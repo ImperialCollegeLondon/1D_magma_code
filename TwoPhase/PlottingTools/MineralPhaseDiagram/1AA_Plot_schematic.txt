@@ -1,0 +1,11 @@
+start_output,      1.000 
+end_output, 4517.000 
+time interval (yr),      2.000 
+top of plots,     -6.5 
+bottom of plots,    -7.1 
+  Min MgO,      0.059 
+  Max MgO,     56.717 
+ Min SiO2,     48.300 
+ Max_SiO2,     75.100 
+frames per second,     20 
+Contribution outputted,      1.000 
