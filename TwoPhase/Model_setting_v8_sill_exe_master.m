@@ -150,7 +150,7 @@ end
 if MU_type==0
     disp('You have chosen Jackson et al 2018 mush bulk viscosity forumulation')
 else
-    disp('You have chosen Costa et al 2019 mush bulk vicosity formulation')
+    disp('You have chosen Costa et al 2009 and Keller&Suckale 2019 mush bulk vicosity formulation')
 end
 
 if Sill_injection==0
@@ -429,6 +429,7 @@ if MU_type==0 % MU_type=0 - Nature model, MU_type=1 - Costa 2019
     end
     mu_all=4/3*mu_m+xi_m;
 else
+    
     F=(1-epsilon)*erf(pi^0.5/2/(1-epsilon)*phi_range/phistar.*(1+(phi_range/phistar).^gamma));
 
     ref_mu=(1+(phi_range/phistar).^sigma)./(1-F).^(B_vis*phistar);
@@ -439,8 +440,11 @@ else
     mu_all=ref_all*ref_shear/ref_all(end);
     mu_m=ref_mu*ref_shear/ref_all(end);
     xi_m=ref_xi*ref_shear/ref_all(end);
-
-    %mu_all=mu_all(end:-1:1);
+    
+    
+    mu_all=mu_all(end:-1:1);
+    mu_m=mu_m(end:-1:1);
+    xi_m=xi_m(end:-1:1);
 end
 
 
