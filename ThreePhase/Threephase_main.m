@@ -4,9 +4,9 @@
 %% 
 clear;
 
-To_Restart=0;  %set to 1 to restart the simulation from a saved state
+To_Restart=1;  %set to 1 to restart the simulation from a saved state
 if To_Restart==1
-    Load_data_index=32;  % The restart step to load 
+    Load_data_index=13;  % The restart step to load 
 end
 
 
@@ -117,44 +117,25 @@ else
     eval(['load(''Record_' num2str(Load_data_index) '.mat'');']);
     % load('Record_error.mat');
     % Transport_method=2;
-  
     
-    % Convective_cut=0.995;
-    % Convective_cut2=0.995;
-    % injection_time=(20e3: 20e3: 4000e3)*Year; %
-    % injection_time=[injection_time End_time+100]; 
+    File_echo=fopen('echo_screen.txt','w');
+    File_precision  = fopen('In_Depth_break_data.txt', 'w');
+
     warning('off');
     if To_extract_volatile==1
         fileID = fopen('Volatile_leak.txt', 'a');
     end
-
+    running_plot=0;
+    Courant0=9.95e-1;
+    Min_dt=10*Year;
 %     Plot_configure=  {[1],[19],[5],[8,6,7],[24], [2,3,20],[23], [99]}; 
 
     if running_plot==1
         Plot_settings
         Update_plot
         tic
-    
-        if Create_video==1
-            if Break_videos==1
-                eval(['Video_handel = VideoWriter(''Temp_restart' num2str(Break_video_index)  '.avi'', Video_format);'])
-            else
-                Video_handel = VideoWriter('Temp_restart.avi', Video_format); %magma_mu12_b0.5_cut0.3
-            end
-            Video_handel.Quality=50;
-            Video_handel.FrameRate=20;
-            open(Video_handel)
-        end
-    
-        if Create_video==1
-            Current_frame=getframe(13);
-            writeVideo(Video_handel,Current_frame);
-            Frame_recorded=Frame_recorded+1;
-        end
         Frame_num=1;
     end
-
-
 end
 %%
 Adjusted=0;
@@ -574,8 +555,13 @@ while Time<End_time
         end
         % V=Vs+Vl+Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0);  
         V=Vs+Vl+Vg;
-        CL=CLs+CLl+CLg;
-        CU=CUs+CUl+CUg;
+        if Add_CLCU==1
+            CL=CLs+CLl+CLg;
+            CU=CUs+CUl+CUg;
+        else
+            CL=zeros(N,1);
+            CU=zeros(N,1);
+        end
 
         if Conservation_type==2
             if Transport_method==1
@@ -656,9 +642,6 @@ while Time<End_time
             for i=2:N
 
                 [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Mass_data(i,:),S_cap(i)]=Phase_component_updated2(H(i),MM(i),NN(i),V(i),Pg_real(i-1),[Mass_data(i-1,:) T(i-1) S_cap(i-1)], T_S_region(i-1,:), Jacobians, Rhs, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, min_por, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
-                %         if T(i)<abs(cellz(i)-nodez(end))/1000*20-400 || Mass_data(i,1)<-1 || Mass_data(i,2)<-1 || Mass_data(i,3)<-1 || Mass_data(i,4)<-1 || Mass_data(i,5)<-1 || Mass_data(i,6)<-1 || Mass_data(i,7)<-1
-                %             break;
-                %         end
             end
         else
             if N_component==3
@@ -675,10 +658,10 @@ while Time<End_time
                 if isempty(gcp('nocreate'))
                     parpool(8); % Reopen the pool desired number of cores
                 end
+                try
                 parfor i=2:N
                     warning('off', 'all');
 
-                    force_solid=0;
                     if Add_CLCU==1
                         input=[H(i),MM(i),NN(i),V(i),CL(i),CU(i)];
                     else
@@ -686,6 +669,9 @@ while Time<End_time
                     end
                     [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,~, Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
                     % [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),Cases(i)]=Phase_component_updated_solid3(H(i),MM(i),NN(i),V(i),Pg_real(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, force_solid);
+                end
+                catch
+                    eval(['save(''Record_error'  '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
                 end
             else
                 [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1),Ts_local(1),Tl_local(1),Mass_data(1,:),S_cap(1),Partition_CL_CU(1,:)]=Phase_component_updated_solid_5p_simple(H(1),MM(1),NN(1),V(1),CL(1),CU(1), Pg_real(1), 1000, 1, Jacobians, Rhs, Constant_index,Extra_func, Sys_constant, cp(1,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
@@ -713,7 +699,7 @@ while Time<End_time
                 % drawnow;
         iter=iter+1;
         % if any(Mass_data<0,'all')
-        %     eval(['save(''Record_error.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');']);
+        %     eval(['save(''Record_erro .mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');']);
         %     error('sorry, it fucked up..')
         % end
 
@@ -807,7 +793,7 @@ while Time<End_time
                     [phi(vol_cells(i)),S(vol_cells(i)),T(vol_cells(i)),rho(vol_cells(i),:),~,T_S_region(vol_cells(i),:),Ts_new(vol_cells(i)),Ts_local(vol_cells(i)),Mass_data(vol_cells(i),:),S_cap(vol_cells(i)),Tl_local(vol_cells(i)),~,~,Partition_CL_CU(vol_cells(i),:)]=Phase_component_updated_solid3(input,Pg_real(vol_cells(i)-1),T_old(vol_cells(i)), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(vol_cells(i),:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, max_melt, dz(vol_cells(i)),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS, 0);
                 catch
                     eval(['save(''Record_error'  '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
-                    error('error 2')
+                    % error('error 2')
                 end
             end
         end
@@ -886,7 +872,11 @@ while Time<End_time
                     
                     evacuation_counter = evacuation_counter+1;
                     [av_rho_T, av_Mass_data_T, av_H_T, av_T_T, av_Ts_local_T, av_phi_T, av_S_T, av_cb_T, av_OG_Cb_T]=Averages_evacuated(evacuation_counter, buoy_Hphi_base(j),buoy_Hphi_top(j), phi, S, H, Mass_data, MM, NN, V, CL, CU, Add_CLCU, Lf, cp, simplified_TS, Sys_constant, rho, Melt_density_type, PD_range, Coef_melt_den, cellz, nodez, aa, bb,cc,rho_mean,g, Velocity_solver_type, Ts, Tl, Conservation_type, rhom_1, rhom_2, Time, Year,OG_Cb); % calculates averages to evacuate and intrude. Also outputs averages that are intruded.
+                    try
                     Evacuations; % Evacuates nodes and then intrudes nodes. Also outputs the nodes which are removed.
+                    catch
+                        aaa=1;
+                    end
                     fprintf(File_echo, '%s %5.5f %s %5.5f %6s\n', 'Evacuated magma intruded at', ...
                             (nodez(depth_int_N_c)-nodez(end))/1000, 'km at', Time/Year/1000, 'ka');
                     % outputs details on the critical buoyancy and total
@@ -992,28 +982,6 @@ while Time<End_time
                 if mod(output_counter,restart_No)==0
                         save(['output_',num2str(output_counter),'.mat']');  %(FileNameO)   
                 end
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
                 % % % phi data from finding porosity % % %
                 Filename_phi = ['phi_output_',num2str(output_counter),'.txt'];
@@ -1178,7 +1146,8 @@ while Time<End_time
     %     V_loss=(sum(sum(Mass_data_old(:,[3,6,7])))-sum(sum(Mass_data(:,[3,6,7]))))/sum(sum(Mass_data_old(:,[3,6,7])));
     % end
     Sum_H=sum(H.*dz);
-    disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data,2))), ' ' num2str(Num_non_convergence)])  %, ' ', num2str((Sum_H-Sum_H0)/Sum_H0
+    % disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ' num2str(Num_non_convergence)])  %, ' ', num2str((Sum_H-Sum_H0)/Sum_H0
+    disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ' num2str(Time/Year)])
     
     Time=Time+dt;
     
@@ -1190,61 +1159,25 @@ while Time<End_time
         Convergence_record(temp,:)=[counter iter];
     end
     
-    if running_plot==1
-        if exist('Create_save_data','var')
-            if Create_save_data==1
-                if Time>Save_data_times(Save_data_index)
-                    eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
-                    Save_data_index=Save_data_index+1;
-                    %             if Create_video==1
-                    %                 open(Video_handel);
-                    %             end
-                end
+    if exist('Create_save_data','var')
+        if Create_save_data==1
+            if Time>Save_data_times(Save_data_index)
+                eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
+                Save_data_index=Save_data_index+1;
             end
-        end
-        
-        if exist('Fixed_record','var')
-            if Fixed_record==1 && Time>Last_record_time+Fixed_record_dt && Create_video==1
-                if Refreshed==0
-                    Update_plot;
-                    drawnow
-                end
-                Current_frame=getframe(13);
-                writeVideo(Video_handel,Current_frame);
-                Last_record_time=Time;
-                Frame_recorded=Frame_recorded+1;
-                if Frame_recorded>Video_handel.FrameRate*Break_videos_times
-                    close(Video_handel)
-                    Break_video_index=Break_video_index+1;
-                    Frame_recorded=0;
-                    % if To_Restart==0
-                        eval(['Video_handel = VideoWriter(''Temp' num2str(Break_video_index)  ''', Video_format);'])
-                    % else
-                    %     eval(['Video_handel = VideoWriter(''Temp_restart' num2str(Break_video_index)  '.avi'', Video_format);'])
-                    % end
-                    open(Video_handel)
-                end
-            end
-        else
-            gap_counter=gap_counter+1;
-            if Create_video==1 && gap_counter == video_gap
-                Current_frame=getframe(13);
-                writeVideo(Video_handel,Current_frame);
-                gap_counter=0;
-            end
-            
-        end
-        if isempty(find(T>Ts_local-1,1)) && (Time>injection_time(end-1)|| To_intrude==0 )
-            eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
-            break
         end
     end
+    
+    if Create_video==1 && Time>(video_data_index+1)*Fixed_record_dt0
+        video_data_index=video_data_index+1;
+        video_data_file_name=['Data' num2str(video_data_index)];
+        save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
+    end
+    % if isempty(find(T>Ts_local-1,1)) && (Time>injection_time(end-1)|| To_intrude==0 )
+    %     eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
+    %     break
+    % end
 end
-if Create_video==1
-    close(Video_handel);
-end
-
-
 
 %% final txt overall output
 % CAB 

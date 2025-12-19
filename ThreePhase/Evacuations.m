@@ -102,6 +102,9 @@ if Add_CLCU==1
     Partition_CL_CU_removed = Partition_CL_CU(melt_base:melt_top,:);
     %av_Partition_CL_CI_T = mean(Partition_CL_CU_removed);
     Partition_CL_CU(melt_base:melt_top,:)=[];
+else
+    Partition_CL_CU_removed=zeros(melt_top-melt_base+1,2);    
+    Partition_CL_CU=zeros(N,2);
 end
 
 T_removed = T(melt_base:melt_top);

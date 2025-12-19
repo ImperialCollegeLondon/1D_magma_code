@@ -9,7 +9,7 @@ warning('off')
 % mode 3: all off
 Fix_H2O=0; 
 
-Model_name="D0.2 c1.2 s5 SiO48-60 MDI mu 0.78-17 muf 0 2 4 7 P10F2 WK3-6 S50 EC";
+Model_name="D0.2 c1.2 s5 SiO48-60 MDI mu 0.78-17 muf 0 2 4 7 P2F2 ";
 
 
 
@@ -24,7 +24,7 @@ rng(13);  %random number seed. For generating consistant result.
 %%
 PD_range=[47 74]; % the two end members of the phase diagram
 N_component=3;
-Add_CLCU=1; %add Cl and Cu as trace element
+Add_CLCU=0; %add Cl and Cu as trace element
 
 Year=3600*24*365.25;
 
@@ -37,7 +37,7 @@ g=9.81/Dynamic_scaling;
 
 Precision=1e-8;
 % Precision2=Precision/1e2;
-Max_iter=100;
+Max_iter=3;
 min_iter=1;
 
 Enhanced_convergence=0;  %
@@ -271,13 +271,13 @@ Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2]
 min_show_range=Show_z(2)-Show_z(1);
 
 % define the meshing and mesh adaptivity
-Adaptive_mesh=0;     % set to one to turn one the adaptive meshing.
+Adaptive_mesh=1;     % set to one to turn on the adaptive meshing.
 Adaptive_step_gap0=10; %frequency of mesh adaptivity done
 Adaptive_step_time=1*Year; %minimal time gap before the new adaptation
 max_adaptive_number=1;
 
 min_dx=3;   % minimal cell length
-max_dx=80; % maximum cell length
+max_dx=200; % maximum cell length
 min_N=300;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells
 aspect_ratio=2.3; % maximum change ratio between adjacent cells,
@@ -424,6 +424,9 @@ if Add_CLCU==1
 
     CL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CL_sill/100;
     CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CU_sill/100;
+else
+    CL=zeros(N,1);
+    CU=zeros(N,1);
 end
 
 % make the lower part dryer
@@ -486,10 +489,10 @@ fixed_dt=0;
 
 Courant0=9.5e-1;%0.025;  %During the start of the sill intrusion
 Courant1=9.5e-1;%0.15;  
-min_phi_dt=3e-2;
+min_phi_dt=5e-2;
 
 Max_dt=200*Year;
-Min_dt=2*Year;
+Min_dt=5*Year;
 
 if fixed_dt==1
     dt=1e-1*Year;    
@@ -664,13 +667,13 @@ SillNodez=round(Sill_length/(dzf));
 
 % injection_time=(5e3: 5e3: 3000e3)*Year; %
 % injection_time=(5e3: 5e3: 2000e3)*Year; %
-% injection_time=(10e3: 10e3: 4000e3)*Year;
+injection_time=(10e3: 10e3: 4000e3)*Year;
 % injection_time=(15e3: 15e3: 3000e3)*Year;
 % injection_time=(25e3: 25e3: 10000e3)*Year; %
 % injection_time=(30e3: 30e3: 12000e3)*Year; %
 % injection_time=(40e3: 40e3: 16000e3)*Year; %
 % injection_time=(30e3: 30e3: 18000e3)*Year;
-injection_time=(50e3: 50e3: 20000e3)*Year;
+% injection_time=(50e3: 50e3: 20000e3)*Year;
 % injection_time=(60e3: 60e3: 24000e3)*Year;
 % injection_time=(75e3: 75e3: 30000e3)*Year;
 % injection_time=[50e3: 50e3: 10000e3, (10000e3+40e3):40e3:18000e3, (18000e3+30e3):30e3:24000e3]*Year;
@@ -771,7 +774,7 @@ Finding_porosity;
 Out_time = 5000;
 output_counter=1;
 % Set as 1, to turn on txt outputs
-Record_data=1;
+Record_data=0;
 Record_index=2;
 Record_time=[0:Out_time*Year:End_time];
 restart_No=5;
@@ -839,7 +842,7 @@ end
 %      [6],[7],[8],[11]};   % a 2*4 plot setting
 % Plot_configure=...
 %     {[1,5,8],[10],[11]};  
-running_plot=0; %CAB added, if 1 it will plot whilst running
+running_plot=1; %CAB added, if 1 it will plot whilst running
 SiO2_range=[47 74]; %CAB added,
 Cb2=(sum(Mass_data(:,[3,6,7]),2))./sum(Mass_data,2); %CAB added,
 
@@ -874,50 +877,22 @@ if running_plot==1
 end
 
 tic;
-%%  Record videos
-
-Create_video=0;
-Fixed_record_dt0=500*Year;
+%%  Record videos (data)
+Create_video=1;
+Fixed_record_dt0=2000*Year;
 Fixed_record_dt=Fixed_record_dt0;
 Fixed_record=1;
-Font_Size=16;
 
-
-Break_videos=1; % set to 1 to break recorded videos into smaller pieceses instead of a long recording.
-Break_videos_times=30; %in seconds
-Break_video_index=1;
-Frame_recorded=0;
-% video_gap=2;
-if Create_video==1
-    if ispc
-        Video_format='MPEG-4';
-    else
-        Video_format='Motion JPEG AVI';
-    end
-
-    if Break_videos==1
-        eval(['Video_handel = VideoWriter(''Temp' num2str(Break_video_index)  ''', Video_format);'])
-    else
-        Video_handel = VideoWriter('Temp.avi', Video_format); %magma_mu12_b0.5_cut0.3
-    end
-Video_handel.Quality=50;
-Video_handel.FrameRate=20;
-open(Video_handel)
-end
-% Update_frame=20;    %Upgrade the plottings every Update_frame steps.
-
-if Create_video==1
-    Current_frame=getframe(13);
-    writeVideo(Video_handel,Current_frame);
-    Frame_recorded=Frame_recorded+1;
-end
+video_data_index=0;
+video_data_file_name=['Data' num2str(video_data_index)];
+save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
 
 %% Save simulation data
 Create_save_data=1;
 if Create_save_data==1
 %     Save_data_times=[10, 20 50 100]*Year;  %define the time where data are saved.
     % Save_data_times=[0:10e4:2e6 (2e6+5e4):5e4:5e6]*Year;
-    Save_data_times=[0:50e4:(End_time*1.1/Year)]*Year;
+    Save_data_times=[0:30e4:(End_time*1.1/Year)]*Year;
     % Save_data_times=[0:2e3:2e6 (2e6+5e4):5e4:5e6]*Year;
     % Save_data_times=0:2e4
     Save_data_times=[Save_data_times End_time+1000*Year];

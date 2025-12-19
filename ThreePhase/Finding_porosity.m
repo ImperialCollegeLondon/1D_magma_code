@@ -256,8 +256,10 @@ if ~isempty(phi_top)
     end
 end
 
-
-
+% HH
+index_error=find(buoy_Hphi_base==0);
+buoy_Hphi_base(index_error)=-5000;
+buoy_Hphi_top(index_error)=-5000;
     %% calculate thickness of buoyant magma 
 if ~isempty(buoy_phi_top)
     buoyant_phi_m = abs(cellz(buoy_phi_top-1) - cellz(buoy_phi_base)); %thickness in m
@@ -269,7 +271,11 @@ if ~isempty(buoy_phi_top)
         if buoy_Hphi_top(i)==-5000
             buoyant_Hphi_m(i)=0;
         else
-            buoyant_Hphi_m(i)  = abs(cellz(buoy_Hphi_top(i)-1) - cellz(buoy_Hphi_base(i))); % thickness in m
+            if buoy_Hphi_top(i)-1>0  && buoy_Hphi_base(i)>0
+                buoyant_Hphi_m(i)  = abs(cellz(buoy_Hphi_top(i)-1) - cellz(buoy_Hphi_base(i))); % thickness in m    
+            else
+                buoyant_Hphi_m(i)=0;
+            end
         end
     end
     
@@ -368,7 +374,13 @@ if ~isempty(buoy_phi_top)
         if buoy_Hphi_top(i)==-5000
             Av_Hphi_bulk_density(i)=0;
         else
+            try
             Av_Hphi_bulk_density(i) = mean(rho_bulk(buoy_Hphi_base(i):buoy_Hphi_top(i)));
+            catch
+                buoy_Hphi_base(i)
+                buoy_Hphi_top(i)
+                error('bouyancy index error')
+            end
         end
     end
 
