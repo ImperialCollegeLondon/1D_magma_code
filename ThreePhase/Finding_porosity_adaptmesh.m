@@ -208,6 +208,10 @@ if ~isempty(phi_top)
     end
 end
 
+% HH check
+%index_error=find(buoy_Hphi_base==0);
+%buoy_Hphi_base(index_error)=-5000;
+%buoy_Hphi_top(index_error)=-5000;
 
 %% Compare hrti
 
