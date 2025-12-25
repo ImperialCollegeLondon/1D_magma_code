@@ -259,7 +259,7 @@ end
 % HH
 index_error=find(buoy_Hphi_base==0);
 buoy_Hphi_base(index_error)=-5000;
-buoy_Hphi_top(index_error)=-5000;
+buoy_Hphi_top(index_error)=-5000; 
     %% calculate thickness of buoyant magma 
 if ~isempty(buoy_phi_top)
     buoyant_phi_m = abs(cellz(buoy_phi_top-1) - cellz(buoy_phi_base)); %thickness in m
