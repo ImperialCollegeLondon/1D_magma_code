@@ -351,7 +351,7 @@ if Conservation_type==1
     end
 else
     rho(1:3)=rho_mean;
-    phi=(m1+n1+v1+v3)/(M+N+V);
+    phi=(m1+n1+v1)/(M+N+V); %for now treat volatile also as treat element (phase)
     S=v3/max(m1+n1+v1+v3,1e-5);
 end
 

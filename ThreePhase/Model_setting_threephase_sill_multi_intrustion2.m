@@ -398,17 +398,18 @@ N=N_number;
 index=find(cellz-nodez(end)>=-15e3-100,1,'first');
 MM=interp1([cellz(1) cellz(index) cellz(end)], [MM_crust MM_crust2 MM_crust3], cellz,'linear' ); 
 MM(Sill_index(1):Sill_index(2))=MM_sill;
-MM0=MM;
+
 
 % NN=linspace(NN_crust,NN_crust2,N)';
 NN=interp1([cellz(1) cellz(index) cellz(end)], [NN_crust NN_crust2 NN_crust3], cellz ,'linear' ); 
 NN(Sill_index(1):Sill_index(2))=NN_sill;
-NN0=NN;
+
 
 % V=zeros(N,1);
 % V=linspace(V_crust,V_crust2,N)';
 V=interp1([cellz(1) cellz(index) cellz(end)], [V_crust V_crust2 V_crust3], cellz ,'linear' ); 
 V(Sill_index(1):Sill_index(2))=V_sill;
+
 
 if N_component==5
     CL=interp1([cellz(1) cellz(index) cellz(end)], [CL1 CL2 CL3], cellz ,'linear' ); 
@@ -450,16 +451,8 @@ if Conservation_type==2
 end
 dry_index=index_temp;
 
-V0=V;
 
 
-
-
-
-
-
-
-cb=MM_sill/(MM_sill+NN_sill); %approximation
 
 if N_component==3
     T0=abs(cellz-nodez(end))/1000*25+10;   %thermal gradient 25C/km, surface at 10C
@@ -472,7 +465,6 @@ else
 
     % Cu is treated as trace element, not taken into enthaly calculation
     H=(MM*cp0(1)+NN*cp0(2)+(V)*cp0(3)).*T0;
-    cb=(SiO2_sill-PD_range(1))/(PD_range(2)-PD_range(1));
     Lf_temp=cb*Lf(1)+(1-cb)*Lf(2);
     H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+Lf_temp*(MM_sill+NN_sill+V_sill)*Sillphi*1.85;
     Sill_den=MM_sill+NN_sill+V_sill+CL_sill;
@@ -484,6 +476,10 @@ H0=H;
 Show_z=[Length2 Length2+Sill_length*fine_ratio];
 % Show_z=[cellz(1) cellz(end)];
 
+
+Sum_M0=sum(MM.*dz);
+Sum_N0=sum(NN.*dz);
+Sum_V0=sum(V.*dz);
 %% Time steps
 fixed_dt=0;
 
@@ -568,7 +564,7 @@ dP=zeros(N+1,1);
 
 C_values=zeros(N+1,3);
 
-U_new=zeros((N+1)*3,1);
+U_new=zeros((N+1)*2,1);
 
 T=ones(N,1);
 
@@ -710,6 +706,7 @@ Last_intrude_time=0;
 
 
 %% Evacuations - CAB
+To_evacuate=1; %set to 1 to enable evacuation
 % initialising arrays for layers
 % buoyant layers which have porosity>0
 buoy_phi_top=[];
@@ -892,7 +889,7 @@ Create_save_data=1;
 if Create_save_data==1
 %     Save_data_times=[10, 20 50 100]*Year;  %define the time where data are saved.
     % Save_data_times=[0:10e4:2e6 (2e6+5e4):5e4:5e6]*Year;
-    Save_data_times=[0:30e4:(End_time*1.1/Year)]*Year;
+    Save_data_times=[0:20e4:(End_time*1.1/Year)]*Year;
     % Save_data_times=[0:2e3:2e6 (2e6+5e4):5e4:5e6]*Year;
     % Save_data_times=0:2e4
     Save_data_times=[Save_data_times End_time+1000*Year];
@@ -929,7 +926,6 @@ Convergence_record_steps=10;
 Convergence_record=zeros(Convergence_record_steps,2);
 Num_non_convergence=0;
 file_iter = fopen('Iteration_recored.txt', 'w');
-% Sum_H0=sum(H.*dz);
 
 
 

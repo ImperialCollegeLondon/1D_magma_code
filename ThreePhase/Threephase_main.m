@@ -6,7 +6,7 @@ clear;
 
 To_Restart=1;  %set to 1 to restart the simulation from a saved state
 if To_Restart==1
-    Load_data_index=13;  % The restart step to load 
+    Load_data_index=15;  % The restart step to load 
 end
 
 
@@ -125,7 +125,7 @@ else
     if To_extract_volatile==1
         fileID = fopen('Volatile_leak.txt', 'a');
     end
-    running_plot=0;
+    running_plot=1;
     Courant0=9.95e-1;
     Min_dt=10*Year;
 %     Plot_configure=  {[1],[19],[5],[8,6,7],[24], [2,3,20],[23], [99]}; 
@@ -237,46 +237,48 @@ while Time<End_time
 
         % CAB EDIT - needed for finding_porosity 
          rho_on_nodez=zeros(N+1,3);
-        if Conservation_type==1
-            rho_on_nodez(:,1)=interp1(cellz,rho(:,1),nodez,'linear','extrap');
-            rho_on_nodez(:,2)=interp1(cellz,rho(:,2),nodez,'linear','extrap');
-            rho_on_nodez(:,3)=interp1(cellz,rho(:,3),nodez,'linear','extrap');
-            rho_bulk=phi.*(1-S).*rho(:,1)+(1-phi).*rho(:,2)+phi.*S.*rho(:,3);
-        else % for volume conservation, recalulate the dyanmic denties used for gravitational term
-            if Melt_density_type==2
-                SiO2=(Mass_data(:,1)*PD_range(2)+Mass_data(:,2)*PD_range(1))./max(sum(Mass_data(:,1:2),2),1e-5)/100;
-                H2O=Mass_data(:,3)./max(sum(Mass_data(:,1:3),2),1e-5);
-                VMX=H2O.*SiO2*Coef_melt_den(1)+SiO2*Coef_melt_den(2)+H2O*Coef_melt_den(3)+Coef_melt_den(4);
-                x_other=1-SiO2-H2O;
-                V_all=SiO2.*26.86e-6/0.06009+H2O.*26.27e-6/0.01802+x_other.*VMX;
-                rho_temp=1./V_all;
-                rho_on_nodez(2:end-1,1)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
-                rho_on_nodez(1,1)=rho_temp(1);  rho_on_nodez(end,1)=rho_temp(end);
-            else
-                rho_temp=(Mass_data(:,1)*rhof_1+Mass_data(:,2)*rhof_2)./max(sum(Mass_data(:,1:2),2),1e-5);
-                rho_on_nodez(2:end-1,1)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
-                rho_on_nodez(1,1)=rho_temp(1);  rho_on_nodez(end,1)=rho_temp(end);
-            end
+         if To_evacuate==1
+             if Conservation_type==1
+                 rho_on_nodez(:,1)=interp1(cellz,rho(:,1),nodez,'linear','extrap');
+                 rho_on_nodez(:,2)=interp1(cellz,rho(:,2),nodez,'linear','extrap');
+                 rho_on_nodez(:,3)=interp1(cellz,rho(:,3),nodez,'linear','extrap');
+                 rho_bulk=phi.*(1-S).*rho(:,1)+(1-phi).*rho(:,2)+phi.*S.*rho(:,3);
+             else % for volume conservation, recalulate the dyanmic denties used for gravitational term
+                 if Melt_density_type==2
+                     SiO2=(Mass_data(:,1)*PD_range(2)+Mass_data(:,2)*PD_range(1))./max(sum(Mass_data(:,1:2),2),1e-5)/100;
+                     H2O=Mass_data(:,3)./max(sum(Mass_data(:,1:3),2),1e-5);
+                     VMX=H2O.*SiO2*Coef_melt_den(1)+SiO2*Coef_melt_den(2)+H2O*Coef_melt_den(3)+Coef_melt_den(4);
+                     x_other=1-SiO2-H2O;
+                     V_all=SiO2.*26.86e-6/0.06009+H2O.*26.27e-6/0.01802+x_other.*VMX;
+                     rho_temp=1./V_all;
+                     rho_on_nodez(2:end-1,1)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
+                     rho_on_nodez(1,1)=rho_temp(1);  rho_on_nodez(end,1)=rho_temp(end);
+                 else
+                     rho_temp=(Mass_data(:,1)*rhof_1+Mass_data(:,2)*rhof_2)./max(sum(Mass_data(:,1:2),2),1e-5);
+                     rho_on_nodez(2:end-1,1)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
+                     rho_on_nodez(1,1)=rho_temp(1);  rho_on_nodez(end,1)=rho_temp(end);
+                 end
 
-            rho_temp=(Mass_data(:,4)*rhom_1+Mass_data(:,5)*rhom_2)./max(sum(Mass_data(:,4:5),2),1e-5);
-            rho_on_nodez(2:end-1,2)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
-            rho_on_nodez(1,2)=rho_temp(1);  rho_on_nodez(end,2)=rho_temp(end);
+                 rho_temp=(Mass_data(:,4)*rhom_1+Mass_data(:,5)*rhom_2)./max(sum(Mass_data(:,4:5),2),1e-5);
+                 rho_on_nodez(2:end-1,2)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
+                 rho_on_nodez(1,2)=rho_temp(1);  rho_on_nodez(end,2)=rho_temp(end);
 
-            rho_on_nodez(rho_on_nodez(:,2)==0,2)=rhom_2; % patch the phi=1 case 
-            
-            P2=-rho_mean*g*(cellz-nodez(end))/1e5; %in bar
-            rho_temp=(aa(1)* max(T,300).^bb(1)+aa(2)*max(P2,400).^bb(2)+aa(3)*max(T,300).^bb(3).*max(P2,400).^cc(1))*1000;
-            rho_on_nodez(2:end-1,3)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
-            rho_on_nodez(1,3)=rho_temp(1);  rho_on_nodez(end,3)=rho_temp(end);
-            if Velocity_solver_type==2
-                rho_on_nodez(S_on_nodez>0,1)=rho_on_nodez(S_on_nodez>0,3);
-            end
-            rho_on_cellz = interp1(nodez, rho_on_nodez, cellz, 'linear', 'extrap');
-            rho_bulk = phi.*(1-S).*rho_on_cellz(:,1)+(1-phi).*rho_on_cellz(:,2)+phi.*S.*rho_on_cellz(:,3);
-        end
+                 rho_on_nodez(rho_on_nodez(:,2)==0,2)=rhom_2; % patch the phi=1 case
+
+                 P2=-rho_mean*g*(cellz-nodez(end))/1e5; %in bar
+                 rho_temp=(aa(1)* max(T,300).^bb(1)+aa(2)*max(P2,400).^bb(2)+aa(3)*max(T,300).^bb(3).*max(P2,400).^cc(1))*1000;
+                 rho_on_nodez(2:end-1,3)=(rho_temp(1:end-1)+rho_temp(2:end))/2;
+                 rho_on_nodez(1,3)=rho_temp(1);  rho_on_nodez(end,3)=rho_temp(end);
+                 if Velocity_solver_type==2
+                     rho_on_nodez(S_on_nodez>0,1)=rho_on_nodez(S_on_nodez>0,3);
+                 end
+                 rho_on_cellz = interp1(nodez, rho_on_nodez, cellz, 'linear', 'extrap');
+                 rho_bulk = phi.*(1-S).*rho_on_cellz(:,1)+(1-phi).*rho_on_cellz(:,2)+phi.*S.*rho_on_cellz(:,3);
+             end
 
 
-        Finding_porosity_adaptmesh;
+             Finding_porosity_adaptmesh;
+         end
         %CAB end
     end
 
@@ -488,9 +490,7 @@ while Time<End_time
         end
         kc=ones(N+1,1)*kc0.*(T_above>=-20);
         kc2=ones(N+1,1)*kc20.*(T_above>=-20);  % for water transport
-
-        % [MM, NN ,V]=Threephase_components_solver(Mass_data, Mass_data_old,  u_all, [kc kc2], dt, dz, zeros(N,1));
-        
+     
 
         p1=ones(N+1,1); %phi_on_nodez.*(1-S_on_nodez);
         p2=ones(N+1,1); %(1-phi_on_nodez); 
@@ -499,16 +499,15 @@ while Time<End_time
         M1l=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,1), ones(N,1), ones(N,1), u_all(1:N+1), kc.*p1,dt, 0,[3,3],0);
         M1s=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,4), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc.*p2,dt, 0,[3,3],0);
 
-        % Nl=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,2), ones(N,1), ones(N,1), u_all(1:N+1), kc.*p1,dt, 0,[3,3],0);
-        % Ns=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,5), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc.*p2*5,dt, 0,[3,3],0);
+        Nl=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,2), ones(N,1), ones(N,1), u_all(1:N+1), kc.*p1,dt, 0,[3,3],0);
+        Ns=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,5), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc.*p2,dt, 0,[3,3],0);
 
         Vl=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,3), ones(N,1), ones(N,1), u_all(1:N+1), kc2.*p1,dt, 0,[3,3],0);
-
         Vs=CV_transport_scaled_v2(dz,min(Mass_data_old_capped(:,6), Mass_solid.*S_cap), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc2.*p2,dt, 0,[3,3],0);  %only those less than S_cap is transported as solid
 
         MM=M1s+M1l;
-
-        % NN=Ns+Nl;
+        % NN=rho_mean-MM-Vl-Vs;
+        NN=Ns+Nl;
 
 
         if N_component==5 || Add_CLCU==1
@@ -570,48 +569,45 @@ while Time<End_time
                 NN=NN*rho_mean./sum_mass;
                 V=V*rho_mean./sum_mass;
             else
-                for j=1:2
-                    index=find(MM./(rho_mean-V)>0.98);
-                    extra=(MM(index)-(rho_mean-V(index))*0.98);
-                    for i=1:length(extra)
-                        MM(index(i)-1)=MM(index(i)-1)+extra(i)*dz(index(i))/dz(index(i)-1);
-                        % MM(index(i)+1)=MM(index(i)+1)+extra(i)/2*dz(index(i))/dz(index(i)+1);
-                        MM(index(i))=MM(index(i))-extra(i);
-                    end
-                end
+                % for j=1:2
+                %     index=find(MM./(rho_mean-V)>0.98);
+                %     extra=(MM(index)-(rho_mean-V(index))*0.98);
+                %     for i=1:length(extra)
+                %         MM(index(i)-1)=MM(index(i)-1)+extra(i)*dz(index(i))/dz(index(i)-1);
+                %         % MM(index(i)+1)=MM(index(i)+1)+extra(i)/2*dz(index(i))/dz(index(i)+1);
+                %         MM(index(i))=MM(index(i))-extra(i);
+                %     end
+                % end
                 if N_component==3
-                    NN=rho_mean-MM-V;
+                    % NN=rho_mean-MM-V;
                 else
-                    NN=rho_mean-MM-V-CL;
+                    % NN=rho_mean-MM-V-CL;
                     CL=CLs+CLl+CLg;
                     CU=CUs+CUl+CUg;
                 end
 
-                NN(NN<0)=0;
+                % NN(NN<0)=0;
           
  
                 % V=Vs+Vl+Vg;
                 
-                extra=Vg-(Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0));
-                
-                index=find(extra>0);
-                if ~isempty(index)
-                    ratio=MM(index)./(MM(index)+NN(index));
-                    MM(index)=MM(index)-extra(index).*ratio;
-                    NN(index)=NN(index)-extra(index).*(1-ratio);
-                    SumM=sum(extra(index).*ratio.*dz(index));
-                    SumN=sum(extra(index).*(1-ratio).*dz(index));
-
-                    ratio=SumM/(SumM+SumN);
-                    index=find(extra<0);
-                    MM(index)=MM(index)-extra(index).*ratio;
-                    NN(index)=NN(index)-extra(index).*(1-ratio);
-                end
+                % extra=Vg-(Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0));
+                % 
+                % index=find(extra>0);
+                % if ~isempty(index)
+                %     ratio=MM(index)./(MM(index)+NN(index));
+                %     MM(index)=MM(index)-extra(index).*ratio;
+                %     NN(index)=NN(index)-extra(index).*(1-ratio);
+                %     SumM=sum(extra(index).*ratio.*dz(index));
+                %     SumN=sum(extra(index).*(1-ratio).*dz(index));
+                % 
+                %     ratio=SumM/(SumM+SumN);
+                %     index=find(extra<0);
+                %     MM(index)=MM(index)-extra(index).*ratio;
+                %     NN(index)=NN(index)-extra(index).*(1-ratio);
+                % end
             end
         end
-
-        %         H=Threephase_enthalpy_solver2(Mass_data_old, T_old, cp, u_all, kt, Lf, dz, dt);
-        %         H=Threephase_enthalpy_solver_ffs(Mass_data, T_old, T, cp, u_all, kt, Lf, dz, dt);
         H_source= zeros(N,1);
         
         kt=(kt0(1)*sum(Mass_data(:,[1 4]),2)+kt0(2)*sum(Mass_data(:,[2 5]),2))./max(sum(Mass_data(:,[1 2 5 5]),2),1e-3);
@@ -761,13 +757,9 @@ while Time<End_time
             release=temp(vol_cells)/2;
             % Invis_vol(vol_cells)=Invis_vol(vol_cells)+release;
             Leak_V=Leak_V+sum(release.*dz(vol_cells));
+            Sum_V0=Sum_V0-sum(release.*dz(vol_cells)); % update the conservative V
 
             if N_component==5 || Add_CLCU==1
-                % Leak_CU=Leak_CU+sum(Mass_data(vol_cells,13).*dz(vol_cells));
-                % Leak_CL=Leak_CL+sum(Mass_data(vol_cells,10).*dz(vol_cells));
-                % CU(vol_cells)=CU(vol_cells)-Mass_data(vol_cells,13);
-                % CL(vol_cells)=CL(vol_cells)-Mass_data(vol_cells,10);
-
                 temp=temp./max(V,1e-3)/2;
                 Leak_CU=Leak_CU+sum(CL(vol_cells).*temp(vol_cells).*dz(vol_cells));
                 Leak_CL=Leak_CL+sum(CU(vol_cells).*temp(vol_cells).*dz(vol_cells));
@@ -778,11 +770,9 @@ while Time<End_time
             Leak_H=Leak_H+sum(release.*dz(vol_cells).*T(vol_cells).*cp(vol_cells,3));            
 
             V(vol_cells)=V(vol_cells)-release;
-            scale=MM(vol_cells)./(MM(vol_cells)+NN(vol_cells));
-            MM(vol_cells)=MM(vol_cells)+scale.*release;
-            NN(vol_cells)=NN(vol_cells)+(1-scale).*release;
-
-
+            % scale=MM(vol_cells)./(MM(vol_cells)+NN(vol_cells));
+            % MM(vol_cells)=MM(vol_cells)+scale.*release;
+            % NN(vol_cells)=NN(vol_cells)+(1-scale).*release;
             for i=1:length(vol_cells)
                 try
                     if Add_CLCU==1
@@ -837,8 +827,7 @@ while Time<End_time
         rho_bulk=phi.*(1-S).*rho(:,1)+(1-phi).*rho(:,2)+phi.*S.*rho(:,3);
     else
         rho_on_cellz = interp1(nodez, rho_on_nodez, cellz, 'linear', 'extrap');
-        rho_bulk = phi.*(1-S).*rho_on_cellz(:,1)+(1-phi).*rho_on_cellz(:,2)+phi.*S.*rho_on_cellz(:,3);
-        
+        rho_bulk = phi.*(1-S).*rho_on_cellz(:,1)+(1-phi).*rho_on_cellz(:,2)+phi.*S.*rho_on_cellz(:,3);        
     end
 
     
@@ -849,7 +838,7 @@ while Time<End_time
         
 
 
-    if ~isempty(buoy_phi_top)
+    if To_evacuate && ~isempty(buoy_phi_top)
         for j=1:length(buoy_phi_top)
             if crit_overpressure(j)<=overpressure_total(j)
                 if buoy_Hphi_top(j)==-5000
@@ -871,14 +860,15 @@ while Time<End_time
 
                     
                     evacuation_counter = evacuation_counter+1;
-                    [av_rho_T, av_Mass_data_T, av_H_T, av_T_T, av_Ts_local_T, av_phi_T, av_S_T, av_cb_T, av_OG_Cb_T]=Averages_evacuated(evacuation_counter, buoy_Hphi_base(j),buoy_Hphi_top(j), phi, S, H, Mass_data, MM, NN, V, CL, CU, Add_CLCU, Lf, cp, simplified_TS, Sys_constant, rho, Melt_density_type, PD_range, Coef_melt_den, cellz, nodez, aa, bb,cc,rho_mean,g, Velocity_solver_type, Ts, Tl, Conservation_type, rhom_1, rhom_2, Time, Year,OG_Cb); % calculates averages to evacuate and intrude. Also outputs averages that are intruded.
+                    % [av_rho_T, av_Mass_data_T, av_H_T, av_T_T, av_Ts_local_T, av_phi_T, av_S_T, av_cb_T, av_OG_Cb_T,  av_S_cap,av_Tl_local_T,av_Partition_CL_CU]=Averages_evacuated_updated(evacuation_counter, buoy_Hphi_base(j),buoy_Hphi_top(j), phi, S, H, Mass_data, Pg_real, dz, MM, NN, V, CL, CU, Add_CLCU, Lf, cp, simplified_TS, Sys_constant, rho, Melt_density_type, PD_range, Coef_melt_den, cellz, nodez, aa, bb,cc,rho_mean,g, Velocity_solver_type, Ts, Tl, Conservation_type, rhom_1, rhom_2, Time, Year,OG_Cb); % calculates averages to evacuate and intrude. Also outputs averages that are intruded.
+                    Averages_evacuated_updated;
                     try
                     Evacuations; % Evacuates nodes and then intrudes nodes. Also outputs the nodes which are removed.
                     catch
                         aaa=1;
                     end
-                    fprintf(File_echo, '%s %5.5f %s %5.5f %6s\n', 'Evacuated magma intruded at', ...
-                            (nodez(depth_int_N_c)-nodez(end))/1000, 'km at', Time/Year/1000, 'ka');
+                    % fprintf(File_echo, '%s %5.5f %s %5.5f %6s\n', 'Evacuated magma intruded at', ...
+                    %         (nodez(depth_int_N_c)-nodez(end))/1000, 'km at', Time/Year/1000, 'ka');
                     % outputs details on the critical buoyancy and total
                     % buoyancy
                     % output: 1. hb, 2. hrti, 3. t2, 4. delta rho, 5. critical overpressue,
@@ -903,9 +893,9 @@ while Time<End_time
 
                     %output the volume and composition evacuated
                     % 1. time 2. thickness of HMF 3. Volume 4. Composition
-                    fprintf(File_AVevac, '%10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \n', ...
-                        [Time/Year/1000; (melt_evacuated_top-nodez(end))/1000; (nodez(depth_int_N_c)-nodez(end))/1000;  buoyant_Hphi_m(j)/1000; (buoyant_Hphi_m(j)/1000)*((Diameter/1000)/2)^2*pi; av_cb_T;...
-                        Thick_melt_evac; Thick_melt_int]);
+                    % fprintf(File_AVevac, '%10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \n', ...
+                    %     [Time/Year/1000; (melt_evacuated_top-nodez(end))/1000; (nodez(depth_int_N_c)-nodez(end))/1000;  buoyant_Hphi_m(j)/1000; (buoyant_Hphi_m(j)/1000)*((Diameter/1000)/2)^2*pi; av_cb_T;...
+                    %     Thick_melt_evac; Thick_melt_int]);
 
                     
                     % reset
@@ -1147,8 +1137,16 @@ while Time<End_time
     % end
     Sum_H=sum(H.*dz);
     % disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ' num2str(Num_non_convergence)])  %, ' ', num2str((Sum_H-Sum_H0)/Sum_H0
-    disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ' num2str(Time/Year)])
+    disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ', num2str(min(sum(Mass_data(1:7,:),2))), ' ', num2str(Time/Year)  ' ' ])
     
+    Conservation_check=[sum(sum(Mass_data(:,[1 4]),2).*dz)/Sum_M0, sum(sum(Mass_data(:,[2 5]),2).*dz)/Sum_N0, sum(sum(Mass_data(:,[3 6 7]),2).*dz)/Sum_V0]; 
+    disp([num2str(Conservation_check(1)), ' ', num2str(Conservation_check(2)), ' ', num2str(Conservation_check(2))])
+    if max(abs(Conservation_check-1))>1e-2
+        aaa=1;
+    end
+    
+
+
     Time=Time+dt;
     
     temp=mod(counter,Convergence_record_steps);
@@ -1173,10 +1171,10 @@ while Time<End_time
         video_data_file_name=['Data' num2str(video_data_index)];
         save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
     end
-    % if isempty(find(T>Ts_local-1,1)) && (Time>injection_time(end-1)|| To_intrude==0 )
-    %     eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
-    %     break
-    % end
+    if isempty(find(T>Ts_local-1,1)) && (Time>injection_time(end-1)|| To_intrude==0 )
+        eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
+        break
+    end
 end
 
 %% final txt overall output
@@ -1222,12 +1220,6 @@ if Record_data==1
     end
 
     fclose(File_OutN);
-
-
-
-
-
-
 end
 
 fclose(File_AVevac);

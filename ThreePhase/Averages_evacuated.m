@@ -44,7 +44,6 @@ if Add_CLCU==1
    u1_T = mean(Mass_data(melt_base:melt_top,11));
    u2_T = mean(Mass_data(melt_base:melt_top,12));
    u3_T = mean(Mass_data(melt_base:melt_top,13));
-
 end
 
 
