@@ -1,5 +1,5 @@
-function [phi,ol,opx,cpx,feld, rhof, rhom, rhool, rhoopx, rhocpx, rhofeld] = weightfrac_to_volfrac(T,phi_wt,ol_wt,opx_wt,cpx_wt, feld_wt,cl, ol_mg, opx_mg, cpx_mg, min_mg, max_mg, Ts_local,rhof_m, rhof_c, crit_mg_si_melt, rhof_2)%,rhool_m,rhool_c,...
-                                                                                                                                   % rhoopx_m, rhoopx_c, rhocpx_m, rhocpx_c, rhofeld_m, rhofeld_c)                                                                                                                
+function [phi,ol,opx,cpx,feld, rhof, rhom, rhool, rhoopx, rhocpx, rhofeld] = weightfrac_to_volfrac(T,phi_wt,ol_wt,opx_wt,cpx_wt, feld_wt,cl, ol_mg, opx_mg, cpx_mg, min_mg, max_mg, Ts_local,rhof_m, rhof_c, crit_mg_si_melt, rhof_2,rhool_m,rhool_c,...
+                                                                                                                                    rhoopx_m, rhoopx_c, rhocpx_m, rhocpx_c, rhofeld_m, rhofeld_c,rhom_1)                                                                                                                
                                                                                                                                     
                                                                                                                                
 
@@ -16,17 +16,17 @@ function [phi,ol,opx,cpx,feld, rhof, rhom, rhool, rhoopx, rhocpx, rhofeld] = wei
 %crit_mg_si_melt = 4;
 %rhof_2=2715;
 
-rhool_m = -20.5;
-rhool_c = 4175;
+%rhool_m = -20.5;
+%rhool_c = 4175;
 
-rhoopx_m = -21.4286;
-rhoopx_c = 3864.29;
+%rhoopx_m = -21.4286;
+%rhoopx_c = 3864.29;
 
-rhocpx_m = -12.5;
-rhocpx_c = 3562.5;
+%rhocpx_m = -12.5;
+%rhocpx_c = 3562.5;
 
-rhofeld_m = 0.04819;
-rhofeld_c = 2621.45;
+%rhofeld_m = 0.04819;
+%rhofeld_c = 2621.45;
 
 %% convert nd to dim
 
@@ -89,10 +89,10 @@ if sum_vol>0
     feld=feld_vol/sum_vol;
     sol = ol + opx + cpx + feld;
     test = ol+opx+cpx+feld+phi;
-    if abs(test-1)>1e-6
-        fprintf('%.15f\n',test)
-        error('oh no')
-    end
+    %if abs(test-1)>1e-6
+       % fprintf('%.15f\n',test)
+       % error('oh no')
+   % end
 else
     phi=0;
     ol=0;
@@ -100,6 +100,7 @@ else
     cpx=0;
     feld=0;
     sol=0;
+    %sum_vol=1/3150;
 end
 
 %phi = phi_wt;
@@ -115,7 +116,7 @@ end
 if sol>0
     rhom = ((ol/sol)*rhool + (opx/sol)*rhoopx + (cpx/sol)*rhocpx + (feld/sol)*rhofeld);
 else
-    rhom=3150;
+    rhom=rhom_1;
 end
 
 

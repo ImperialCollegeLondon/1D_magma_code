@@ -23,7 +23,7 @@ if dt_way==0
 
     if dt_new == Min_dt && dt_old~= Min_dt
         disp('You have reached the minimum dt')
-       
+        
     end
 
     if dt_old ~= Min_dt

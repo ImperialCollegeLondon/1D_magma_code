@@ -15,10 +15,10 @@ CALCULATION_PRECISION,dummy,
 ,Precision,1e-4
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
-,Max_iter,30
+,Max_iter,100
 
 MeltSeg_Flag_gt_0_SEGREGATION,dummy,
-,MeltSeg_Flag,1
+,MeltSeg_Flag,0
 
 react_try_=1trynew_=0HHvers,dummy,
 ,react_try,1
@@ -274,10 +274,10 @@ Number_of_dt_Steps_between_min_max,dummy,
 ,N_dt, 10
 
 Value_of_Steps_to_increasedt,dummy, 
-,inc_N, 5
+,inc_N, 8
 
 Minimum_number_of_iterations_to_increasedt,dummy, 
-,Min_iter,10
+,Min_iter,20
 
 Initial_dt_in_years,dummy,
 ,dt0Y,1e-2
@@ -286,10 +286,10 @@ Maximum_dt_in_years,dummy,
 ,Max_dtY,2
 
 Minimum_dt_in_years,dummy,
-,Min_dtY,1e-7
+,Min_dtY,1e-3
 
 Courant_Number,dummy,
-,Courant, 0.45
+,Courant, 0.5
 
 End_time_of_model_in_years,dummy,
 ,End_timeY,500e3

@@ -252,8 +252,9 @@ else
 end
 
 %%
-Cphi_ratio=1;
-phi_ratio = ones(2*N,1);
+
+%% 
+
 while Time<End_time
     %% CAB - INTRUDE SILLS 
         if SillCount<SillNo 
@@ -513,9 +514,9 @@ while Time<End_time
         if fixed_dt==0 && iter<Min_iter
             [dt, ~] = dynamic_dt_master(1,iter,dt,Min_dt,Max_dt, N_dt, Courant, dz, u_all,N,inc_N);
 
-            if dt==Max_dt
-                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Maximum time step reached', Time/Year/1000, 'ka');
-            end
+            %if dt==Max_dt
+             %       fprintf(File_echo, '%6s %5.5f %6s \n', 'Maximum time step reached', Time/Year/1000, 'ka');
+            %end
         end
 
 
@@ -529,6 +530,20 @@ while Time<End_time
         C_all_old=C_all;
         Cphi_all_old=Cphi_all;
         Cb_old=Cb;
+
+               
+
+        %phi_prevdt = phi;
+       % u_prevdt = u_all;
+        %H_prevdt=H;
+       % T_prevdt=T;
+        %C_all_prevdt=C_all;
+        %Cphi_all_prevdt=Cphi_all;
+       % Cb_prevdt=Cb;
+        
+
+
+
         Gamma=zeros(2*length(cellz),1); % Melft
         Type_record=zeros(N,2);
         Type_fix=zeros(N,1);
@@ -571,6 +586,30 @@ while Time<End_time
         %%
         %CAB - iteration for the timestep starts
         while improve>Precision && iter<Max_iter
+            %% Estimate dt
+            if fixed_dt==0 && iter==Max_iter-1
+                [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant, dz, u_all, N,inc_N);
+
+                %if dt==Min_dt
+                   % fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
+                %end
+
+                phi = phi_old;
+                u_all=u_all_old;
+                H= H_old;
+                T=T_old;
+                C_all = C_all_old;
+                Cphi_all = Cphi_all_old;
+                Cb = Cb_old;
+               
+
+
+            end
+
+
+
+
+
             %%  Solving Momentum equation
             temp1=project_cell2node_master(nodez,dz,phi(1:N));     %project phi from cell center to nodes, fluid part;
             temp2=project_cell2node_master(nodez,dz,phi(N+1:2*N)); %project phi from cell center to nodes;
@@ -644,9 +683,11 @@ while Time<End_time
             if (HHJPet==1 || SSPD==1)
 
                 rhof=rhof_1*(1-C_all(1:N))+(C_all(1:N))*rhof_2;
+                rhom=rhom_1*(1-C_all(N+1:2*N))+(C_all(N+1:2*N))*rhom_2;
             elseif FourMPD==1
             %rhof changes depending on comp
                 rhof = C_all_dim.*0;
+                rhom = C_all_dim.*0; 
                 for i=1:1:length(C_all_dim)
                     if C_all_dim(i)>=crit_mg_si_melt
                         rhof(i) = rhof_2;
@@ -654,19 +695,22 @@ while Time<End_time
                         rhof(i) = rhof_m*C_all_dim(i)+rhof_c;
                     end
                 end
+
+
+                for i=1:N
+                    if phi(N+i)>0
+                        rhom(i)= rhool(i).*(ol(i)./(phi(N+i))) + rhoopx(i).*(opx(i)./(phi(N+i))) + rhocpx(i).*(cpx(i)./(phi(N+i)))  + rhofeld(i).*(feld(i)./(phi(N+i))); 
+                        %% 
+                    else
+                        rhom(i)=3150;
+                    end
+                end
                               
             end
-            if phi(N+1:2*N)>0
-                rhom=rhool.*(ol./(phi(N+1:2*N))) + rhoopx.*(opx./(phi(N+1:2*N))) + rhocpx.*(cpx./(phi(N+1:2*N)))  + rhofeld.*(feld./(phi(N+1:2*N)));  %rhom_1*(1-C_all(N+1:2*N))+(C_all(N+1:2*N))*rhom_2;
-            else
-                rhom=3150*ones(N,1);
-            end
-            
-            rhof_cellz = rhof;
-            rhom_cellz = rhom;
+
             
             rho_b=rhof.*phi(1:N)+rhom.*phi(N+1:2*N);  % Bulk density
-            
+           
             
             rhof=project_cell2node_master(nodez,dz,rhof);
             rhom=project_cell2node_master(nodez,dz,rhom);
@@ -685,15 +729,7 @@ while Time<End_time
     %                 u_all=u_all*0;
                 %     u_all(1:N)=movmean(u_all(1:N),30);
                 %     u_all(N+1:2*N)=movmean(u_all(N+1:2*N),5);
-            %% Estimate dt
-            if fixed_dt==0 && iter==Max_iter-1
-                [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant, dz, u_all, N,inc_N);
-
-                if dt==Min_dt
-                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
-                end
-
-            end
+            
        %% Enthalpy and components transport
             H_nonlinear=H;
             u_bar=u_all(1:N+1).*phi_on_nodes(1:N+1)+u_all(N+2:2*N+2).*phi_on_nodes(N+2:2*N+2);
@@ -702,62 +738,71 @@ while Time<End_time
             
     %           H=H_old;
             % Solve for composition
-            Cb_nonlinear=Cphi_all;%Cb;
+            Cb_nonlinear=Cb;%Cphi_all(N+1:2*N)+Cphi_all(1:N);%Cb1;%Cphi_all;%Cb;
 
             Cphi_all=CV_composition_solve_source_master(C_all,phi,phi_old,Cphi_all_old, u_all,dz,dt,kc,BC_C_type, BC_C_value,C_transport_method,C_source);
             
-            
+            Cphi_dt_m = (Cphi_all(1:N) - Cphi_all_old(1:N));%./dt;
+            Cphi_dt_s = (Cphi_all(N+1:2*N) - Cphi_all_old(N+1:2*N));%./dt;
             
             % Update bulk composition
-            Cb1=Cphi_all(N+1:2*N)+Cphi_all(1:N);
-
-            liq_calcs = zeros(N,1);
-            sol_calcs = zeros(N,1);
-            for i=1:N
-                if phi(i)>0 
-                    liq_calcs(i) = Cphi_all(i)/phi(i);
-                else
-                    liq_calcs(i)=0;
-                end
-                if phi(i)<1 
-                   sol_calcs(i) = Cphi_all(N+i)/(1-phi(i));
-                else
-                    sol_calcs(i) = 0;
-                end
-
-            end
-
-
-            composition_iter=sum(Cb1.*Cphi_ratio);
-   
-            Mass_res_iter=composition_iter-OG_composition;
-
-            Cbi = Cb1.*Cphi_ratio;%Cphi_all(N+1:2*N).*phi_ratio(N+1:2*N)+Cphi_all(1:N).*phi_ratio(1:N);%Cb1.*Cphi_ratio;%(Cphi_all(1:N).*rhof_cellz./rho_b + Cphi_all(N+1:2*N).*rhom_cellz./rho_b);%.*Cphi_ratio;  Cb1.*Cphi_ratio;%
-            diff_phi = phi_wt(1:N) - phi(1:N);
-            mask = diff_phi~=0;
-
-            weights = diff_phi(mask);
-            weights_sum = sum(weights);
-            error_vector = zeros(size(diff_phi));
-            error_vector(mask) = Mass_res_iter*(weights/weights_sum);
+            Cb = Cb_old + Cphi_dt_m + Cphi_dt_s;
+            %Cb=Cphi_all(N+1:2*N)+Cphi_all(1:N);
             
-            %num_Gt_0 = sum((phi_wt(1:N)-phi(1:N))~=0);
-            %nodes = (phi_wt(1:N)-phi(1:N))~=0
-            %weights = 
-            %num_sum_gt_0 = sum(num_Gt_0);
-            %error_per_node = Mass_res_iter/num_Gt_0;
-            %error_per_node = zeros(size(Cbi));
-            %error_per_node((phi_wt(1:N)-phi(1:N))~=0) = Mass_res_iter*(num_Gt_0/num_sum_gt_0);
+            
+            %% METHOD ONE
+            %cll = zeros(N,1);
+            %css = zeros(N,1);
+            %for i=1:N
+            %    if phi(i)>0
+            %        cll(i) = Cphi_all(i)/phi(i);
+            %    else
+            %        cll(i) = 0;
+            %    end
 
-            Cb = Cbi - error_vector;
+             %   if phi(i)<1
+             %       css(i) = Cphi_all(N+i)/(1-phi(i));
+             %   else
+             %       css(i) = 0;
+             %   end
 
-            %for i = 1:N
-             %   if phi_wt(i)>0
-              %      Cb(i) = Cbi(i) - error_per_node;
-              %  else
-              %      Cb(i) = Cbi(i);
-              %  end
+              % Cb(i) = cll(i)*phi_wt(i) + css(i)*(1-phi_wt(i));
             %end
+
+            %% METHOD TWO
+
+            %Cb = (rhom_cellz.*Cphi_all(N+1:2*N) + rhof_cellz.*Cphi_all(1:N))./rho_b;
+
+
+
+
+            %% METHOD THREE
+            %composition_iter=sum(Cb1.*Cphi_ratio);
+       
+            %Mass_res_iter=composition_iter-OG_composition;
+
+
+            %Cbi = Cb1.*Cphi_ratio;
+             
+            %diff_phi = phi_wt(1:N) - phi(1:N);
+            %mask = diff_phi~=0;
+
+            %weights = diff_phi(mask);
+            %weights_sum = sum(weights);
+            %error_vector = zeros(size(diff_phi));
+            %error_vector(mask) = Mass_res_iter*(weights/weights_sum);
+            %Cb = Cb1;%i;% - error_vector;
+            
+
+                
+   
+           
+            %% 
+            %% 
+                %disp([Mass_res_iter, sum(error_vector)])
+           % end
+
+        
             %% 
            
 
@@ -860,11 +905,11 @@ while Time<End_time
             
             Cphi_all_nonlinear(:)=Cphi_all(:);
             Cphi_all_wt=[C_all(1:N).*phi_wt(1:N); C_all(N+1:2*N).*phi_wt(N+1:2*N)];
-            Cb=Cphi_all_wt(N+1:2*N)+Cphi_all_wt(1:N);
+            %Cb=Cphi_all_wt(N+1:2*N)+Cphi_all_wt(1:N);
 
             if FourMPD==1
                 for i=1:N
-                    [ol_wt(i),opx_wt(i),cpx_wt(i),feld_wt(i),ol_mg(i),px_mg(i),opx_mg(i),cpx_mg(i),feld_mg(i),ol_mn(i),sol_mn(i)] = A_4_mineral_proportions_v2_master(...
+                    [ol_wt(i),opx_wt(i),cpx_wt(i),feld_wt(i),ol_mg(i),px_mg(i),opx_mg(i),cpx_mg(i),feld_mg(i),ol_mn(i),sol_mn(i)] = A_4_mineral_proportions_v3_master(...
                                         ol_wt(i),opx_wt(i),cpx_wt(i), feld_wt(i), ...
                                         T(i),phi_wt(i),phi_wt_old(i),Cb(i),C_all(N+i),C_all(i),crit_T1,crit_T2,crit_cb1,crit_cb2,crit_cb3,crit_cb4,crit_cb5,...
                                         s1m,s1c,s3m,s3c,s4m,s4c,s6m,s6c,s7m,s7c,s8m,s8c,s11m,s11c, ...
@@ -882,8 +927,8 @@ while Time<End_time
                                         max_mgo, min_mgo);
 
                     [phi(i),ol(i),opx(i),cpx(i),feld(i), rhof(i), rhom(i), rhool(i), rhoopx(i), rhocpx(i), rhofeld(i)] = weightfrac_to_volfrac(T(i),phi_wt(i),ol_wt(i),opx_wt(i),cpx_wt(i), feld_wt(i),C_all(i), ol_mg(i), opx_mg(i), cpx_mg(i),...
-                        min_mgo, max_mgo, Ts(i),rhof_m, rhof_c, crit_mg_si_melt, rhof_2);%,rhool_m,rhool_c,...
-                         %rhoopx_m, rhoopx_c, rhocpx_m, rhocpx_c, rhofeld_m, rhofeld_c);
+                        min_mgo, max_mgo, Ts(i),rhof_m, rhof_c, crit_mg_si_melt, rhof_2,rhool_m,rhool_c,...
+                         rhoopx_m, rhoopx_c, rhocpx_m, rhocpx_c, rhofeld_m, rhofeld_c,rhom_1);
                     
                 end
             end
@@ -894,16 +939,16 @@ while Time<End_time
             Cphi_all=[C_all(1:N).*phi(1:N); C_all(N+1:2*N).*phi(N+1:2*N)];
 
             Cphi_ratio = (Cphi_all_wt(1:N)+Cphi_all_wt(N+1:2*N))./(Cphi_all(1:N)+Cphi_all(N+1:2*N));
+            %Cb=Cphi_all(N+1:2*N)+Cphi_all(1:N);
 
-            phi_ratio = phi_wt./phi;
-            phi_ratio(phi==0)=1;
 
           
             if res_type == 0
-                improve1=max(abs(Cphi_all-Cb_nonlinear));
+                improve1=max(abs(Cb-Cb_nonlinear));%*(max_mgo-min_mgo));
                 improve2=max(abs(H(1:N)-H_nonlinear(1:N)))/Lf;
-                improve=max(improve1,improve2);
-                disp([iter, improve,dt/Year])
+                %improve3=max(abs(phi(1:N)-phi_old_nonlinear(1:N)));
+                improve=max([improve1,improve2]);
+                disp([Time/Year,iter, improve1,improve2,dt/Year])
                 
             else
                 improve=max(abs(phi(1:N)-phi_old_nonlinear(1:N)));

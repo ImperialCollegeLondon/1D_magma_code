@@ -101,6 +101,18 @@ if FourMPD==1
     
     %Feldspar
     feld_wt = [feld_wt(1:Start_depthN_c); 0.*ones(SillNodez,1);feld_wt(Start_depthN_c+1:end)];
+
+     %Olivine
+    rhool = [rhool(1:Start_depthN_c); zeros(SillNodez,1);rhool(Start_depthN_c+1:end)];
+    
+    %Orthopyroxene
+    rhoopx = [rhoopx(1:Start_depthN_c); 0.*ones(SillNodez,1);rhoopx(Start_depthN_c+1:end)];
+    
+    %Clinopyroxene 
+    rhocpx = [rhocpx(1:Start_depthN_c); 0.*ones(SillNodez,1);rhocpx(Start_depthN_c+1:end)];
+    
+    %Feldspar
+    rhofeld = [rhofeld(1:Start_depthN_c); 0.*ones(SillNodez,1);rhofeld(Start_depthN_c+1:end)];
 end
 
 %% Contributions

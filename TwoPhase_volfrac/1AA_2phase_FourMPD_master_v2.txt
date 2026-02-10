@@ -1,0 +1,343 @@
+Var1,Var2,Var3
+Description_use_4_spaces,dummy,
+,Input_name,Input_No
+
+Phase_Diagram_Inputs_for_the_layered_intrusion_phase_diagram,dummy,
+
+******************MgO_SiO2************************************,dummy,
+MIN_SILICA,dummy,
+,min_sio2,48.3
+
+MAX_SILICA,dummy,
+,max_sio2,75.1
+
+MIN_MGO,dummy,
+,min_mgo,0.0591
+
+MAX_MGO,dummy, 
+,max_mgo,56.7173
+
+******************Densities************************************,dummy,
+Min_sio2_melt,dummy,
+,min_sio2_visc,52
+
+Max_sio2_melt_Rel_GRAD,dummy,
+,max_sio2_m, -5
+
+Min_sio2_melt_rel_c,dummy,
+,max_sio2_c,72
+
+Crit_mg_sio2_Rel_melt,dummy
+,crit_mg_si_melt,4
+
+LEAST_EVOLVED_FLUID_DENS,dummy,
+,rhof_2,2715
+
+MOST_EVOLVED_FLUID_DENS_RELATIONSHIP_GRAD,dummy, 
+,rhof_m, 128.75
+
+MOST_EVOLVED_FLUID_DENS_RELATIONSHIP_const,dummy,
+,rhof_c, 2200
+
+LEAST_EVOLVED_ROCK_DENS,dummy,
+,rhom_2,3150
+
+MOST_EVOLVED_ROCK_DENS,dummy,
+,rhom_1,3150
+
+DENSITY_OF_SILL,dummy,
+,DensSill,2566.507
+
+Ol_density_gradient,dummy,
+,rhool_m,-20.5
+
+Ol_density_constant,dummy,
+,rhool_c,4175
+
+Opx_density_gradient,dummy,
+,rhoopx_m,-21.4286
+
+Opx_density_constant,dummy,
+,rhoopx_c,3864.29
+
+cpx_density_gradient,dummy,
+,rhocpx_m,-12.5
+
+cpx_density_constant,dummy,
+,rhocpx_c,3562.5
+
+feld_density_gradient,dummy,
+,rhofeld_m,0.04819
+
+feld_density_constant,dummy,
+,rhofeld_c,2621.45
+
+
+******************Phase_Diagram************************************,dummy,
+
+*****************Critical_points*****************,dummy,
+,crit_T1, 1400
+
+,crit_cb1_dim, 8.31
+
+,crit_T2, 1215
+
+,crit_T3, 1073.17
+
+,crit_cb2_dim, 16.2972
+
+,crit_cb3_dim, 32.2772
+
+,crit_cb4_dim, 7
+
+,crit_cb5_dim, 2.05
+
+*****************liquidus*****************,dummy,
+,liq_k1,2000
+
+,liq_k2,1310
+
+,liq_k3,1100
+
+,liq_P1_T,1453.2
+
+,liq_P1_C_dim,18.88
+
+,liq_P2_T,1215
+
+,liq_P2_C_dim,8.5
+
+,liq_P3_T, 1073.17
+
+,liq_P3_C_dim,2.062
+
+,liq_P4_T, 800
+
+,liq_P4_C_dim,0.0591
+
+*****************Point_A*****************,dummy,
+,AC_dim,49.7
+
+,AT,1453.2
+
+*****************Point_B*****************,dummy,
+,BC_dim,48.4
+
+,BT,1400
+
+*****************Point_C*****************,dummy,
+,CC_dim,34.25
+
+,CT,1400
+
+*****************Point_D*****************,dummy,
+,DC_dim,29.6
+
+,DT,1215
+
+*****************Point_E*****************,dummy,
+,EC_dim,28.25
+
+,ET,1087
+
+*****************Point_F*****************,dummy,
+,FC_dim,12.32
+
+,FT,852.1
+
+*****************Point_G*****************,dummy,
+,GC_dim,25.34
+
+,GT,1215
+
+*****************Point_H*****************,dummy,
+,HC_dim,23.47
+
+,HT,1138.8
+
+*****************Point_I*****************,dummy,
+,IC_dim,1.96
+
+,IT,965.9
+
+*****************Point_J*****************,dummy,
+,JC_dim,11.01
+
+,JT,1199.4
+
+*****************Point_K*****************,dummy,
+,KC_dim,6.799
+
+,KT,1068.2
+
+*****************Point_L*****************,dummy,
+,LC_dim,15.52
+
+,LT,1103.1
+
+*****************Point_M*****************,dummy,
+,MC_dim,14.12
+
+,MT,879
+
+*****************Point_N*****************,dummy,
+,NC_dim,34.55
+
+,NT,1085
+
+*****************Point_O*****************,dummy,
+,OC_dim,1.188
+
+,OT,978.6
+
+*****************olpx_line_2_relationship*****************,dummy,
+,px_k, 1230
+
+,olpx_C_dim, 16.933
+
+,mk_dim, 28
+
+,ck_dim, 948.4
+
+,olpxm_dim, -102.586730988016
+
+,olpxc_dim, 3057.40696551125
+
+*****************solid_line_5_relationship*****************,dummy,
+,sol_k2, 1235
+
+,s5T, 900
+
+*****************low_MgO_solid_relationship**************,dummy, 
+,lowest_end_T, 800
+
+,lowest_k,1100
+
+*****************opx_cpx_relationship_DIM*****************,dummy,
+,copx_C_m_dim, 0.581548
+
+,copx_C_c_dim, 13.75774
+
+,copx_T_m_dim, 10.71318
+
+,copx_T_c_dim, 905.621
+
+****************ol_i_grad_and_constant********************,dummy,
+,sol_mni_m,-2.31507 
+
+,sol_mni_c,4.630142
+
+*****************ol_mn_relationship_DIM*******************,dummy, 
+,ol_i_m0,-0.86426
+
+,ol_i_c0,16.9372
+
+,ol_i_m1,-12.7168
+
+,ol_i_c1,217.637
+
+,ol_i_m2, 0.78203
+
+,ol_i_c2,3.00494
+
+,ol_i_m3, -0.904
+
+,ol_i_c3, 5.3826
+
+,ol_e_m1, -4.182
+
+,ol_e_c1, 86.6456
+
+,ol_e_m2, 0.31371
+
+,ol_e_c2, 15.1638
+
+,ol_e_m3, 1.97747
+
+,ol_e_c3, 1.85377
+
+,ol_e_m4, -2.05433
+
+,ol_e_c4,9.91737
+
+*******************ol_temp_relationship***************,dummy,
+,ol_T_high_m, 152.9385
+
+,ol_T_high_c, -1474.45
+
+,ol_T_low_m, -8.1437
+
+,ol_T_low_c, 1086.755
+
+,ol_T_lowest_m,11.45556
+
+,ol_T_lowest_c, 1029.089
+
+,crit_sol_mn_cb_dim, 4
+
+,ol_mn_bridge, 1052
+
+*******************sol_mn_relationship_dim**************,dummy,
+,sol_mn_k_hCb,2000
+
+,sol_mn_k_lCb, 1060
+
+,mn_k_m, 66.6667
+
+,mn_k_c,966.6667
+
+,a_mn,0.0085
+
+,b_mn,-0.2295
+
+,c_mn, 1.6
+
+******************ol_mg_relationship_dim****************,dummy, 
+,ol_T_crit_cb2, 1050
+
+,ol_i_m_dim,1.219
+
+,ol_i_c_dim,7.8319
+
+,ol_mg_m_dim,0.0242
+
+*****************opx cpx relationship line 1 DIM*****************, dummy,
+,cb_low_high_dim, 10
+
+,copx_cb_m_l1_h_dim, 0.6563
+
+,copx_cb_c_l1_h_dim, 12.1206
+
+,copx_cb_m_l1_l_dim, 1.5556
+
+,copx_cb_c_l1_l_dim, 3.12759
+
+,copx_T_m_l1_h_dim, 12.4920635
+
+,copx_T_c_l1_h_dim, 910
+
+,copx_T_m_l1_l_dim, 28.87010582
+
+,copx_T_c_l1_l_dim, 746.2195767
+
+*****************opx cpx relationship line 2 DIM*****************, dummy,
+,copx_cb_m_l2_h_dim, 0.2888889
+
+,copx_cb_c_l2_h_dim, 10.13
+
+,copx_cb_m_l2_l_dim, 0.851481
+
+,copx_cb_c_l2_l_dim, 4.504074
+
+,copx_T_m_l2_h_dim, 12.5873
+
+,copx_T_c_l2_h_dim, 867
+
+,copx_T_m_l2_l_dim, 23.32884
+
+,copx_T_c_l2_l_dim, 759.5847
+
+*****************px_mg_relationship_DIM*****************, dummy,
+,px_cb_m_dim, 0.05677
+
+,px_cb_c_dim, -39.696
