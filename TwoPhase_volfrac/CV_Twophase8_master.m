@@ -241,6 +241,8 @@ else
     % Update sillcount
     SillCount=1;
 
+    improve=1e-4;
+
 
 
 %%
@@ -254,6 +256,7 @@ end
 %%
 
 %% 
+
 
 while Time<End_time
     %% CAB - INTRUDE SILLS 
@@ -511,12 +514,13 @@ while Time<End_time
 
 %%
         % increase timestep if needed
-        if fixed_dt==0 && iter<Min_iter
+        %disp([improve/Precision])
+        if fixed_dt==0 && iter<Min_iter && improve/Precision<dt_resid
             [dt, ~] = dynamic_dt_master(1,iter,dt,Min_dt,Max_dt, N_dt, Courant, dz, u_all,N,inc_N);
 
-            %if dt==Max_dt
-             %       fprintf(File_echo, '%6s %5.5f %6s \n', 'Maximum time step reached', Time/Year/1000, 'ka');
-            %end
+            if dt==Max_dt
+                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Maximum time step reached', Time/Year/1000, 'ka');
+            end
         end
 
 
@@ -530,6 +534,15 @@ while Time<End_time
         C_all_old=C_all;
         Cphi_all_old=Cphi_all;
         Cb_old=Cb;
+
+        ol_old = ol;
+        opx_old = opx;
+        cpx_old = cpx;
+        feld_old = feld;
+        rhool_old = rhool;
+        rhoopx_old = rhoopx;
+        rhocpx_old = rhocpx;
+        rhofeld_old = rhofeld;
 
                
 
@@ -590,9 +603,9 @@ while Time<End_time
             if fixed_dt==0 && iter==Max_iter-1
                 [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant, dz, u_all, N,inc_N);
 
-                %if dt==Min_dt
-                   % fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
-                %end
+                if dt==Min_dt
+                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
+                end
 
                 phi = phi_old;
                 u_all=u_all_old;
@@ -601,6 +614,14 @@ while Time<End_time
                 C_all = C_all_old;
                 Cphi_all = Cphi_all_old;
                 Cb = Cb_old;
+                ol = ol_old;
+                opx = opx_old;
+                cpx = cpx_old;
+                feld = feld_old;
+                rhool = rhool_old;
+                rhoopx = rhoopx_old;
+                rhocpx = rhocpx_old;
+                rhofeld = rhofeld_old;
                
 
 
@@ -686,9 +707,10 @@ while Time<End_time
                 rhom=rhom_1*(1-C_all(N+1:2*N))+(C_all(N+1:2*N))*rhom_2;
             elseif FourMPD==1
             %rhof changes depending on comp
-                rhof = C_all_dim.*0;
-                rhom = C_all_dim.*0; 
+                rhof =C_all_dim.*0;
+                rhom =C_all_dim.*0; 
                 for i=1:1:length(C_all_dim)
+                    
                     if C_all_dim(i)>=crit_mg_si_melt
                         rhof(i) = rhof_2;
                     else
@@ -698,14 +720,21 @@ while Time<End_time
 
 
                 for i=1:N
-                    if phi(N+i)>0
+                    if (ol(i)+opx(i)+cpx(i)+feld(i))>0 %&& phi(N+i)>0
+                        if phi(N+i)==0
+                            mmm=i;
+                        end
                         rhom(i)= rhool(i).*(ol(i)./(phi(N+i))) + rhoopx(i).*(opx(i)./(phi(N+i))) + rhocpx(i).*(cpx(i)./(phi(N+i)))  + rhofeld(i).*(feld(i)./(phi(N+i))); 
-                        %% 
                     else
                         rhom(i)=3150;
                     end
                 end
                               
+            end
+
+            if SillCount==2
+                %% 
+                hi=1;
             end
 
             
@@ -948,7 +977,7 @@ while Time<End_time
                 improve2=max(abs(H(1:N)-H_nonlinear(1:N)))/Lf;
                 %improve3=max(abs(phi(1:N)-phi_old_nonlinear(1:N)));
                 improve=max([improve1,improve2]);
-                disp([Time/Year,iter, improve1,improve2,dt/Year])
+                %disp([Time/Year,iter, improve1,improve2,dt/Year])
                 
             else
                 improve=max(abs(phi(1:N)-phi_old_nonlinear(1:N)));

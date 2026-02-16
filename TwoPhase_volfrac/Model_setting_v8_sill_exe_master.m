@@ -9,7 +9,7 @@ clear;
 %execute='1AA_4M_2_phase_HS_mc_input_update_2.txt';
 
 
-Inputs= readtable('1AA_2phase_master_input_v6.txt');
+Inputs= readtable('1AA_2phase_master_input_v7.txt');
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -711,6 +711,8 @@ end
 uf=zeros(N+1,1);
 um=zeros(N+1,1);
 u_all=[uf;um];
+
+
 
 C_values=zeros(N,1);  % the coupling term coefficient
 kt=kt0*ones(N,1);

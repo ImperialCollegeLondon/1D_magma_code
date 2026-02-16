@@ -61,58 +61,58 @@ if FourMPD==1
     ol = [ol(1:Start_depthN_c); zeros(SillNodez,1);ol(Start_depthN_c+1:end)];
     
     %Orthopyroxene
-    opx = [opx(1:Start_depthN_c); 0.*ones(SillNodez,1);opx(Start_depthN_c+1:end)];
+    opx = [opx(1:Start_depthN_c); zeros(SillNodez,1);opx(Start_depthN_c+1:end)];
     
     %Clinopyroxene 
-    cpx = [cpx(1:Start_depthN_c); 0.*ones(SillNodez,1);cpx(Start_depthN_c+1:end)];
+    cpx = [cpx(1:Start_depthN_c); zeros(SillNodez,1);cpx(Start_depthN_c+1:end)];
     
     %Feldspar
-    feld = [feld(1:Start_depthN_c); 0.*ones(SillNodez,1);feld(Start_depthN_c+1:end)];
+    feld = [feld(1:Start_depthN_c); zeros(SillNodez,1);feld(Start_depthN_c+1:end)];
     
     %Olivine mg
     ol_mg = [ol_mg(1:Start_depthN_c); zeros(SillNodez,1);ol_mg(Start_depthN_c+1:end)];
     
     %Pyroxene  mg 
-    px_mg = [px_mg(1:Start_depthN_c); 0.*ones(SillNodez,1);px_mg(Start_depthN_c+1:end)];
+    px_mg = [px_mg(1:Start_depthN_c);zeros(SillNodez,1);px_mg(Start_depthN_c+1:end)];
     
     %Orthopyroxene mg
-    opx_mg = [opx_mg(1:Start_depthN_c); 0.*ones(SillNodez,1);opx_mg(Start_depthN_c+1:end)];
+    opx_mg = [opx_mg(1:Start_depthN_c);zeros(SillNodez,1);opx_mg(Start_depthN_c+1:end)];
     
     %Clinopyroxene  mg 
-    cpx_mg = [cpx_mg(1:Start_depthN_c); 0.*ones(SillNodez,1);cpx_mg(Start_depthN_c+1:end)];
+    cpx_mg = [cpx_mg(1:Start_depthN_c); zeros(SillNodez,1);cpx_mg(Start_depthN_c+1:end)];
     
     %Feldspar mg 
-    feld_mg = [feld_mg(1:Start_depthN_c); 0.*ones(SillNodez,1);feld_mg(Start_depthN_c+1:end)];
+    feld_mg = [feld_mg(1:Start_depthN_c); zeros(SillNodez,1);feld_mg(Start_depthN_c+1:end)];
     
     %Solid Mn
-    sol_mn = [sol_mn(1:Start_depthN_c); 0.*ones(SillNodez,1);sol_mn(Start_depthN_c+1:end)];
+    sol_mn = [sol_mn(1:Start_depthN_c); zeros(SillNodez,1);sol_mn(Start_depthN_c+1:end)];
     
     %Olivine Mn
-    ol_mn = [ol_mn(1:Start_depthN_c); 0.*ones(SillNodez,1);ol_mn(Start_depthN_c+1:end)];
+    ol_mn = [ol_mn(1:Start_depthN_c); zeros(SillNodez,1);ol_mn(Start_depthN_c+1:end)];
 
     %Olivine
     ol_wt = [ol_wt(1:Start_depthN_c); zeros(SillNodez,1);ol_wt(Start_depthN_c+1:end)];
     
     %Orthopyroxene
-    opx_wt = [opx_wt(1:Start_depthN_c); 0.*ones(SillNodez,1);opx_wt(Start_depthN_c+1:end)];
+    opx_wt = [opx_wt(1:Start_depthN_c); zeros(SillNodez,1);opx_wt(Start_depthN_c+1:end)];
     
     %Clinopyroxene 
-    cpx_wt = [cpx_wt(1:Start_depthN_c); 0.*ones(SillNodez,1);cpx_wt(Start_depthN_c+1:end)];
+    cpx_wt = [cpx_wt(1:Start_depthN_c); zeros(SillNodez,1);cpx_wt(Start_depthN_c+1:end)];
     
     %Feldspar
-    feld_wt = [feld_wt(1:Start_depthN_c); 0.*ones(SillNodez,1);feld_wt(Start_depthN_c+1:end)];
+    feld_wt = [feld_wt(1:Start_depthN_c); zeros(SillNodez,1);feld_wt(Start_depthN_c+1:end)];
 
      %Olivine
     rhool = [rhool(1:Start_depthN_c); zeros(SillNodez,1);rhool(Start_depthN_c+1:end)];
     
     %Orthopyroxene
-    rhoopx = [rhoopx(1:Start_depthN_c); 0.*ones(SillNodez,1);rhoopx(Start_depthN_c+1:end)];
+    rhoopx = [rhoopx(1:Start_depthN_c);zeros(SillNodez,1);rhoopx(Start_depthN_c+1:end)];
     
     %Clinopyroxene 
-    rhocpx = [rhocpx(1:Start_depthN_c); 0.*ones(SillNodez,1);rhocpx(Start_depthN_c+1:end)];
+    rhocpx = [rhocpx(1:Start_depthN_c);zeros(SillNodez,1);rhocpx(Start_depthN_c+1:end)];
     
     %Feldspar
-    rhofeld = [rhofeld(1:Start_depthN_c); 0.*ones(SillNodez,1);rhofeld(Start_depthN_c+1:end)];
+    rhofeld = [rhofeld(1:Start_depthN_c); zeros(SillNodez,1);rhofeld(Start_depthN_c+1:end)];
 end
 
 %% Contributions
