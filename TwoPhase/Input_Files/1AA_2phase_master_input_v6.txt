@@ -15,13 +15,13 @@ CALCULATION_PRECISION,dummy,
 ,Precision,1e-4
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
-,Max_iter,200
+,Max_iter,100
 
 MeltSeg_Flag_gt_0_SEGREGATION,dummy,
 ,MeltSeg_Flag,1
 
 react_try_=1trynew_=0HHvers,dummy,
-,react_try,0
+,react_try,1
 
 GRAVITY,dummy,
 ,g,9.81
@@ -122,7 +122,7 @@ N_vis,dummy,
 ,N_vis,1e5
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
-,MU_type,0
+,MU_type,1
 
 Mush_bulk_visc_min_FLAG_No=0_Yes=1,dummy,
 ,mu_min_FLAG,0
@@ -138,14 +138,14 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,1e15
+,Ref_Bulk_MN,1e14
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,
 ,B_vis,2
 
 Phi_star,dummy,
-,phistar,0.78
+,phistar,0.5
 
 gamma,dummy,
 ,gamma,12.5
@@ -157,7 +157,7 @@ epsilon,dummy,
 ,epsilon,1e-3
 
 Reference_shear_visc,dummy,
-,ref_shear,1e18
+,ref_shear,1e15
 
 Bulk_To_Shear_ratio,dummy,
 ,BS_ratio,0.6
@@ -226,10 +226,10 @@ Random_injection_length_above_and_low_metres,dummy,
 ,Rand_inject,200
 
 Length_of_sill_metres,dummy,
-,Sill_length,600
+,Sill_length,500
 
 Fine_meshed_region_ratio_compared_to_sillregion,dummy,
-,fine_ratio,8.33
+,fine_ratio,10
 
 Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
@@ -274,16 +274,16 @@ Number_of_dt_Steps_between_min_max,dummy,
 ,N_dt, 5
 
 Value_of_Steps_to_increasedt,dummy, 
-,inc_N, 2
+,inc_N, 3
 
 Minimum_number_of_iterations_to_increasedt,dummy, 
-,Min_iter,25
+,Min_iter,50
 
 Initial_dt_in_years,dummy,
 ,dt0Y,1e-2
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,1
+,Max_dtY,2
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5
