@@ -253,7 +253,9 @@ end
 
 %%
 if Use_Newton==1
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(Non_dimention);
+    % Generate the Jacobians for Newton's method or load from the exisitng 
+    % [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(Non_dimention);
+    load('Jacobians_for_Newton.mat');
 end
 
 

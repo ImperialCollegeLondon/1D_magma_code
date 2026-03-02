@@ -107,4 +107,5 @@ Jac_solidus=jacobian(solidus, Variables);
 Jac_solidus=matlabFunction(Jac_solidus,'Vars',[Variables n Ts Tl]);
 rhs_solidus=matlabFunction(solidus,'Vars',[Variables n Ts Tl ]);
 
+save('Jacobians_for_Newton.mat', 'Jac_mom', 'rhs_mom', 'Jac_con', 'rhs_con', 'Jac_ct', 'rhs_ct', 'Jac_ent', 'rhs_ent', 'Jac_solidus', 'rhs_solidus', 'Jac_liquidus', 'rhs_liquidus');
 end
