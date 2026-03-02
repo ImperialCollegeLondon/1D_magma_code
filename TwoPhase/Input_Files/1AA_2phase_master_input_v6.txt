@@ -2,7 +2,7 @@ Var1,Var2,Var3
 Description_use_4_spaces,dummy,
 ,Input_name,Input_No
 
-Use_parallel=1,dummy,
+Use_parallel,dummy,
 ,Use_parallel,0
 
 No_cores_in_parallel,dummy,
@@ -11,8 +11,11 @@ No_cores_in_parallel,dummy,
 Res_type_cb+enth=0_phi=1,dummy,
 ,res_type,0
 
+Use_Newton, dummy,
+,Use_Newton,1
+
 CALCULATION_PRECISION,dummy,
-,Precision,1e-4
+,Precision,1e-8
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
 ,Max_iter,200
@@ -28,13 +31,13 @@ GRAVITY,dummy,
 
 *****************Phase_Diagram_Parameters*****************,dummy,
 Hu_et_al_2022_Phase_Diagram_=1,dummy,
-,HHJPet,0
+,HHJPet,1
 
 Solid_Solution_Solidus_Phase_Diagram_=1,dummy,
 ,SSPD,0
 
 Layered_intrusion_Phase_Diagram_=1,dummy, 
-,FourMPD,1
+,FourMPD,0
 
 PHASE_DIAGRAM_TOLERANCE,dummy,
 ,Precision_PD,1e-10
@@ -102,7 +105,7 @@ RG_Perm_C_value_B,dummy,
 ,C_value_B_RG,0
 
 C_type_PorousSuspension=1_Porous=0,dummy,
-,C_type,1
+,C_type,0
 
 Perm_min_FLAG_No=0_Yes=1,dummy, 
 ,perm_min_FLAG,0
@@ -119,7 +122,7 @@ Precision_For_Visc,dummy,
 ,Precision_BV,1e-2
 
 N_vis,dummy,
-,N_vis,1e5
+,N_vis,1e4
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
 ,MU_type,0
@@ -138,7 +141,7 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,1e15
+,Ref_Bulk_MN,1e13
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,
@@ -226,7 +229,7 @@ Random_injection_length_above_and_low_metres,dummy,
 ,Rand_inject,200
 
 Length_of_sill_metres,dummy,
-,Sill_length,600
+,Sill_length,100
 
 Fine_meshed_region_ratio_compared_to_sillregion,dummy,
 ,fine_ratio,8.33
@@ -241,7 +244,7 @@ Total_number_of_sills_intruded,dummy,
 ,Tot_SillN,1
 
 Composition_of_sills_Sio2,dummy,
-,Comp_sill,18.9
+,Comp_sill,50
 
 MeltFraction_of_sills,dummy,
 ,MeltFracSill,1
@@ -258,10 +261,10 @@ Geotherm_of_crust,dummy,
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
-,min_N,5000
+,min_N,3000
 
 maximum_number_of_cells,dummy,
-,max_N,5000
+,max_N,3000
 
 *****************Time_steps*****************,dummy,
 Starting_Time,dummy,
@@ -280,7 +283,7 @@ Minimum_number_of_iterations_to_increasedt,dummy,
 ,Min_iter,25
 
 Initial_dt_in_years,dummy,
-,dt0Y,1e-2
+,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
 ,Max_dtY,1
@@ -295,16 +298,16 @@ End_time_of_model_in_years,dummy,
 ,End_timeY,500e3
 
 Output_Rate_of_data_plots_in_years,dummy,
-,Out_time,2
+,Out_time,10
 
 Y_limits_crust_bottom,dummy,
-,crust_bottom,-11
+,crust_bottom,-6.65
 
 Y_limits_crust_top,dummy,
-,crust_top,-9
+,crust_top,-6.45
 
 With_monitor_if1_plotsOutputWithCode,dummy,
-,With_monitor,0
+,With_monitor,1
 
 Update_frame_howManyStepsBeforeMonitorIsRefreshed,dummy,
 ,Update_frame,1

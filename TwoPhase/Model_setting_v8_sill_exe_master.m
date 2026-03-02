@@ -9,7 +9,7 @@ clear;
 %execute='1AA_4M_2_phase_HS_mc_input_update_2.txt';
 
 
-Inputs= readtable('1AA_2phase_master_input_v6.txt');
+Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -18,7 +18,7 @@ for i=1:r
 end
 
 if HHJPet==1
-    Inputs= readtable('1AA_2phase_HHJPet_master.txt');
+    Inputs= readtable('Input_Files/1AA_2phase_HHJPet_master.txt');
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -61,7 +61,7 @@ if HHJPet==1
     n_PD=0;
 
 elseif SSPD==1
-    Inputs= readtable('1AA_2phase_SSPD_master.txt');
+    Inputs= readtable('../../Input_Files/1AA_2phase_SSPD_master.txt');
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -103,7 +103,7 @@ elseif SSPD==1
 
 
 elseif FourMPD==1
-    Inputs= readtable('1AA_2phase_FourMPD_master.txt');
+    Inputs= readtable('Input_Files/1AA_2phase_FourMPD_master.txt');
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -459,7 +459,11 @@ legend({'Shear','Bulk','Sum'})
 saveas(f3,'Shear_bulk_viscosity','svg')
 
 %%
-scaling_factor=sqrt(scaling_factorB^scaling_factorEx);%10^12.5);  %to make the velocity LHS matrix have better conditioning number
+if Use_Newton
+    scaling_factor=1;
+else
+    scaling_factor=sqrt(scaling_factorB^scaling_factorEx);%10^12.5);  %to make the velocity LHS matrix have better conditioning number
+end
 g=g/scaling_factor;
 
 
@@ -944,3 +948,18 @@ if With_monitor==1
 end
 
 
+if Use_Newton==1
+    mum_0=Ref_Bulk_MN;
+    c0=C_value_A/grain_size^2;
+    
+    % A temperal old definition of density model, need to be updated into
+    % the new format
+    rhof_2=2800; 
+    rhof_1=2350;     
+    rhom_2=3000;%Density solid, least evolved
+    rhom_1=2600; %Density solid, most evolved
+    
+    Non_dimention=0;
+    Ts0=A1+B1+C1;
+    Tl0=C1;
+end

@@ -20,7 +20,7 @@ clc
 % CAB - calling the m-file which contains the settings for the run.
 Model_setting_v8_sill_exe_master; 
 
-Inputs= readtable('1AA_2Phase_code_RESTART.txt');
+Inputs= readtable('Input_Files/1AA_2Phase_code_RESTART.txt');
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -252,6 +252,10 @@ else
 end
 
 %%
+if Use_Newton==1
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(Non_dimention);
+end
+
 
 while Time<End_time
     %% CAB - INTRUDE SILLS 
@@ -487,12 +491,6 @@ while Time<End_time
                                     cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
                             end
                         end
-
-
-
-
-
-
                     end
                         
                         
@@ -505,11 +503,10 @@ while Time<End_time
                 end
             end
         end
-% end 
-
 %%
-        % increase timestep if needed
-        if fixed_dt==0 && iter<Min_iter
+
+        % increase timestep if needed, not for Newton's method
+        if (fixed_dt==0 && iter<Min_iter) && ~Use_Newton
             [dt, ~] = dynamic_dt_master(1,iter,dt,Min_dt,Max_dt, N_dt, Courant, dz, u_all,N,inc_N);
 
             if dt==Max_dt
@@ -547,6 +544,9 @@ while Time<End_time
         %end
        
 %%
+    if Use_Newton==1
+        Two_phase_Newton;
+    else
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');
         ind2=find(dz<max(dz)*0.9,1,'last');
@@ -671,13 +671,6 @@ while Time<End_time
             if MeltSeg_Flag>0
                 [u_all, Portion]=Velocity_solve_portion_with_source_master(phi_on_nodes,u_all_old,Nonzero,ZerosU,ZerosU_values, C_values,mu_f_dynamics,mu_m_dynamics,0.5,rhof,rhom, Precision,length(nodez),dz,g,U_source_int);
             end
-
-    %                  u_all([1:find(nodez<Sill(1),1,'last'),find(nodez>Sill(2),1,'first'):end])=0;
-    %                  u_all([1:find(nodez<Sill(1),1,'last'),find(nodez>Sill(2),1,'first'):end]+N+1)=0;
-                
-    %                 u_all=u_all*0;
-                %     u_all(1:N)=movmean(u_all(1:N),30);
-                %     u_all(N+1:2*N)=movmean(u_all(N+1:2*N),5);
             %% Estimate dt
             if fixed_dt==0 && iter==Max_iter-1
                 [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant, dz, u_all, N,inc_N);
@@ -700,12 +693,7 @@ while Time<End_time
             Cphi_all=CV_composition_solve_source_master(C_all,phi,phi_old,Cphi_all_old, u_all,dz,dt,kc,BC_C_type, BC_C_value,C_transport_method,C_source);
             % Update bulk composition
             Cb=Cphi_all(N+1:2*N)+Cphi_all(1:N);
-            if counter==80
-                aaa=1;
-            end
       %% Update melt fraction and composition due to phase_diagram
-
-
 
             phi_old_nonlinear=phi;
 
@@ -786,7 +774,6 @@ while Time<End_time
 
                    C_all(N+1:2*N) = C_all_dummy;
                 end
-
             end
 
             
@@ -813,8 +800,9 @@ while Time<End_time
               %  hold on
             %end
 %             Check_convergence; % Enable to show the convergence on the Cm plot
-            iter=iter+1;
+            iter=iter+1;            
         end
+    end
 
         %%%%%% HH added for calculating the contribution of mel fraction/Cb
         if To_cal_mc==1&& iter>0
@@ -1219,7 +1207,7 @@ if Record_data==1
                         T(i); Ts(i); Tl(i); Cb(i);  (Cb(i))*(SiO2_range(2)-SiO2_range(1))+SiO2_range(1); (C_all(N+i))* ...
                         (SiO2_range(2)-SiO2_range(1))+SiO2_range(1); (C_all(i))*(SiO2_range(2)-SiO2_range(1))+SiO2_range(1); rho_b(i); ...
                         ACon_T(i); ACon_M(i); ACon_C(i); Con_T(i); Con_M(i); Con_C(i); ...
-                        CD_M(i)*(Sio2_range(2)-Sio2_range(1));CD_R(i)*(Sio2_range(2)-Sio2_range(1));CD_Ms(i)*(Sio2_range(2)-Sio2_range(1));CD_Rs(i)*(Sio2_range(2)-Sio2_range(1))]);
+                        CD_M(i)*(SiO2_range(2)-SiO2_range(1));CD_R(i)*(SiO2_range(2)-SiO2_range(1));CD_Ms(i)*(SiO2_range(2)-SiO2_range(1));CD_Rs(i)*(SiO2_range(2)-SiO2_range(1))]);
                 end
             else
     
