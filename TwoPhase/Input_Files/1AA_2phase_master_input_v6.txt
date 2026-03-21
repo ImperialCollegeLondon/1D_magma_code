@@ -286,7 +286,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,1
+,Max_dtY,20
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5

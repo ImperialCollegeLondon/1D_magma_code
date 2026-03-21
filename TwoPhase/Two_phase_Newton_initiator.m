@@ -1,5 +1,3 @@
-
-
 function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(Non_dimention)
 
 
@@ -58,7 +56,7 @@ rhs_ct= matlabFunction(trans_comp, 'Vars', [Variables dt dzi_1 OLD_com]);
 syms T0 T1 T2 dzi_2
 syms cp Lf kt
 syms OLD_ent
-trans_enthalpy=((cp*T1+Lf*phi1)-OLD_ent-Lf*((phi0+phi1)/2*ufi-(phi1+phi2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T2-T1)/(dzi_2+dzi_1)-(T1-T0)/(dzi_1+dzi_0))*dt)/550e3;
+trans_enthalpy=((cp*T1+Lf*phi1)-OLD_ent-Lf*((phi0+phi1)/2*ufi-(phi1+phi2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T2-T1)/(dzi_2+dzi_1)-(T1-T0)/(dzi_1+dzi_0))*dt)/Lf;
 Variables=[ufi ufi2 phi0 phi1 phi2 T0 T1 T2];
 Jac_ent=jacobian(trans_enthalpy, Variables);
 Jac_ent=matlabFunction(Jac_ent,'Vars',[Variables dzi_0 dzi_1 dzi_2 dt cp Lf kt OLD_ent]);
