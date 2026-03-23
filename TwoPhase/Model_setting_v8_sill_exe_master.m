@@ -10,6 +10,9 @@ clear;
 
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
+
+Has_volatile=0;
+
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -439,8 +442,7 @@ else
     mu_all=ref_all*ref_shear/ref_all(end);
     mu_m=ref_mu*ref_shear/ref_all(end);
     xi_m=ref_xi*ref_shear/ref_all(end);
-
-    %mu_all=mu_all(end:-1:1);
+    mu_all=mu_all(end:-1:1);
 end
 
 
@@ -948,18 +950,148 @@ if With_monitor==1
 end
 
 
+%% Generate look-up tables for Newton's method
+
 if Use_Newton==1
+    disp('Generating all the lookup tables for Newton''s method')
     mum_0=Ref_Bulk_MN;
-    c0=C_value_A/grain_size^2;
+    N_mus=N_vis;
+
+    % Solid viscosity are all ready in a lookup table as mu_all, just to create the coefficient
+    mus_coef_all = piecewiseFit(mu_all);
+
+
+    % Coupling term coefficient, as a function of phi, Cl and Cl2 (if there is volatile) 
+    N_C=100;
+    phi_range=linspace(0,1,N_C);
+    Cl_range=linspace(0,1,N_C);
+    %calculate the melt viscosity range
+    if (HHJPet==1||SSPD==1)
+        Ssio2_scaled = Cl_range;
+    elseif FourMPD==1
+        Ssio2_dim = 0*Cl_range;
+        % calculating melt SiO2 from melt MgO
+        %dim MgO
+        C_all_dim = Cl_range*(MgO_range(2)-MgO_range(1))+MgO_range(1);
+        for i=1:N_C
+            if C_all_dim(i)>=crit_mg_si_melt
+                Ssio2_dim(i) = min_sio2_visc;
+            else
+                Ssio2_dim(i) = max_sio2_m*C_all_dim(i)+max_sio2_c;
+            end
+        end
+        Ssio2_scaled=(Ssio2_dim- SiO2_range(1))/(SiO2_range(2)-SiO2_range(1));
+    else %H2O dependant viscosity from (REFERNCE!) 
+        
+    end
+
+    if Has_volatile==0
+        C_values=zeros(N_C,N_C); %phi, Cl
+        muf_range=10.^((mu_f2-mu_f1)*Ssio2_scaled+mu_f1);
+        for i=1:N_C
+            for j=1:N_C
+                C_values(i,j)=c_gen_master(muf_range(j),grain_size,phi_range(i),C_value_A,C_value_B,C_type,C_type2,KC_perm_MF_a, KC_perm_MF_b, KC_perm_MF_c, perm_min_FLAG, perm_min_MF);
+            end
+        end
+        C_coef_all= piecewiseFit(C_values);
+    else
+        C_values=zeros(N_C,N_C); %phi, Cl, Cl2
+        for i=1:N_C
+            for j=1:N_C
+                for k=1:N_C
+                    C_values(i,j,k)=c_gen_master(muf_range(j,k),grain_size,phi_range(i),C_value_A,C_value_B,C_type,C_type2,KC_perm_MF_a, KC_perm_MF_b, KC_perm_MF_c, perm_min_FLAG, perm_min_MF);
+                end
+            end
+        end
+        C_coef_all= piecewiseFit(C_values);
+    end
+
+    % Density coefficients
+    N_rhos=10;
+    N_rhol=100;
+    Cl_range=linspace(0,1,N_rhol);
+    Cs_range=linspace(0,1,N_rhos);
+    if (HHJPet==1 || SSPD==1)
+        rhof=rhof_1*(1-Cl_range)+Cl_range*rhof_2;
+    elseif FourMPD==1
+        C_all_dim = Cl_range*(MgO_range(2)-MgO_range(1))+MgO_range(1);
+        %rhof changes depending on comp
+        rhof = C_all_dim.*0;
+        for i=1:1:length(C_all_dim)
+            if C_all_dim(i)>=crit_mg_si_melt
+                rhof(i) = rhof_2;
+            else
+                rhof(i) = rhof_m*C_all_dim(i)+rhof_c;
+            end
+        end
+
+    end
+    rhol_coef_all=piecewiseFit(rhof);
+
+    rhom=rhom_1*(1-Cs_range)+Cs_range*rhom_2;
+    rhos_coef_all=piecewiseFit(rhom);
+
+    %solidus coefficients
+    % if HHJPet == 1
+    %     Ts0=A1+B1+C1;
+    %     Tl0=C1;
+    % end
+        
+    N_sl=10; %since all varaibles here are normalized, does not need that large entries
+    %The range of the scaled temperature should be beyond 0 and 1 for values outside of [Ts Tl] 
+    % we force 0 and 1 to be in the range
+    k = round((N_sl - 1) / 12);
+    h=0.1/k;
+    % T_range=-0.0:h:1.0;
     
-    % A temperal old definition of density model, need to be updated into
-    % the new format
-    rhof_2=2800; 
-    rhof_1=2350;     
-    rhom_2=3000;%Density solid, least evolved
-    rhom_1=2600; %Density solid, most evolved
-    
-    Non_dimention=0;
-    Ts0=A1+B1+C1;
-    Tl0=C1;
+    T_range=linspace(0,1,N_sl);
+    phi_range=linspace(0,1,N_sl);
+    Cl_range=linspace(0,1,N_sl);
+    Cs_range=linspace(0,1,N_sl);
+
+    solidus_func=zeros(N_sl, length(T_range), N_sl, N_sl);  %use single precision for memory save
+    liquidus_func=zeros(N_sl, length(T_range), N_sl, N_sl); 
+    %In general solidus is F(phi, T, Cs, Cl)=0 
+    %solidus is cs=softmax(softmin(f,Cb),0);
+    A1_scaled=A1/(Tl0-Ts0);
+    B1_scaled=B1/(Tl0-Ts0);
+    C1_scaled=1;
+    for i=1:N_sl %phi
+        for j=1:length(T_range) %T
+            for k=1:N_sl %cs
+                for p=1:N_sl %cl
+                    if HHJPet == 1
+                        cb=Cl_range(p)*phi_range(i)+Cs_range(k)*(1-phi_range(i));                        
+                        temp=(max(1-T_range(j),0))^n_order;
+                        temp=min(cb,temp);
+                        solidus_func(i,j,k,p)=temp-Cs_range(k);
+                        
+                        temp=max(min(T_range(j),1),0);
+                        temp=(-B1_scaled-sqrt(B1_scaled^2-4*A1_scaled*(C1_scaled-temp)))/2/A1_scaled;
+                        temp=max(cb,temp);
+                        liquidus_func(i,j,k,p)=temp-Cl_range(p);
+                    elseif SSPD ==1
+
+                    elseif FourMPD==1
+
+                    end
+                end
+            end
+        end
+    end
+    solidus_coef_all=piecewiseFit(solidus_func);
+    liquidus_coef_all=piecewiseFit(liquidus_func);
+    disp('All tables generated')
+
+
+    %assjust all table numbers to be the cell number to be used later
+    N_mus=N_mus-1;
+    N_C=N_C-1;
+    N_rhos=N_rhos-1;
+    N_rhol=N_rhol-1;
+    N_sl=N_sl-1;
+    N_sl_T=length(T_range)-1;
+
+    K1=0;
 end
+

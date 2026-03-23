@@ -254,11 +254,31 @@ end
 %%
 if Use_Newton==1
     % Generate the Jacobians for Newton's method or load from the exisitng 
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(Non_dimention);
+    if Use_Newton==1
+        mum_0=Ref_Bulk_MN;
+        c0=C_value_A/grain_size^2;
+
+        % A temperal old definition of density model, need to be updated into
+        % the new format
+        rhof_2=2800;
+        rhof_1=2350;
+        rhom_2=3000;%Density solid, least evolved
+        rhom_1=2600; %Density solid, most evolved
+
+        Non_dimention=0;
+        A1=-99.6;
+        B1=-300.4;
+        C1=1160;
+        Ts0=A1+B1+C1;
+        Tl0=C1;
+    end
+    % [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(0);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator...
+    (Has_volatile);
     % load('Jacobians_for_Newton.mat');
 end
 
-
+tic;
 while Time<End_time
     %% CAB - INTRUDE SILLS 
         if SillCount<SillNo 
@@ -547,7 +567,8 @@ while Time<End_time
        
 %%
     if Use_Newton==1
-        Two_phase_Newton;
+        % Two_phase_Newton;
+        Newton_solver;
     else
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');
@@ -1133,25 +1154,9 @@ while Time<End_time
 
                     output_counter=output_counter+1;
             end
-
-             
-
         end
         end
 
-
-        
-        %if length(Record_time)>=Record_index
-         %   if Time>=Record_time(Record_index) %&& (Passing_time_since_intrude>10*Year && Passing_time_since_intrude< Intrusion_interval)
-%                 eval(['save(''mu' num2str(mu_m) '_cut' num2str(Contribution_cut)  'T=' num2str(round(Record_time(Record_index)/Year,1)) '.mat'')']);
-          %      eval(['save(''step=' num2str(counter) '.mat'')']);
-%                 eval(['save(''mu' num2str(mu_m) '_cut' num2str(Contribution_cut)  'T=' num2str(round(Time,1)) '.mat'')']);
-           %     Record_index=Record_index+1;
-            %    if Create_video==1
-             %       open(Video_handel)
-              %  end
-            %end
-        %end
  end
 %CAB end        
 %%
@@ -1176,6 +1181,7 @@ while Time<End_time
      
     
 end
+toc;
 fclose(File_echo);
 fclose(File_comp);
 fclose(File_breaks);
@@ -1291,8 +1297,3 @@ if Record_data==1
         save(FileNameO)                
     end
 end
-
-
-%if Create_video==1
- %   close(Video_handel);
-%end

@@ -52,4 +52,8 @@ C2,dummy,
 Eutetic,dummy,
 ,ae,1
 
+Ts0, dummy,
+, Ts0, 760
 
+Tl0, dummy
+, Tl0, 1160

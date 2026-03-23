@@ -105,7 +105,7 @@ RG_Perm_C_value_B,dummy,
 ,C_value_B_RG,0
 
 C_type_PorousSuspension=1_Porous=0,dummy,
-,C_type,0
+,C_type,1
 
 Perm_min_FLAG_No=0_Yes=1,dummy, 
 ,perm_min_FLAG,0
@@ -261,7 +261,7 @@ Geotherm_of_crust,dummy,
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
-,min_N,3000
+,min_N,2000
 
 maximum_number_of_cells,dummy,
 ,max_N,3000
@@ -286,7 +286,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,20
+,Max_dtY,5
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5
