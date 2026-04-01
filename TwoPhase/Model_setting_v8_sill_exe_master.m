@@ -64,7 +64,7 @@ if HHJPet==1
     n_PD=0;
 
 elseif SSPD==1
-    Inputs= readtable('../../Input_Files/1AA_2phase_SSPD_master.txt');
+    Inputs= readtable('Input_Files/1AA_2phase_SSPD_master.txt');
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;

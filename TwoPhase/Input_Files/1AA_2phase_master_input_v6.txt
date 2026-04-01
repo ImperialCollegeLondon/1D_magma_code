@@ -31,10 +31,10 @@ GRAVITY,dummy,
 
 *****************Phase_Diagram_Parameters*****************,dummy,
 Hu_et_al_2022_Phase_Diagram_=1,dummy,
-,HHJPet,1
+,HHJPet,0
 
 Solid_Solution_Solidus_Phase_Diagram_=1,dummy,
-,SSPD,0
+,SSPD,1
 
 Layered_intrusion_Phase_Diagram_=1,dummy, 
 ,FourMPD,0
