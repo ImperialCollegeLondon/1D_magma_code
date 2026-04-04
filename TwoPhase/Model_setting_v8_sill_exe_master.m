@@ -71,7 +71,10 @@ elseif SSPD==1
     for i=1:r
         assignin('base',names(i),Number(i))
     end
-
+    
+    if mod(n_order,2)==0 % make sure n_order is an odd number
+        n_order=n_order+1;
+    end
     % set values to zero that are used in sill_intrusion and solid_state
     % but not related to the chosen phase diagram 
     ol=0;
@@ -833,7 +836,7 @@ rho_mean=2700;
 %% Data output
 Step_counts=0;
 
-Record_data=1; % set to 1 to save the simulation data
+Record_data=0; % set to 1 to save the simulation data
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;
 Record_time=[0:Out_time*Year:End_time];%[0:1:50 55:5:230]*Year;  % the time at which the simulation will be saved
@@ -1157,4 +1160,6 @@ if Has_volatile==1
     [a_grid, b_grid] = ndgrid(Pressure_range2, vol_range2);
     Tl0_coefficient= piecewiseFit(F(a_grid, b_grid));
 end
+
+phi([1 N])=0;
 disp('All tables generated')

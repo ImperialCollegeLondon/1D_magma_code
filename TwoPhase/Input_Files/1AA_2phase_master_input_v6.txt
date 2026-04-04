@@ -46,7 +46,7 @@ Phase_diagram_step_size,dummy,
 ,step_size,0.35
 
 n,dummy, 
-,n_order,20
+,n_order,11
 
 **DIFFERENT_DEEP_SOLIDUS**,dummy,
 Different_solidus_in_deep_crust_=1,dummy,
@@ -141,7 +141,7 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,1e13
+,Ref_Bulk_MN,1e14
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,
@@ -202,13 +202,13 @@ Only_record_contribution_if_MF_decreasing,dummy,
 
 *****************Defining_sill_length_and_injection_parameters*****************,dummy,
 Base_of_crust_km,dummy,
-,Base_crust,30
+,Base_crust,25
 
 Top_of_crust_km,dummy,
 ,Top_crust,0
 
 Injection_depth_km,dummy,
-,Injection_depth,20
+,Injection_depth,18
 
 Density_emplacement_Flag_DensityEmplacement_GT_0,dummy,
 ,DensF,0
@@ -251,7 +251,7 @@ MeltFraction_of_sills,dummy,
 
 *****************Initial_Conditions*****************,dummy,
 Composition_of_crust,dummy,
-,Cb_initialV,55
+,Cb_initialV,50
 
 Composition_of_deep_crust,dummy,
 ,Cb_initialVD,55
@@ -286,7 +286,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,2.5
+,Max_dtY,5
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5
