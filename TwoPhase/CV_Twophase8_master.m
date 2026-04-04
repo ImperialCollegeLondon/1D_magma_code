@@ -272,9 +272,8 @@ if Use_Newton==1
         Ts0=A1+B1+C1;
         Tl0=C1;
     end
-    % [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus]=Two_phase_Newton_initiator(0);
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator...
-    (Has_volatile);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile);
+    
     % load('Jacobians_for_Newton.mat');
 end
 
@@ -568,7 +567,7 @@ while Time<End_time
 %%
     if Use_Newton==1
         % Two_phase_Newton;
-        Newton_solver;
+        Newton_solver2;
     else
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');

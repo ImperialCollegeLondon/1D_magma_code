@@ -202,13 +202,13 @@ Only_record_contribution_if_MF_decreasing,dummy,
 
 *****************Defining_sill_length_and_injection_parameters*****************,dummy,
 Base_of_crust_km,dummy,
-,Base_crust,20
+,Base_crust,30
 
 Top_of_crust_km,dummy,
 ,Top_crust,0
 
 Injection_depth_km,dummy,
-,Injection_depth,6.5
+,Injection_depth,20
 
 Density_emplacement_Flag_DensityEmplacement_GT_0,dummy,
 ,DensF,0
@@ -286,7 +286,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,5
+,Max_dtY,2.5
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5
@@ -313,4 +313,4 @@ Update_frame_howManyStepsBeforeMonitorIsRefreshed,dummy,
 ,Update_frame,1
 
 To_understand_Contributions_=1,dummy, 
-,To_cal_mc,1
+,To_cal_mc,0

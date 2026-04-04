@@ -784,6 +784,7 @@ elseif FourMPD==1
     rhom_c=rhom_1*(1-c_check)+(c_check)*rhom_2;
                   
 end
+rho_mean=2700;
 
 %f1=figure(1);
 %if HHJPet==1 || SSPD==1
@@ -994,13 +995,14 @@ if Use_Newton==1
             end
         end
         C_coef_all= piecewiseFit(C_values);
-    else
+    else % need update this
         C_values=zeros(N_C,N_C); %phi, Cl, Cl2
+        muf_range=10.^((mu_f2-mu_f1)*Ssio2_scaled+mu_f1);
         for i=1:N_C
             for j=1:N_C
-                for k=1:N_C
-                    C_values(i,j,k)=c_gen_master(muf_range(j,k),grain_size,phi_range(i),C_value_A,C_value_B,C_type,C_type2,KC_perm_MF_a, KC_perm_MF_b, KC_perm_MF_c, perm_min_FLAG, perm_min_MF);
-                end
+                % for k=1:N_C
+                    C_values(i,j)=c_gen_master(muf_range(j),grain_size,phi_range(i),C_value_A,C_value_B,C_type,C_type2,KC_perm_MF_a, KC_perm_MF_b, KC_perm_MF_c, perm_min_FLAG, perm_min_MF);
+                % end
             end
         end
         C_coef_all= piecewiseFit(C_values);
@@ -1080,10 +1082,9 @@ if Use_Newton==1
         end
     end
     solidus_coef_all=piecewiseFit(solidus_func);
-    liquidus_coef_all=piecewiseFit(liquidus_func);
-    disp('All tables generated')
+    liquidus_coef_all=piecewiseFit(liquidus_func);    
 
-
+    
     %assjust all table numbers to be the cell number to be used later
     N_mus=N_mus-1;
     N_C=N_C-1;
@@ -1095,3 +1096,65 @@ if Use_Newton==1
     K1=0;
 end
 
+%% Currently only with Newton's method, volatile and the third phase can be included in the model
+K0=0.2; % H2O solid/melt partition coefficient
+if Has_volatile==1    
+    
+    %% H2O dependancy for solidus and liquidus - % paper based
+    %(0,0)    : (57,326)
+    %(1200,0) : (455,326)
+    %(0,8000) : (57,70)
+    % from 8000 bar to 0 bar, water 13% to 0 %
+    %           13  12  11  10    9     8     7    6     5    4    3    2   1     0
+    Data_point=[80, 83, 86, 91, 100,  115,  135, 164,  196, 230, 267, 307, 355, 401;... %70
+        0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;...   %102
+        0,  0, 84,87.5,95.5,108.5,126, 151.5, 180, 211, 243, 280, 329, 375;... %134
+        0,  0, 0,   86, 93, 105,  121, 144,   170, 199, 230, 266, 316, 362;... %166
+        0,  0, 0,    0,90.5,100,  115, 136,   159, 186, 217, 252, 302, 349;... %198
+        0,  0, 0,    0,   0, 95,  109, 128.5, 150, 176, 205, 241, 291, 339;... %223
+        0,  0, 0,    0,   0,  0,  103, 120,   141, 165, 194, 230, 280, 328;... %248
+        0,  0, 0,    0,   0,  0,    0, 113,  133.5,155.5,185,220, 270, 320;... %268
+        0,  0, 0,    0,   0,  0,    0,   0,   127,146.5,176, 211.5,261,313;... %285
+        0,  0, 0,    0,   0,  0,    0,   0,     0, 141, 170, 206, 256, 309;... %295
+        0,  0, 0,    0,   0,  0,    0,   0,     0,   0, 164, 200, 250, 305;... %305
+        0,  0, 0,    0,   0,  0,   0,    0,     0,   0,   0, 194, 244, 301;... %316
+        0,  0, 0,    0,   0,  0,   0,    0,     0,    0,  0,   0, 240, 298;... %322
+        0,  0,  0,   0,   0,  0,    0,   0,     0,   0,   0,   0,   0, 297];   %326
+    Data_y=[70, 102,134,166,198,223,248,268,285,295,305,316,322,326];
+    Data_y=8000-(Data_y-70)*8000/(326-70);
+    Data_point=(Data_point-57)*(1200-600)/(455-57)+600;
+    
+    N_Ts=100;
+    vol_range= linspace(0,13,N_Ts);
+    Pressure_range=linspace(0,8000,N_Ts); %Pressure in bar
+    F = griddedInterpolant({Data_y(end:-1:1), 0:13}, Data_point(end:-1:1,end:-1:1), 'linear', 'linear');
+    [a_grid, b_grid] = ndgrid(Pressure_range, vol_range);
+    Ts0_coefficient= piecewiseFit(F(a_grid, b_grid));
+    %
+    % (0,0) (61,738)
+    % (0,1700) (838,738)
+    % (0,40000) (61 33)
+    %             20   10    5   2    0
+    Data_point2=[358, 428,  512, 586, 699;...%120
+        321, 397,  477, 547, 653;...%208
+        288, 369,  443, 508, 604;...%297
+        274, 351,  412, 473, 558;...%390
+        0, 340,  391, 447, 517;...%473
+        0, 332,  379, 427, 477;...%561
+        0, 329,  376, 420, 462;...%596
+        0,   0,  374, 414, 438;...%691
+        0,   0,    0, 413, 436;...%728
+        0,   0,    0,   0, 436];...%738
+        Data_y2=[120,208,297,390,473,561,596,691,728,738];
+    Data_y2=40000-(Data_y2-120)*40000/(738-120);
+    Data_point2=(Data_point2-61)*(1700-800)/(838-61)+800;
+
+
+    N_Tl=N_Ts;
+    vol_range2= linspace(0,20,N_Tl);
+    Pressure_range2=linspace(0,40000,N_Tl); %Pressure in bar
+    F = griddedInterpolant({Data_y2(end:-1:1), [0 2 5 10 20]}, Data_point2(end:-1:1, end:-1:1), 'linear', 'linear');
+    [a_grid, b_grid] = ndgrid(Pressure_range2, vol_range2);
+    Tl0_coefficient= piecewiseFit(F(a_grid, b_grid));
+end
+disp('All tables generated')

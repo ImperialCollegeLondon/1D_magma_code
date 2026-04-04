@@ -2,7 +2,8 @@
 % Initializing all the plots
 %Plot_Label={'Melt fraction, $$\phi (-)$$','uf','um','Enthalpy','Temperature($$^\circ$$C)','Cl','Cs','$$\bar{C}$$','St', 'Solid_vis(%)','$$\Delta\phi$$','$$\sum|\Delta\phi|$$', 'Cb', '$$\sum|\Delta\phi|$$', '$$\sum\Delta\phi$$','$$\sum\Delta\bar{C}$$','$$\Delta\bar{C}$$','$$\sum|\Delta\bar{C}|$$'};
 Font_Size=13;
-YLIMITS=[crust_bottom crust_top];
+% YLIMITS=[crust_bottom crust_top];
+YLIMITS=[-Injection_depth-Sill_length/1000-0.1, -Injection_depth+0.1];
 %YLIMITS=[-35 -20];
 
 Step_counts=0;
