@@ -11,7 +11,7 @@ clear;
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=0;
+Has_volatile=1;
 
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
@@ -543,6 +543,7 @@ end
 
 injection_H= Lf.*injection_phi+cp.*injection_T; %injection enthalpy
 
+
  
 if (SSPD==1||HHJPet==1)
     injection_densF =  rhof_1*injection_Cl+(1-injection_Cl)*rhof_2; %injection density - fluid
@@ -904,54 +905,7 @@ if To_cal_mc==1
 end
 
 
-%% Set up the monitor
-%With_monitor=1; 
 
-%Update_frame=1; % How many steps before the monitor  is refreshed
-
-% Chooose what to show on the monitor
-% labels for parameters to be plot:
-% 1. melt fraction
-% 2. liquid velocity
-% 3. solid velocity
-% 4. enthalpy
-% 5. temperature
-% 6. liquid composition
-% 7. solid composition
-% 8. bulk composition
-% 9. material state:  0: below solidus, 1: at solidus 2: between solidus and liquidus 3: above liquidus
-% 10. force contribution from solid viscous force
-% 11. Heat-chemical-compaction contribution, stepwise.
-% 12. Heat-chemical-compaction contribution, total (abs).
-% 13. Refined recored of bulk composition
-% 14. Refined recored of HCC contribution, total.
-% 15. Heat-chemical-compaction contribution, total
-% 16. Chemical differenciation from compacton and reactive flow, total
-% 17. Chemical differenciation from compacton and reactive flow, stepwise
-% 18. Chemical differenciation from compacton and reactive flow, total (abs)
-% 19. Pressure gradient and the hydrostatic pressure rhofg and rhomg
-
-% Plot_Label={'$$\phi$$','uf','um','H','T','Cf','Cm','Cb','St', 'Solid_vis(%)','$$\Delta\phi$$','$$\sum|\Delta\phi|$$'};
-% when multiple variable in one figure, temperature will be scaled between solidus and liquidus
-% option 11 and 12 must stand alone!
-
-% Plot_configure=...
-%     {[1],[2],[4],[5];...
-%      [6],[7],[8],[11]};   % a 2*4 plot setting
-% Plot_configure=...
-%     {[1,5,8],[10],[11]};  
-
-
-% Plot_configure=  {[1],[5],[6,7,8]};  
-if With_monitor==1
-    if To_cal_mc==1
-        Plot_configure=  {[1],[5],[6,7,8],[15],[16]};  
-    else
-        Plot_configure=  {[1],[5],[6,7,8]};
-    end
-    
-    Plot_settings_master;
-end
 
 
 %% Generate look-up tables for Newton's method
@@ -1159,7 +1113,100 @@ if Has_volatile==1
     F = griddedInterpolant({Data_y2(end:-1:1), [0 2 5 10 20]}, Data_point2(end:-1:1, end:-1:1), 'linear', 'linear');
     [a_grid, b_grid] = ndgrid(Pressure_range2, vol_range2);
     Tl0_coefficient= piecewiseFit(F(a_grid, b_grid));
+    
+    N_Ts=N_Ts-1;
+    N_Tl=N_Tl-1;
+
+
+    P_injection=Injection_depth*1000*g*rho_mean/1e5;
+    V_Sill=1.03/K0;
+    index_v_nts=max(min(floor(V_Sill/13*N_Ts)+1,N_Ts),1);
+    index_P_nts=max(min(floor(P_injection/8000*N_Ts)+1,N_Ts),1);
+    coef=Ts0_coefficient(index_P_nts,index_v_nts,:);
+    Ts0=coef(1)*P_injection/8000+coef(2)*V_Sill/13+coef(3)*P_injection*V_Sill/8000/13+coef(4);
+
+    coef=Tl0_coefficient(index_P_nts,index_v_nts,:);
+    Tl0=coef(1)*P_injection/8000+coef(2)*V_Sill/13+coef(3)*P_injection*V_Sill/8000/13+coef(4);
+
+    S=zeros(N,1);
+    Cl2=V_Sill*ones(N,1)/100;
+    Cs2=V_Sill*K0*ones(N,1)/100;
+
+    injection_S=0;
+    injection_Cl2=V_Sill/100;
+    injection_Cs2=V_Sill*K0/100;
+
+    kf=1e-5;
+
+    S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
+
+    Cb2=Cl2.*phi(1:N)+Cs2.*phi(N+1:end)+S;
+
+    Pressure=(nodez(end)-cellz)*g*rho_mean/1e5+1; %in bar
+    PT=[-4e-4,-5e-4,-6e-4,-13e-4, -15.5e-4,-17e-4,-16e-4,-5e-4, 0, 26e-4,5e-3, 5e-3];  % coefficient from (ref) for the temperature dependency of water saturation (Holtz et al,?) 
+    PTx=[0,   0.12    0.2  0.3    0.5       1       2       3   4  5,    11, 20]; %in kbar
+    dSdT = interp1(PTx, PT, Pressure/1000, 'linear', 'extrap')';    
+    
+    P3=Pressure'/10; %Pressure in Mpa
+    Lsaturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-(T-800).*dSdT/100;
+    Ssaturation=S_cap(1)*Cs2+S_cap(2)*(1-Cs2);
+    
 end
 
-phi([1 N])=0;
+% phi([1 N])=0;
 disp('All tables generated')
+
+
+
+%% Set up the monitor
+%With_monitor=1; 
+
+%Update_frame=1; % How many steps before the monitor  is refreshed
+
+% Chooose what to show on the monitor
+% labels for parameters to be plot:
+% 1. melt fraction
+% 2. liquid velocity
+% 3. solid velocity
+% 4. enthalpy
+% 5. temperature
+% 6. liquid composition
+% 7. solid composition
+% 8. bulk composition
+% 9. material state:  0: below solidus, 1: at solidus 2: between solidus and liquidus 3: above liquidus
+% 10. force contribution from solid viscous force
+% 11. Heat-chemical-compaction contribution, stepwise.
+% 12. Heat-chemical-compaction contribution, total (abs).
+% 13. Refined recored of bulk composition
+% 14. Refined recored of HCC contribution, total.
+% 15. Heat-chemical-compaction contribution, total
+% 16. Chemical differenciation from compacton and reactive flow, total
+% 17. Chemical differenciation from compacton and reactive flow, stepwise
+% 18. Chemical differenciation from compacton and reactive flow, total (abs)
+% 19. Pressure gradient and the hydrostatic pressure rhofg and rhomg
+
+% 1001. volatiles in phases+melt saturation+ solid saturation
+% Plot_Label={'$$\phi$$','uf','um','H','T','Cf','Cm','Cb','St', 'Solid_vis(%)','$$\Delta\phi$$','$$\sum|\Delta\phi|$$'};
+% when multiple variable in one figure, temperature will be scaled between solidus and liquidus
+% option 11 and 12 must stand alone!
+
+% Plot_configure=...
+%     {[1],[2],[4],[5];...
+%      [6],[7],[8],[11]};   % a 2*4 plot setting
+% Plot_configure=...
+%     {[1,5,8],[10],[11]};  
+
+
+% Plot_configure=  {[1],[5],[6,7,8]};  
+if With_monitor==1
+    if Has_volatile==1
+        Plot_configure=  {[1],[5],[6,7,8],1001};
+    else
+        if To_cal_mc==1
+            Plot_configure=  {[1],[5],[6,7,8],[15],[16]};
+        else
+            Plot_configure=  {[1],[5],[6,7,8]};
+        end
+    end    
+    Plot_settings_master;
+end

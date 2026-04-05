@@ -56,6 +56,12 @@ H = [H(1:Start_depthN_c); SillH.*ones(SillNodez,1);H(Start_depthN_c+1:end)];
 %Temperature
 T = [T(1:Start_depthN_c); SillTemp.*ones(SillNodez,1);T(Start_depthN_c+1:end)];
 
+if Has_volatile==1
+    S=[S(1:Start_depthN_c); injection_S.*ones(SillNodez,1);S(Start_depthN_c+1:end)];
+    Cl2=[Cl2(1:Start_depthN_c); injection_Cl2.*ones(SillNodez,1);Cl2(Start_depthN_c+1:end)];
+    Cs2=[Cs2(1:Start_depthN_c); injection_Cs2.*ones(SillNodez,1);Cs2(Start_depthN_c+1:end)];
+end
+
 if FourMPD==1
     %Olivine
     ol = [ol(1:Start_depthN_c); zeros(SillNodez,1);ol(Start_depthN_c+1:end)];

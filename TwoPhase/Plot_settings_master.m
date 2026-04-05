@@ -45,7 +45,18 @@ for i=1:(Plot_size(1)*Plot_size(2))
                 Handel_all{i}(j)=plot(phi(1:N),cellz/1000-Base_crust,'b','linewidth',2.5);
 %                 Handel_all{i}(j)=plot(phi(1:N),cellz,'-o','markersize',3);
                 %yticks([-35 -32.5 -30 -27.5 -25 -22.5 -20])
+                
+                if Has_volatile==1
+                    ax_volatile=axes('Position',get(gca,'Position'),'XAxisLocation','top','Color','none','XColor','r','YColor','none');
+                    hold on;
+                    ylim(Show_z)
+                    xlim([0 0.2])
+                    Handel_all{i}(2)=plot(ax_volatile,S,cellz/1000-Base_crust,'linewidth',1 ,'Parent',ax_volatile,'color','r');
+                    xlabel('Volatile fraction(-)','fontsize',Font_Size,'color','r')
+                end
+
                 xlabel('Melt fraction (-)')
+
                 ylim(YLIMITS);
                 xlim([0,1])
             case 2
@@ -237,8 +248,13 @@ for i=1:(Plot_size(1)*Plot_size(2))
                 xlim([min(rhof)*0.9*g*scaling_factor max(rhom)*1.2*g*scaling_factor])
                % yticks([-35 -32.5 -30 -27.5 -25 -22.5 -20])
                 ylim(YLIMITS);
-            
-          
+            case 1001
+                Handel_all{i}(1)=plot(Cb2,cellz,'b','linewidth',1.5);
+                Handel_all{i}(2)=plot(Cl2,cellz,'r','linewidth',1.2);
+                Handel_all{i}(3)=plot(Cs2,cellz,'green','linewidth',1.2);
+                
+                Handel_all{i}(4)=plot(Lsaturation,cellz,'--','linewidth',1.2);
+                Handel_all{i}(5)=plot(Ssaturation,cellz,'--','linewidth',1.2);
         end
         if S_or_Cb~=10 && j~=19 && j~=20
             %xlabel(Plot_Label{j},'interpreter','Latex')

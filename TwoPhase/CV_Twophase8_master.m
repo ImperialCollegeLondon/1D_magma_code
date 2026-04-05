@@ -550,8 +550,13 @@ while Time<End_time
         Type_record=zeros(N,2);
         Type_fix=zeros(N,1);
         type_index=1;
-        dt_old=dt;
         C_values=zeros(N+1,1);
+
+        if Has_volatile==1
+            S_old=S;
+            Cs2_old=Cs2;
+            Cl2_old=Cl2;            
+        end
         
         %Injecting=0;
         %Sill_injection=0;
