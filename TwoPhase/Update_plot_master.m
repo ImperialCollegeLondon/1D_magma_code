@@ -1,13 +1,15 @@
-try
 if Step_counts>=Update_frame || Time>=End_time
     Step_counts=0;
 
     for i=1:(Plot_size(1)*Plot_size(2))
-        if length(Plot_configure{i})==1
+        if isscalar(Plot_configure{i})
             j=Plot_configure{i};
             switch j
                 case 1
                     set(Handel_all{i}(j),'xdata',phi(1:N),'ydata',cellz/1000-Base_crust);
+                    if Has_volatile==1
+                        set(Handel_all{i}(2),'xdata',S,'ydata',cellz/1000-Base_crust);
+                    end
                 case 2
                     set(Handel_all{i}(j),'xdata',u_all(1:N+1),'ydata',nodez);
                 case 4
@@ -113,6 +115,13 @@ if Step_counts>=Update_frame || Time>=End_time
                     set(Handel_all{i}(1), 'xdata',-Pressure*scaling_factor,'ydata',nodez);
                     set(Handel_all{i}(2), 'xdata', dhydro*scaling_factor,'ydata',cellz);
                     %
+                case 1001
+                    set(Handel_all{i}(1), 'ydata',cellz/1000-Base_crust,'xdata',Cb2);
+                    set(Handel_all{i}(2), 'ydata',cellz/1000-Base_crust,'xdata',Cl2);
+                    set(Handel_all{i}(3), 'ydata',cellz/1000-Base_crust,'xdata',Cs2);
+                    set(Handel_all{i}(4), 'ydata',cellz/1000-Base_crust,'xdata',Lsaturation);
+                    set(Handel_all{i}(5), 'ydata',cellz/1000-Base_crust,'xdata',Ssaturation);
+
             end
         else
             for j=Plot_configure{i}
@@ -175,6 +184,3 @@ if Step_counts>=Update_frame || Time>=End_time
 end
 
 drawnow;
-catch
-    With_monitor=0; %something wrong with the plot, turn off the monitor
-end
