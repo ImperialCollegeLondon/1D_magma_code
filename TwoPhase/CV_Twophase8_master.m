@@ -252,30 +252,7 @@ else
 end
 
 %%
-if Use_Newton==1
-    % Generate the Jacobians for Newton's method or load from the exisitng 
-    if Use_Newton==1
-        mum_0=Ref_Bulk_MN;
-        c0=C_value_A/grain_size^2;
 
-        % A temperal old definition of density model, need to be updated into
-        % the new format
-        rhof_2=2800;
-        rhof_1=2350;
-        rhom_2=3000;%Density solid, least evolved
-        rhom_1=2600; %Density solid, most evolved
-
-        Non_dimention=0;
-        A1=-99.6;
-        B1=-300.4;
-        C1=1160;
-        Ts0=A1+B1+C1;
-        Tl0=C1;
-    end
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile);
-    
-    % load('Jacobians_for_Newton.mat');
-end
 
 tic;
 while Time<End_time

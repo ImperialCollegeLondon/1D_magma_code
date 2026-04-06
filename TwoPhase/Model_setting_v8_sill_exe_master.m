@@ -527,21 +527,13 @@ rand_injectN=round(Rand_inject/dzF);
 
 %injection parameters
 injection_Cb= (Comp_sill-Range_of_phase_diagram(1))/(Range_of_phase_diagram(2)-Range_of_phase_diagram(1)); %bulk composition of injection(s)
-injection_phi=(MeltFracSill).*ones(SillNodez,1);%injection melt fraction
+injection_phi=MeltFracSill;%injection melt fraction
 injection_Cl=injection_Cb./injection_phi; %injection liquid comp
 injection_Cs=0.*ones(SillNodez,1); %injection solid comp
 
-if FourMPD==1
-    if injection_Cb>=liq_P2_C %injection temperature
-        injection_T= liq_k1-(liq_a1/(injection_Cb-liq_b1));  
-    else
-        injection_T= liq_k2 - (liq_a2/(injection_Cb-liq_b1));
-    end
-elseif (SSPD==1||HHJPet==1)
-    injection_T = A1*injection_Cl.^2 + B1*injection_Cl + C1;
-end
 
-injection_H= Lf.*injection_phi+cp.*injection_T; %injection enthalpy
+% injection T and H needs to be determined after volatile content is determined later
+
 
 
  
@@ -671,45 +663,6 @@ BC_T=[T(1), T(end)];
 BC_C_type=[3,3];
 BC_C_value=[0,0;0,0];
 
-H=Lf*phi+cp*T;
-
-Cf=zeros(N,1);
-Cm=zeros(N,1);
-TYPE=zeros(N,1);
-
-
-for i=1:N
-
-    if HHJPet==1
-        [~,~,Cf(i), Cm(i),~]=poro_component_solve_JPET_master(Cb(i), H(i),A1, B1, C1, A2, B2, C2, ae, Lf, cp,Precision_PD);
-    end
-
-    if SSPD==1
-        [~,~,Cf(i), Cm(i),~] = poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
-    end
-
-
-    if FourMPD==1
-        [~,~,Cf(i), Cm(i),~,CCC(i),DDD(i)]=poro_component_solve_4_components_v2_master(Cb(i), H(i), Lf, cp, min_mgo, max_mgo, crit_T1, crit_T2,...
-                                                            crit_cb2, crit_cb3, crit_cb4,crit_cb4_OG, crit_cb5,liq_k1, liq_a1, liq_b1,liq_k2, liq_a2, liq_b2, liq_k3, liq_a3, liq_b3,...
-                                                            lm1, lc1, lm3, lc3, lm8, lc8, mk, ck, BT, BC, DT, DC,JC, olpx_C,olpxm, olpxc, s5T, sol_k2,liq_P2_C,s1m,s1c, ...
-                                                            lowest_end_T, liq_P3_C,l13_k,l13_a,l13_b,lowest_k,s8m,s8c,crit_T3,liq_P4_C,Precision_PD,step_size);
-    end
-end
-
-
-C_all=[Cf;Cm];
-
-%% Initialize the parameters
-phi=[phi; 1-phi];
-
-uf=zeros(N+1,1);
-um=zeros(N+1,1);
-u_all=[uf;um];
-
-C_values=zeros(N,1);  % the coupling term coefficient
-kt=kt0*ones(N,1);
-kc=kc0*ones(N,1);
 %% Initialize the chemical differentiation number
 Lrange1=[6100 6200];  %the range of the studied region 
 Lrange2=[6050 6250]; %the range of the calculated region 
@@ -1117,19 +1070,8 @@ if Has_volatile==1
     N_Ts=N_Ts-1;
     N_Tl=N_Tl-1;
 
-
-    P_injection=Injection_depth*1000*g*rho_mean/1e5;
-    V_Sill=1.03/Par_v;
-    index_v_nts=max(min(floor(V_Sill/13*N_Ts)+1,N_Ts),1);
-    index_P_nts=max(min(floor(P_injection/8000*N_Ts)+1,N_Ts),1);
-    coef=Ts0_coefficient(index_P_nts,index_v_nts,:);
-    Ts0=coef(1)*P_injection/8000+coef(2)*V_Sill/13+coef(3)*P_injection*V_Sill/8000/13+coef(4);
-
-    coef=Tl0_coefficient(index_P_nts,index_v_nts,:);
-    Tl0=coef(1)*P_injection/8000+coef(2)*V_Sill/13+coef(3)*P_injection*V_Sill/8000/13+coef(4);
-
-
-
+    V_crust=1.5;
+    V_sill=2;
     kf=1e-5;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1146,21 +1088,146 @@ if Has_volatile==1
    
 
     S=zeros(N,1);
-    Cl2=min(V_Sill*ones(N,1)/100, Lsaturation);
-    Cs2=V_Sill*Par_v*ones(N,1)/100;
+    Cl2=min(V_crust/Par_v*ones(N,1)/100, Lsaturation);
+    Cs2=V_crust*ones(N,1)/100;
 
     injection_S=0;
-    injection_Cl2=V_Sill/100;
-    injection_Cs2=V_Sill*Par_v/100;
+    injection_Cl2=V_sill/100;
+    injection_Cs2=V_sill*Par_v/100;
     
     Ssaturation=S_cap(1)*Cs2+S_cap(2)*(1-Cs2);
-    Cb2=Cl2.*phi(1:N)+Cs2.*phi(N+1:end)+S;
+    Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
+
+    
+    Ts0=zeros(N,1);
+    Tl0=zeros(N,1);
+    index_v_nts=max(min(floor(Cb2/13*100/Par_v*N_Ts)+1,N_Ts),1);
+    index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);
+    for i=1:N
+        coef=Ts0_coefficient(index_pressure_nts(i),index_v_nts(i),:);
+        Ts0(i)=coef(1)*Pressure(i)/8000+coef(2)*Cb2(i)/Par_v/13*100+coef(3)*Pressure(i)*Cb2(i)/Par_v/8000/13*100+coef(4);
+    end
+
+    index_v_ntl=max(min(floor(Cb2/20*100/Par_v*N_Ts)+1,N_Ts),1);
+    index_pressure_ntl=max(min(floor(Pressure/40e3*N_Ts)+1,N_Ts),1);
+    for i=1:N
+        coef=Tl0_coefficient(index_pressure_ntl(i),index_v_ntl(i),:);
+        Tl0(i)=coef(1)*Pressure(i)/40e3+coef(2)*Cb2(i)/Par_v/20*100+coef(3)*Pressure(i)*Cb2(i)/Par_v/400/20+coef(4);
+    end
+    Ts=Tl0-Cb.^(1/n_order).*(Tl0-Ts0);
+    Tl=A1*Cb.^2+(Ts0-Tl0-A1).*Cb+Tl0;
+    
+    
+    Pressure_injection=Injection_depth*g*rho_mean/1e2+1;
+    index_v_nts=max(min(floor(V_sill/13/Par_v*N_Ts)+1,N_Ts),1);
+    index_pressure_nts=max(min(floor(Pressure_injection/8000*N_Ts)+1,N_Ts),1);
+    coef=Ts0_coefficient(index_pressure_nts,index_v_nts,:);
+    Ts0_sill=coef(1)*Pressure_injection/8000+coef(2)*V_sill/13+coef(3)*Pressure(i)*V_sill/8000/13+coef(4);
+    
+    index_v_ntl=max(min(floor(V_sill/20/Par_v*N_Ts)+1,N_Ts),1);
+    index_pressure_ntl=max(min(floor(Pressure_injection/40e3*N_Ts)+1,N_Ts),1);
+    coef=Tl0_coefficient(index_pressure_ntl,index_v_ntl,:);
+    Tl0_sill=coef(1)*Pressure_injection/40e3+coef(2)*V_sill/13+coef(3)*Pressure(i)*V_sill/40e3/20+coef(4);
+else
+    Ts0=(A1+B1+C1)*ones(N,1);
+    Tl0=C1*ones(N,1);
 end
+
+if Has_volatile==1
+    if FourMPD==1
+        if injection_Cb>=liq_P2_C %injection temperature
+            injection_T= liq_k1-(liq_a1/(injection_Cb-liq_b1));
+        else
+            injection_T= liq_k2 - (liq_a2/(injection_Cb-liq_b1));
+        end
+    elseif (SSPD==1||HHJPet==1)
+        injection_T = A1*injection_Cl.^2 + (Ts0_sill-Tl0_sill-A1)*injection_Cl + Tl0_sill;
+    end
+else
+    if FourMPD==1
+        if injection_Cb>=liq_P2_C %injection temperature
+            injection_T= liq_k1-(liq_a1/(injection_Cb-liq_b1));
+        else
+            injection_T= liq_k2 - (liq_a2/(injection_Cb-liq_b1));
+        end
+    elseif (SSPD==1||HHJPet==1)
+        injection_T = A1*injection_Cl.^2 + B1*injection_Cl + C1;
+    end
+end
+
+injection_H= Lf.*injection_phi+cp.*injection_T; %injection enthalpy
+
 
 % phi([1 N])=0;
 disp('All tables generated')
 
 
+%%
+H=Lf*phi+cp*T;
+Cl=zeros(N,1);
+Cs=zeros(N,1);
+TYPE=zeros(N,1);
+
+for i=1:N
+
+    if HHJPet==1
+        [~,~,Cl(i), Cs(i),~]=poro_component_solve_JPET_master(Cb(i), H(i),A1, B1, C1, A2, B2, C2, ae, Lf, cp,Precision_PD);
+    end
+
+    if SSPD==1
+        [~,~,Cl(i), Cs(i),~] = poro_component_solve_solid_master(Cb(i), H(i), A1, Ts0(i)-A1-Tl0(i), Tl0(i), alpha, n_PD ,Lf, cp, Precision_PD,step_size);
+    end
+
+
+    if FourMPD==1
+        [~,~,Cl(i), Cs(i),~,CCC(i),DDD(i)]=poro_component_solve_4_components_v2_master(Cb(i), H(i), Lf, cp, min_mgo, max_mgo, crit_T1, crit_T2,...
+                                                            crit_cb2, crit_cb3, crit_cb4,crit_cb4_OG, crit_cb5,liq_k1, liq_a1, liq_b1,liq_k2, liq_a2, liq_b2, liq_k3, liq_a3, liq_b3,...
+                                                            lm1, lc1, lm3, lc3, lm8, lc8, mk, ck, BT, BC, DT, DC,JC, olpx_C,olpxm, olpxc, s5T, sol_k2,liq_P2_C,s1m,s1c, ...
+                                                            lowest_end_T, liq_P3_C,l13_k,l13_a,l13_b,lowest_k,s8m,s8c,crit_T3,liq_P4_C,Precision_PD,step_size);
+    end
+end
+
+
+
+
+C_all=[Cl;Cs];
+
+%% Initialize the parameters
+phi=[phi; 1-phi];
+
+uf=zeros(N+1,1);
+um=zeros(N+1,1);
+u_all=[uf;um];
+
+C_values=zeros(N,1);  % the coupling term coefficient
+kt=kt0*ones(N,1);
+kc=kc0*ones(N,1);
+
+
+%%
+Total_cb20=sum(Cb2.*cellz');
+
+if Use_Newton==1
+
+    % Generate the Jacobians for Newton's method or load from the exisitng
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile);
+
+
+    u_all_old=u_all;
+    H_old=H;
+    T_old=T;
+    C_all_old=C_all;
+    Cb_old=Cb;
+
+    phi_old=phi;
+    if Has_volatile==1
+        S_old=S;
+        Cs2_old=Cs2;
+        Cl2_old=Cl2;
+    end
+
+    Newton_solver2;
+end
 
 %% Set up the monitor
 %With_monitor=1; 
@@ -1214,3 +1281,6 @@ if With_monitor==1
     end    
     Plot_settings_master;
 end
+
+
+%%
