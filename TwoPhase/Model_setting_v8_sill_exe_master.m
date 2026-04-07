@@ -1084,7 +1084,7 @@ if Has_volatile==1
     dSdT = interp1(PTx, PT, Pressure/1000, 'linear', 'extrap')';    
     
     P3=Pressure'/10; %Pressure in Mpa
-    Lsaturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-(T-800).*dSdT/100;
+    Lsaturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-(max(T,500)-800).*dSdT/100;
    
 
     S=zeros(N,1);
