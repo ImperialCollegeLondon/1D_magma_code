@@ -1225,7 +1225,8 @@ if Use_Newton==1
         Cs2_old=Cs2;
         Cl2_old=Cl2;
     end
-
+    
+    dt=0;
     Newton_solver2;
 end
 
