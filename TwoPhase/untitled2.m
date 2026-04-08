@@ -37,7 +37,7 @@ Sats=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1/(1-phi_1+eps);
             clf; plot(phi,y)
 
             %%
-i=2939;
+i=2940;
 column_index=[i+(N+1)*2, i+(N+1)*2+N*2, i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
             in=X(column_index);
 
@@ -54,6 +54,6 @@ eps=1e-12;
 beta=1e4;
             Sat=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1+0.02;
     Par=cl2_1*D1-cs2_1;
-    % Par=-1/beta*log(exp(-beta*phi_1)+exp(-beta*Par)); %log softmin
+    Par=-1/beta*log(exp(-beta*(phi_1)^2)+exp(-beta*Par^2)); %log softmin
     % Par=(Par+sqrt(Par^2+eps))/2;
     condition=(sqrt(Sat^2+Par^2+eps)-(Sat+Par))/1e4

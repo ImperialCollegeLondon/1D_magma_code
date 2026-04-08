@@ -1089,7 +1089,9 @@ if Has_volatile==1
 
     S=zeros(N,1);
     Cl2=min(V_crust/Par_v*ones(N,1)/100, Lsaturation);
+    % Cl2=V_crust/Par_v*ones(N,1)/100;
     Cs2=V_crust*ones(N,1)/100;
+    % Cs2=Cl2*Par_v;
 
     injection_S=0;
     injection_Cl2=V_sill/100;
