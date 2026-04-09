@@ -1232,7 +1232,7 @@ if Use_Newton==1
     end
     
     dt=0;
-    Newton_solver3;
+    Newton_solver;
 end
 
 %% Set up the monitor

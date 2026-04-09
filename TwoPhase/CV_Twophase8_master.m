@@ -550,7 +550,7 @@ while Time<End_time
 %%
     if Use_Newton==1
         % Two_phase_Newton;
-        Newton_solver3;
+        Newton_solver;
     else
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');
