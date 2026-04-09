@@ -265,7 +265,7 @@ for iter=1:Max_Newton_iter
     for i=2:N-1
         % phi1,T1,cs,cl,n,Ts,Tl
         % in=[phi(i), T(i), Cs(i),  Cl(i) n_order, Ts0, Tl0];
-        in=[X([i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3])', n_order, Ts0, Tl0];
+        in=[X([i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3])', n_order, Ts0(1), Tl0(1)];
 
         vals(entry_count:entry_count+num_local-1)=Jac_solidus(in');
         RHS(i+(N+1)*2+N*2)=rhs_solidus(in');
@@ -410,7 +410,7 @@ for iter=1:Max_Newton_iter
         for i=2:N-1
             % phi1,T1,cs,cl,n,Ts,Tl
             % in=[phi(i), T(i), Cs(i),  Cl(i) n_order, Ts0, Tl0];
-            in=[X([i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3])', n_order, Ts0, Tl0];
+            in=[X([i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3])', n_order, Ts0(1), Tl0(1)];
             RHS(i+(N+1)*2+N*2)=rhs_solidus(in');
         end
         for i=2:N-1
@@ -476,11 +476,11 @@ C_all=[X((1:N)+2*N+2+N*3); X((1:N)+2*N+2+N*2)];
 Cb=X((1:N)+2*N+2).*X((1:N)+2*N+2+N*3)+(1-X((1:N)+2*N+2)).*X((1:N)+2*N+2+N*2);
 H=phi(1:N)*Lf+cp*T;
 
-Ts=(1-max(Cb,1e-12).^(1/n_order))*(Tl0-Ts0)+Ts0; %local solidus
+Ts=(1-max(Cb,1e-12).^(1/n_order))*(Tl0(1)-Ts0(1))+Ts0(1); %local solidus
 Tl=A1*Cb.^2+B1*Cb+C1; %local liquidus
 
 
-improve1=temp_norm;
+improve1=Norm_pre;
 improve2=improve1;
 
 

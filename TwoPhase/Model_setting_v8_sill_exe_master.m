@@ -461,7 +461,7 @@ semilogy(phi_range,xi_m, 'x-')
 semilogy(phi_range,mu_all)
 ylim([min(mu_m)/2 max(mu_all)])
 legend({'Shear','Bulk','Sum'})
-saveas(f3,'Shear_bulk_viscosity','svg')
+% saveas(f3,'Shear_bulk_viscosity','svg')
 
 %%
 if Use_Newton
@@ -865,7 +865,7 @@ end
 
 if Use_Newton==1
     disp('Generating all the lookup tables for Newton''s method')
-    mum_0=Ref_Bulk_MN;
+    
     N_mus=N_vis;
 
     % Solid viscosity are all ready in a lookup table as mu_all, just to create the coefficient
@@ -917,7 +917,8 @@ if Use_Newton==1
         end
         C_coef_all= piecewiseFit(C_values);
     end
-
+    % mum_0=max(Ref_Bulk_MN,max(max(C_values)));
+    mum_0=sqrt(Ref_Bulk_MN);
     % Density coefficients
     N_rhos=10;
     N_rhol=100;
@@ -1130,6 +1131,8 @@ if Has_volatile==1
     index_pressure_ntl=max(min(floor(Pressure_injection/40e3*N_Ts)+1,N_Ts),1);
     coef=Tl0_coefficient(index_pressure_ntl,index_v_ntl,:);
     Tl0_sill=coef(1)*Pressure_injection/40e3+coef(2)*V_sill/13+coef(3)*Pressure(i)*V_sill/40e3/20+coef(4);
+
+    Total_cb20=sum(Cb2.*cellz');
 else
     Ts0=(A1+B1+C1)*ones(N,1);
     Tl0=C1*ones(N,1);
@@ -1207,7 +1210,7 @@ kc=kc0*ones(N,1);
 
 
 %%
-Total_cb20=sum(Cb2.*cellz');
+
 
 if Use_Newton==1
 
@@ -1229,7 +1232,7 @@ if Use_Newton==1
     end
     
     dt=0;
-    Newton_solver2;
+    Newton_solver3;
 end
 
 %% Set up the monitor
@@ -1274,7 +1277,7 @@ end
 % Plot_configure=  {[1],[5],[6,7,8]};  
 if With_monitor==1
     if Has_volatile==1
-        Plot_configure=  {[1],[5],[6,7,8],1001};
+        Plot_configure=  {[1],[5],[6,7,8],1001,[2,3]};
     else
         if To_cal_mc==1
             Plot_configure=  {[1],[5],[6,7,8],[15],[16]};

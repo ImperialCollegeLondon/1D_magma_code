@@ -16,6 +16,7 @@
 %%
 clear;
 clc
+warning('off')
 
 % CAB - calling the m-file which contains the settings for the run.
 Model_setting_v8_sill_exe_master; 
@@ -549,7 +550,7 @@ while Time<End_time
 %%
     if Use_Newton==1
         % Two_phase_Newton;
-        Newton_solver2;
+        Newton_solver3;
     else
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');

@@ -261,7 +261,7 @@ Geotherm_of_crust,dummy,
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
-,min_N,2000
+,min_N,1500
 
 maximum_number_of_cells,dummy,
 ,max_N,3000
@@ -286,7 +286,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,4
+,Max_dtY,1
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5

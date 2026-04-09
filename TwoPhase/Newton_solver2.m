@@ -19,28 +19,18 @@ else
     nnz=12*(N+1)+4*(N+1)+13*N+8*N*2+8*N*2+14*N*2;
 end
 
-
-
-
-
-
 rows=zeros(nnz,1);
 cols=zeros(nnz,1);
 vals=zeros(nnz,1);
 
 RHS=zeros(Dof,1);
 
-
 % OLD_com=phi_old(1:N).*Cl_old+(1-phi_old).*Cs_old;
 % OLD_ent=phi_old(1:N)*Lf+T_old*cp; 
-
-
-
 Max_Newton_iter=500;
 converged=false;
 
 % Initial guess
-
 if Has_volatile==0
     % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old];
     X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N)];
@@ -49,6 +39,7 @@ else
     X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
 end
 X0=X;
+X_pre=X;
 if Has_volatile==1
     %preprocessing pressure index data
     Pressure=(nodez(end)-cellz)*g*rho_mean/1e5+1; %in bar
@@ -104,7 +95,6 @@ for iter=1:Max_Newton_iter
         end
         
         Variables=X(variable_indes);        
-        %parameters=[a0; b0; a1; b1; a2; b2; c2; d2; e2; f2; g2; h2; a3; b3; a4; b4; a5; b5; c5; d5; a6; b6; c6; d6;  dzi_0; dzi_1; g; mum_0];
         %Solid coefficients
         Parameters=zeros(28,1);
         % index_phi_0=max(min(floor(X(i-1+(N+1)*2) * N_mus) + 1, N_mus),1); %phi_0 index
@@ -254,7 +244,7 @@ for iter=1:Max_Newton_iter
             %[phi(i), T(i), Cs(i),  Cl(i)]
             column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3];
             in=X(column_index);
-            Parameters=[Ts0;Tl0;0;0; 0];
+            Parameters=[Ts0(1);Tl0(1);0;0; 0];
         end
 
         vals(entry_count:entry_count+num_local-1)=Jac_solidus([in; Parameters;n_order]);
@@ -398,23 +388,19 @@ for iter=1:Max_Newton_iter
 
     Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
     
-    % if ~isreal(RHS)
-    %     aaa=1; 
-    % end
     du = Matrix_A \ (-RHS);
-
-    % if any(isnan(du))
-    %     dt=dt*0.5;   
-    %     disp(['Decrease dt, dt=' num2str(dt/Year)]) 
-    %     continue
-    % end
+    if any(isnan(du))
+        dt=dt*0.5;   
+        X=X0;
+        disp(['Decrease dt, dt=' num2str(dt/Year)]) 
+        continue
+    end
     % Force constant values on boundary
     du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
     
     alpha = 1.0;
-
-    for ls = 1:3
-        X = X0 + alpha * du;
+    for ls = 1:10
+        X = X_pre + alpha * du;
         % force 1>phi>0
         % X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),0);
 
@@ -600,18 +586,9 @@ for iter=1:Max_Newton_iter
             disp(['Decrease dt, dt=' num2str(dt/Year)])  
             Not_improve=0;
             Norm_pre=1e3;
-%             if dt/Year<1e-5
-%                 aaa=1;
-%             end
         end
     end
-    % um=X(1:N+1);
-    % uf=X(N+2:2*N+2);
-    % phi=X((1:N)+2*N+2);
-    % T=X((1:N)+2*N+2+N);
-    % Cs=X((1:N)+2*N+2+N*2);
-    % Cl=X((1:N)+2*N+2+N*3);
-    X0=X;
+    X_pre=X;
 end
 if iter<=5
     if dt<0.01*Max_dt
@@ -684,9 +661,9 @@ rhom=zeros(N+1,1);
 rhof=zeros(N+1,1);
 rho_b=zeros(N,1);
 
-if min(Cl2)<0
-    aaa=1;
-end
+% if min(Cl2)<0
+%     aaa=1;
+% end
     
 % Total_cb2=sum(Cb2.*cellz);
 % disp(['CB2 conservation:' num2str(Total_cb2/Total_cb20)])

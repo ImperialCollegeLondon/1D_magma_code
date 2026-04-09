@@ -1,11 +1,13 @@
 
-i=3054;
+i=2205;
+column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*4 ,i+(N+1)*2+N*6 ];
+                in=X(column_index);
             a0=dSdT(i)/100;
             b0=b0_all(i);
 D1=0.2;
 cap_A=S_cap(1);
 cap_B=S_cap(2);
-eps=1e-15;
+eps=1e-12;
 
             column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6];
             in=X(column_index);
@@ -18,16 +20,15 @@ eps=1e-15;
             cs2_1=in(6); 
             cl2_1=in(7);
         
-Sats=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1/(1-phi_1+eps);
-    T_capped=(T_1+500+sqrt((T_1-500)^2+eps))/2;
-    Satl=a0*T_capped+b0-cl2_1/(phi_1+eps);
+    Sat=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1+0.02;
+    Par1=cl2_1*D1-cs2_1;
+    % Par=-1/beta*log(exp(-beta*phi_1^2)+exp(-beta*Par^2)); %log softmin
+    Par1=(Par1+sqrt(Par1^2+eps))/2;
+    Par=sqrt(Par1^2+phi_1^2+eps)-(Par1+phi_1);
+    % condition=(sqrt(Sat^2+Par^2+eps)-(Sat+Par))/1e4; %condition=0 means either Sat>0 and Par=0;  or Sat>0 and Par=0
+    condition=(Sat+Par-sqrt((Sat-Par)^2+eps))/1e4
 
-    % Par_l=cl2_1/(phi_1+eps)*D1;
-    % Par=cs2_1/(1-phi_1+eps)-((cap_A*cs_1+cap_B*(1-cs_1))+Par_l-sqrt(((cap_A*cs_1+cap_B*(1-cs_1))-Par_l+eps)^2))/2;
 
-    R=(phi_1/(phi_1+eps)*Satl+(1-phi_1/(phi_1+eps))*Sats);
-
-    constraint=sqrt(S_1^2+R^2+eps)-(S_1+R)
 
 
             %%

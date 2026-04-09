@@ -128,7 +128,7 @@ rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2
 % solidus and liquidus should be defined in temrs of normalized temperature T'=(T-Ts)/(Tl-Ts) where Tl and Ts is fixed when no volatile is present
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
 % T=func(cl)*(Tl-Ts)+Ts
-% syms Ts Tl
+
 % syms D1 % wather s/m parition coefficient
 % if Has_volatile==1
 %     % when volatile is present Tl and Ts become functions of bulk water content (thus cb2=cl2*phi+(1-phi)*cs2)
@@ -165,7 +165,7 @@ rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2
 % % In the most general form, liquidus and solidus are of the same format symbolicly 
 % Jac_liquidus=Jac_solidus;
 % rhs_liquidus=rhs_solidus;
-% 
+
 
 eps=1e-12;
 
@@ -231,7 +231,7 @@ end
 %% Solid saturation equation
 % Solid saturation is a function of solid component cs
 % either water in solid/melt follow the partition rule or solid is saturated
-syms cap_A cap_B
+syms cap_A cap_B D1
 if Has_volatile==1    
     Sat=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1;
     Par=cl2_1*D1-cs2_1;
