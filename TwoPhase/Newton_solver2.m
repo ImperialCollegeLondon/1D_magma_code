@@ -149,18 +149,42 @@ for iter=1:Max_Newton_iter
 
     %% Continuity assembly
     num_local=4;
-    for i=1:N+1
-        % umi_1,ufi,phi0,phi1
-        % in=[um(i), uf(i), phi(i-1), phi(i)];
-        in=X([i, i+(N+1),  i-1+(N+1)*2, i+(N+1)*2]);
-        vals(entry_count:entry_count+num_local-1)=Jac_con(in);
-        RHS(i+N+1)=rhs_con(in);
+    % umi_1,ufi,phi0,phi1
+    I = (2:N)';
+    um_1=X(I);
+    uf_1=X(I+(N+1));
+    phi_0=X(I-1+(N+1)*2);
+    phi_1=X(I  +(N+1)*2);
+    RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0, phi_1);
 
-        rows(entry_count:entry_count+num_local-1)=i+N+1;
-        cols(entry_count:entry_count+num_local-1)=[i, i+(N+1),  i-1+(N+1)*2, i+(N+1)*2];
+    J = Jac_con(um_1, uf_1, phi_0, phi_1);
+    rows_block = repmat(I + N + 1, 1, num_local);   % (N-1) × 4
+    cols_block = [ ...
+        I, ...
+        I + (N+1), ...
+        I-1 + (N+1)*2, ...
+        I   + (N+1)*2 ...
+        ];   % (N-1) × 4
+    
+    idx = entry_count : entry_count + num_local*(N-1) - 1;
 
-        entry_count=entry_count+num_local;
-    end
+    rows(idx) = rows_block(:);
+    cols(idx) = cols_block(:);
+    vals(idx) = J(:);
+     
+    entry_count = entry_count + num_local*(N-1);
+    % for i=2:N
+    % 
+    %     % in=[um(i), uf(i), phi(i-1), phi(i)];
+    %     in=X([i, i+(N+1),  i-1+(N+1)*2, i+(N+1)*2]);
+    %     vals(entry_count:entry_count+num_local-1)=Jac_con(in);
+    %     RHS(i+N+1)=rhs_con(in);
+    % 
+    %     rows(entry_count:entry_count+num_local-1)=i+N+1;
+    %     cols(entry_count:entry_count+num_local-1)=[i, i+(N+1),  i-1+(N+1)*2, i+(N+1)*2];
+    % 
+    %     entry_count=entry_count+num_local;
+    % end
 
     %% Major component transport assembly
     num_local=13;
@@ -371,8 +395,8 @@ for iter=1:Max_Newton_iter
         % force 1350>T
         % X(2*(N+1)+N+1:2*(N+1)+N*2)=min(X(2*(N+1)+N+1:2*(N+1)+N*2),1350);
  
-        RHS=zeros(Dof,1);
-                index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
+        RHS(:)=0;
+        index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
 
         index_phi_nc=max(min(floor(X((1:N)+(N+1)*2) * N_C) + 1, N_C),1);
         index_cl_nc=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_C) + 1, N_C),1);
@@ -437,12 +461,18 @@ for iter=1:Max_Newton_iter
             RHS(i)=rhs_mom([Variables; Parameters]);
         end
 
-        for i=1:N+1
-            % umi_1,ufi,phi0,phi1
-            % in=[um(i), uf(i), phi(i-1), phi(i)];
-            in=X([i, i+(N+1),  i-1+(N+1)*2, i+(N+1)*2]);
-            RHS(i+N+1)=rhs_con(in);
-        end
+        % for i=1:N+1
+        %     % umi_1,ufi,phi0,phi1
+        %     % in=[um(i), uf(i), phi(i-1), phi(i)];
+        %     in=X([i, i+(N+1),  i-1+(N+1)*2, i+(N+1)*2]);
+        %     RHS(i+N+1)=rhs_con(in);
+        % end
+        I = (2:N)';
+        um_1=X(I);
+        uf_1=X(I+(N+1));
+        phi_0=X(I-1+(N+1)*2);
+        phi_1=X(I  +(N+1)*2);
+        RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0,phi_1);
 
         for i=2:N-1
             %umi_1,umi_2,ufi,ufi2,phi0,phi1,phi2,cs0,cs,cs2,cl0,cl,cl2,dt,dzi_1,Cb_old

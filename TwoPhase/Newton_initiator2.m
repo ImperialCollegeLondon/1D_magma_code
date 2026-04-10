@@ -94,11 +94,12 @@ rhs_mom= matlabFunction(momentum, 'Vars', {[Variables; parameters]});
 
 %% Continuity equation
 continuity=umi_1*(1-phi_1/2-phi_0/2)+ufi*(phi_1/2+phi_0/2);
-Variables=[umi_1; ufi; phi_0; phi_1];
-Jac_con=jacobian(continuity, Variables);
+% Variables=;
+Jac_con=jacobian(continuity, [umi_1, ufi, phi_0, phi_1]);
 Jac_con=simplify(Jac_con);
-Jac_con= matlabFunction(Jac_con, 'Vars', {Variables});
-rhs_con= matlabFunction(continuity, 'Vars', {Variables});
+
+Jac_con= matlabFunction(Jac_con, 'Vars', {umi_1, ufi, phi_0, phi_1});
+rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
 
 
 %% Major component transport equation

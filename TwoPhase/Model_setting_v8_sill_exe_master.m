@@ -1073,7 +1073,7 @@ if Has_volatile==1
 
     V_crust=1.5;
     V_sill=2;
-    kf=1e-5;
+    kf=1e-7;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
 
