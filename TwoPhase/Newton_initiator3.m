@@ -233,42 +233,53 @@ else
     rhs_ct2=[];
 end
 
-%% Melt and solid saturation equation
+%% Melt saturation equation
 % melt saturation is a function of temperature and presusre. Pressure dependency part is a constant in the constraint
 % e.g. Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100-v2;
-syms cap_A cap_B
 eps=1e-12;
 % beta=1e4;
 if Has_volatile==1
     % cl2_1_cor=(cl2_1+sqrt(cl2_1^2+eps))/2;
     T_capped=(T_1+500+sqrt((T_1-500)^2+eps))/2;
-    Satl=a0*T_capped+b0-cl2_1;
-    
-    Sats=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1+0.02;
-    Par=cl2_1*D1-cs2_1;
+    Sat=a0*T_capped+b0-cl2_1;
+    % Sat=sqrt(Sat^2+phi_1^2+eps)-(Sat+phi_1);
+    % condition=(sqrt(Sat^2+S_1^2+eps)-(Sat+S_1))/1e4; %condition=0 means either Sat>0 and S=0;  or Sat=0 and S>0    
+    % condition=(Sat+S_1-sqrt((Sat-S_1)^2+eps))/1e4;
+    condition=(Sat+S_1-(sqrt(Sat-S_1)^2+eps))/1e4;
+    % condition=Sat+S_1-sqrt((Sat-S_1)^2+eps);
 
-    % condition=(Satl+S_1-(sqrt(Satl-S_1)^2+eps))/1e4;
-    condition=(Satl+S_1-sqrt((Satl-S_1)^2+eps))/1e4;
-
-    Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
+    Variables=[phi_1; T_1; S_1; cl2_1 ];
     Jac_lsat=jacobian(condition, Variables);
     Jac_lsat= matlabFunction(Jac_lsat, 'Vars', {[Variables; a0; b0]});
     rhs_lsat= matlabFunction(condition, 'Vars', {[Variables; a0; b0]});
+else
+    Jac_lsat=[];
+    rhs_lsat=[];
+end
 
-    % condition=(Sats+Par-sqrt((Sats-Par)^2+eps))/1e4;
-    condition=Par/1e4;
-    Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
+%% Solid saturation equation
+% Solid saturation is a function of solid component cs
+% either water in solid/melt follow the partition rule or solid is saturated
+syms cap_A cap_B
+eps=1e-12;
+% beta=1e5;
+if Has_volatile==1    
+    Sat=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1+0.02;
+    Par=cl2_1*D1-cs2_1;
+    % Par=-1/beta*log(exp(-beta*phi_1^2)+exp(-beta*Par^2)); %log softmin
+    % Par=(Par+sqrt(Par^2+eps))/2;
+    % Par=sqrt(Par^2+phi_1^2+eps)-(Par+phi_1);
+    % condition=(sqrt(Sat^2+Par^2+eps)-(Sat+Par))/1e4; %condition=0 means either Sat>0 and Par=0;  or Sat>0 and Par=0
+    condition=(Sat+Par-sqrt((Sat-Par)^2+eps))/1e4;
 
+    Variables=[phi_1; cs_1; cs2_1; cl2_1];
     Jac_ssat=jacobian(condition, Variables);
     Jac_ssat= matlabFunction(Jac_ssat, 'Vars', {[Variables; cap_A; cap_B; D1]});
     rhs_ssat= matlabFunction(condition, 'Vars', {[Variables; cap_A; cap_B; D1]});
 else
-    Jac_lsat=[];
-    rhs_lsat=[];
     Jac_ssat=[];
     rhs_ssat=[];
 end
-
 %% Melt and solid saturation, and volatile partitioning constraints
 % Constraints:
 % 1: S(H(phi)(Satl-Cl2)+(1-H(phi))(Sats-Cs2))=0

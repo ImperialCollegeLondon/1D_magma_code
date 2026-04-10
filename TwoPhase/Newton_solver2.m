@@ -27,7 +27,7 @@ RHS=zeros(Dof,1);
 
 % OLD_com=phi_old(1:N).*Cl_old+(1-phi_old).*Cs_old;
 % OLD_ent=phi_old(1:N)*Lf+T_old*cp; 
-Max_Newton_iter=500;
+Max_Newton_iter=200;
 converged=false;
 
 % Initial guess
@@ -57,8 +57,6 @@ if Has_volatile==1
     b0_all=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-8*dSdT;
 end
 
-
-
 Norm_pre=1e3;
 Not_improve=0;
 for iter=1:Max_Newton_iter
@@ -69,8 +67,7 @@ for iter=1:Max_Newton_iter
     else
         num_local=10;
     end
-    
-    % update indes
+        % update indes
     index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
 
     index_phi_nc=max(min(floor(X((1:N)+(N+1)*2) * N_C) + 1, N_C),1);
@@ -85,6 +82,7 @@ for iter=1:Max_Newton_iter
         index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
         index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Ts) + 1, N_Ts),1);
     end
+
     for i=2:N
         %Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1; cl2_0; cl2_1];
         if Has_volatile==2
@@ -210,9 +208,9 @@ for iter=1:Max_Newton_iter
     cols(entry_count+(0:1))=[1 N]+(N+1)*2+N;
     vals(entry_count+(0:1))=1;
     RHS([1 N]+(N+1)*2+N)=X([1 N]+(N+1)*2+N)-T_old([1 N]);
-    entry_count=entry_count+2;
-    
-    %% solidus and liquidus
+    entry_count=entry_count+2;   
+
+    %% Solidus and liquidus
     if Has_volatile==1
         num_local=7;
     else
@@ -305,42 +303,28 @@ for iter=1:Max_Newton_iter
         cols(entry_count+(0:1))=[1 N]+(N+1)*2+N*4;
         vals(entry_count+(0:1))=1;
         RHS([1 N]+(N+1)*2)=X([1 N]+(N+1)*2+N*4)-S_old([1 N]);
-        entry_count=entry_count+2;
-        
-        %% Partition and saturations
-        % num_local=7;
-        % 
-        % for i=2:N-1
-        %     %[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1]
-        %     column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6];
-        %     in=X(column_index);
-        %     a0=dSdT(i)/100;
-        %     b0=b0_all(i);
-        % 
-        %     vals(entry_count:entry_count+num_local-1)=Jac_ssat([in; a0; b0; S_cap(1); S_cap(2); Par_v]);
-        %     RHS(i+(N+1)*2+N*5)=rhs_ssat([in; a0; b0; S_cap(1); S_cap(2); Par_v]);
-        %     rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*5;
-        %     cols(entry_count:entry_count+num_local-1)=column_index;
-        %     entry_count=entry_count+num_local;
-        % 
-        %     vals(entry_count:entry_count+num_local-1)=Jac_lsat([in; a0; b0; S_cap(1); S_cap(2); Par_v]);
-        %     RHS(i+(N+1)*2+N*6)=rhs_lsat([in; a0; b0; S_cap(1); S_cap(2); Par_v]);
-        %     rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*6;
-        %     cols(entry_count:entry_count+num_local-1)=column_index;
-        %     entry_count=entry_count+num_local;
-        % end
+        entry_count=entry_count+2;        
 
-        %% Solid saturation equation
-        num_local=4;
+        %% Solid and melt saturation equation
+        num_local=6;
         for i=2:N-1
-            %phi_1, cs_1;  cs2_1; cl2_1; 
-            column_index=[i+(N+1)*2, i+(N+1)*2+N*2, i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
+            % Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
+            column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
             in=X(column_index);
-
+            
+            a0=dSdT(i)/100;
+            b0=b0_all(i);
 
             vals(entry_count:entry_count+num_local-1)=Jac_ssat([in;S_cap(1); S_cap(2); Par_v]);
             RHS(i+(N+1)*2+N*5)=rhs_ssat([in;S_cap(1); S_cap(2); Par_v]);
             rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*5;
+            cols(entry_count:entry_count+num_local-1)=column_index;
+            entry_count=entry_count+num_local;
+
+
+            vals(entry_count:entry_count+num_local-1)=Jac_lsat([in; a0; b0]);
+            RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);
+            rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*6;
             cols(entry_count:entry_count+num_local-1)=column_index;
             entry_count=entry_count+num_local;
         end
@@ -350,35 +334,14 @@ for iter=1:Max_Newton_iter
         vals(entry_count+(0:1))=1;
         RHS([1 N]+(N+1)*2)=X([1 N]+(N+1)*2+N*5)-Cs2_old([1 N]);
         entry_count=entry_count+2;
-        %% Melt saturation equation
-        num_local=4;
-        % Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100;
 
-        % a0=dSdT/100;
-        for i=2:N-1
-            %phi_1, T_1; S_1; cl2_1 
-            column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*4 ,i+(N+1)*2+N*6 ];
-            in=X(column_index);
-
-            a0=dSdT(i)/100;
-            b0=b0_all(i);
-            vals(entry_count:entry_count+num_local-1)=Jac_lsat([in; a0; b0]);
-            RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);
-            rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*6;
-            cols(entry_count:entry_count+num_local-1)=column_index;
-            entry_count=entry_count+num_local;
-        end
-
-        %fix the first and last cell value
         rows(entry_count+(0:1))=[1 N]+(N+1)*2+N*6;
         cols(entry_count+(0:1))=[1 N]+(N+1)*2+N*6;
         vals(entry_count+(0:1))=1;
         RHS([1 N]+(N+1)*2)=X([1 N]+(N+1)*2+N*6)-Cl2_old([1 N]);
         entry_count=entry_count+2;
-
-
     end
-%%    
+%%
     norm_R = max(abs(RHS));
     if norm_R < Precision
         fprintf('Converged in %d iterations\n', iter);
@@ -389,34 +352,32 @@ for iter=1:Max_Newton_iter
     Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
     
     du = Matrix_A \ (-RHS);
-    if any(isnan(du))
-        dt=dt*0.5;   
-        X=X0;
-        disp(['Decrease dt, dt=' num2str(dt/Year)]) 
-        continue
-    end
+    % if any(isnan(du))
+    %     dt=dt*0.5;   
+    %     X=X0;
+    %     disp(['Decrease dt, dt=' num2str(dt/Year)]) 
+    %     continue
+    % end
     % Force constant values on boundary
     du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
     
     alpha = 1.0;
-    for ls = 1:10
+    for ls = 1:5
         X = X_pre + alpha * du;
         % force 1>phi>0
-        % X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),0);
-
-        % X(2*(N+1)+N*2+1:2*(N+1)+N*3)=max(X(2*(N+1)+N*2+1:2*(N+1)+N*3),0);
+        X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),-0.99e-2);
+        % X(2*(N+1)+1:2*(N+1)+N)=min(X(2*(N+1)+1:2*(N+1)+N),1);
 
         % force 1350>T
         % X(2*(N+1)+N+1:2*(N+1)+N*2)=min(X(2*(N+1)+N+1:2*(N+1)+N*2),1350);
  
         RHS=zeros(Dof,1);
-        index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
+                index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
 
         index_phi_nc=max(min(floor(X((1:N)+(N+1)*2) * N_C) + 1, N_C),1);
         index_cl_nc=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_C) + 1, N_C),1);
 
         index_cs_nrhos=max(min(floor(X((1:N)+(N+1)*2+N*2) * N_rhos) + 1, N_rhos),1);
-
         if Has_volatile==1
             index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
             % cb2=phi*cl2+(1-phi)*cs2+S;
@@ -525,12 +486,12 @@ for iter=1:Max_Newton_iter
                 %[phi(i), T(i), Cs(i),  Cl(i)]
                 column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3];
                 in=X(column_index);
-                Parameters=[Ts0;Tl0;0;0; 0];
+                Parameters=[Ts0(1);Tl0(1);0;0; 0];
             end
-            RHS(i+(N+1)*2+N*2)=rhs_solidus([in; Parameters;n_order]);
-            RHS(i+(N+1)*2+N*3)=rhs_liquidus([in; Parameters; A1]);
+            RHS(i+(N+1)*2+N*2)=rhs_solidus([in; Parameters; n_order]);
+            RHS(i+(N+1)*2+N*3)=rhs_liquidus([in; Parameters; A1]);            
         end
-        
+
         if Has_volatile==1
             for i=2:N-1
                 %umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2
@@ -541,22 +502,17 @@ for iter=1:Max_Newton_iter
                 RHS(i+(N+1)*2+N*4)=rhs_ct2(in);
             end
             for i=2:N-1
-                %phi_1, cs_1;  cs2_1; cl2_1;
-                column_index=[i+(N+1)*2, i+(N+1)*2+N*2, i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
+                column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
                 in=X(column_index);
+                a0=dSdT(i)/100;
+                b0=b0_all(i);
                 RHS(i+(N+1)*2+N*5)=rhs_ssat([in;S_cap(1); S_cap(2); Par_v]);
-
+                RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);
             end
-            for i=2:N-1
-                %phi_1, T_1; S_1; cl2_1
-                column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*4 ,i+(N+1)*2+N*6 ];
-                in=X(column_index);
-                RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);     
-            end  
         end
 
-        temp_norm=max(abs(RHS));
-        if temp_norm < norm_R           
+        temp_norm=max(abs(RHS)); 
+        if temp_norm < (1-alpha*1e-4)*norm_R           
             break;            
         end
         alpha = alpha * 0.5;
@@ -581,7 +537,6 @@ for iter=1:Max_Newton_iter
                 % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
                 X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
             end
-
             dt=dt*0.5;   
             disp(['Decrease dt, dt=' num2str(dt/Year)])  
             Not_improve=0;
@@ -644,7 +599,7 @@ if Has_volatile==1
     Tl=A1*Cb.^2+(Ts0-Tl0-A1).*Cb+Tl0;
 else
     % Ts=(1-max(Cb,1e-12).^(1/n_order))*(Tl0-Ts0)+Ts0; 
-    Ts=Tl0-Cb.^(1/n_order).*(Tl0-Ts0); %local solidus
+    Ts=Tl0(1)-Cb.^(1/n_order).*(Tl0(1)-Ts0(1)); %local solidus
     Tl=A1*Cb.^2+B1*Cb+C1; %local liquidus
 end
 
@@ -671,3 +626,4 @@ rho_b=zeros(N,1);
 if iter==Max_Newton_iter
     error('Newton solver not converged before max iteration');
 end
+

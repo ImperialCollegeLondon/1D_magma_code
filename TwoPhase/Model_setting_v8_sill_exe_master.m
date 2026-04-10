@@ -1091,15 +1091,16 @@ if Has_volatile==1
     S=zeros(N,1);
     Cl2=min(V_crust/Par_v*ones(N,1)/100, Lsaturation);
     % Cl2=V_crust/Par_v*ones(N,1)/100;
-    Cs2=V_crust*ones(N,1)/100;
-    % Cs2=Cl2*Par_v;
+    % Cs2=V_crust*ones(N,1)/100;
+    Cs2=Cl2*Par_v;
 
     injection_S=0;
-    injection_Cl2=V_sill/100;
+    injection_Cl2=V_sill/100.*injection_phi;
     injection_Cs2=V_sill*Par_v/100;
     
     Ssaturation=S_cap(1)*Cs2+S_cap(2)*(1-Cs2);
     Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
+    % Cb2=Cl2+Cs2+S;
 
     
     Ts0=zeros(N,1);
@@ -1232,7 +1233,7 @@ if Use_Newton==1
     end
     
     dt=0;
-    Newton_solver;
+    Newton_solver2;
 end
 
 %% Set up the monitor

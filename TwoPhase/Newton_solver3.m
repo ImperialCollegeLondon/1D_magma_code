@@ -37,7 +37,6 @@ if Has_volatile==0
 else
     % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
     X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
-    % X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old.*(1-phi_old(1:N)); Cl2_old.*phi_old(1:N)];
 end
 X0=X;
 X_pre=X;
@@ -48,8 +47,7 @@ if Has_volatile==1
     index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
     index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
 
-    % Cb2_old=phi_old(1:N).*Cl2_old+(1-phi_old(1:N)).*Cs2_old+S_old;
-    Cb2_old=Cl2_old+Cs2_old+S_old;
+    Cb2_old=phi_old(1:N).*Cl2_old+(1-phi_old(1:N)).*Cs2_old+S_old;
 
     PT=[-4e-4,-5e-4,-6e-4,-13e-4, -15.5e-4,-17e-4,-16e-4,-5e-4, 0, 26e-4,5e-3, 5e-3];  % coefficient from (ref) for the temperature dependency of water saturation (Holtz et al,?) 
     PTx=[0,   0.12    0.2  0.3    0.5       1       2       3   4  5,    11, 20]; %in kbar
@@ -80,8 +78,7 @@ for iter=1:Max_Newton_iter
     if Has_volatile==1
         index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
         % cb2=phi*cl2+(1-phi)*cs2+S;
-        % cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
-        cb2=X((1:N)+(N+1)*2+N*6)+X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
+        cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
         index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
         index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Ts) + 1, N_Ts),1);
     end
@@ -387,7 +384,7 @@ for iter=1:Max_Newton_iter
         % X(2*(N+1)+N+1:2*(N+1)+N*2)=min(X(2*(N+1)+N+1:2*(N+1)+N*2),1350);
  
         RHS=zeros(Dof,1);
-        index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
+                index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
 
         index_phi_nc=max(min(floor(X((1:N)+(N+1)*2) * N_C) + 1, N_C),1);
         index_cl_nc=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_C) + 1, N_C),1);
@@ -396,8 +393,7 @@ for iter=1:Max_Newton_iter
         if Has_volatile==1
             index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
             % cb2=phi*cl2+(1-phi)*cs2+S;
-            % cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
-            cb2=X((1:N)+(N+1)*2+N*6)+X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
+            cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
             index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
             index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Ts) + 1, N_Ts),1);
         end
@@ -593,16 +589,10 @@ Cb=X((1:N)+2*N+2).*X((1:N)+2*N+2+N*3)+(1-X((1:N)+2*N+2)).*X((1:N)+2*N+2+N*2);
 H=phi(1:N)*Lf+cp*T;
 
 if Has_volatile==1
-    S=X((1:N)+2*N+2+N*4);    
-    
-    eps=1e-12;
-    % Cs2=X((1:N)+2*N+2+N*5)./(1-X((1:N)+2*N+2)+eps);
-    % Cl2=X((1:N)+2*N+2+N*6)./(X((1:N)+2*N+2)+eps);
-
+    S=X((1:N)+2*N+2+N*4);
     Cs2=X((1:N)+2*N+2+N*5);
     Cl2=X((1:N)+2*N+2+N*6);
-    % Cb2=Cl2.*phi(1:N)+Cs2.*phi(N+1:end)+S;
-    Cb2=X((1:N)+2*N+2+N*4)+X((1:N)+2*N+2+N*5)+X((1:N)+2*N+2+N*6);
+    Cb2=Cl2.*phi(1:N)+Cs2.*phi(N+1:end)+S;
 
     Lsaturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(max(T,500)-800).*dSdT/100;
     Ssaturation=S_cap(1)*Cs2+S_cap(2)*(1-Cs2);
