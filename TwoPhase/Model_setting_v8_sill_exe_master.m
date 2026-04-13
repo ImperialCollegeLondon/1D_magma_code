@@ -11,7 +11,7 @@ clear;
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=1;
+Has_volatile=0;
 
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
@@ -917,6 +917,8 @@ if Use_Newton==1
         end
         C_coef_all= piecewiseFit(C_values);
     end
+
+    
     % mum_0=max(Ref_Bulk_MN,max(max(C_values)));
     mum_0=sqrt(Ref_Bulk_MN);
     % Density coefficients
@@ -940,6 +942,7 @@ if Use_Newton==1
 
     end
     rhol_coef_all=piecewiseFit(rhof);
+
 
     rhom=rhom_1*(1-Cs_range)+Cs_range*rhom_2;
     rhos_coef_all=piecewiseFit(rhom);
@@ -1041,6 +1044,7 @@ if Has_volatile==1
     F = griddedInterpolant({Data_y(end:-1:1), 0:13}, Data_point(end:-1:1,end:-1:1), 'linear', 'linear');
     [a_grid, b_grid] = ndgrid(Pressure_range, vol_range);
     Ts0_coefficient= piecewiseFit(F(a_grid, b_grid));
+
     %
     % (0,0) (61,738)
     % (0,1700) (838,738)
@@ -1067,6 +1071,7 @@ if Has_volatile==1
     F = griddedInterpolant({Data_y2(end:-1:1), [0 2 5 10 20]}, Data_point2(end:-1:1, end:-1:1), 'linear', 'linear');
     [a_grid, b_grid] = ndgrid(Pressure_range2, vol_range2);
     Tl0_coefficient= piecewiseFit(F(a_grid, b_grid));
+
     
     N_Ts=N_Ts-1;
     N_Tl=N_Tl-1;
@@ -1216,7 +1221,7 @@ kc=kc0*ones(N,1);
 if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator3(Has_volatile);
 
 
     u_all_old=u_all;
@@ -1232,8 +1237,20 @@ if Use_Newton==1
         Cl2_old=Cl2;
     end
     
+
+    if Has_volatile==1
+        nC = size(Tl0_coefficient,3);
+        Tl0_coefficient=reshape(Tl0_coefficient, [], nC);
+
+        nC = size(Ts0_coefficient,3);
+        Ts0_coefficient=reshape(Ts0_coefficient, [], nC);
+    end
+    
+    % nC = size(C_coef_all,3);
+    % C_coef_all=reshape(C_coef_all, [], nC);
+    
     dt=0;
-    Newton_solver2;
+    Newton_solver3;
 end
 
 %% Set up the monitor

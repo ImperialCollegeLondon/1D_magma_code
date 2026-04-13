@@ -30,15 +30,6 @@ syms dzi_0 dzi_1 dzi_2
 %     Variables=[umi_0; umi_1;  umi_2; ufi; ufi2;phi_0; phi_1; phi_2; T_0; T_1; T_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
 % end
 
-%% Parameters linear coefficients
-% linear, bylinear, trilinear function coefficients
-% linear: y=ax_1+bx
-% bilinear: y= ax_1+bx_2+cx_1*x_2+d
-% trilinear: y= ax_1+ bx_2 +c x_3 + dx_1*x_2 +ex_1*x_3+ fx_2*x_3+gx_1*x_2*x_3+h
-% syms a0 b0 c0 d0 e0 f0 g0 h0
-% syms a1 b1 c1 d1 e1 c1 g1 h1
-
-
 %% Momentum equation
 % parameters for momentum equation
 % Solid viscosity is a function of phi
@@ -85,11 +76,17 @@ if Has_volatile==2
 else
     Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1];
 end
-parameters=[a0; b0; a1; b1; a2; b2; c2; d2; e2; f2; g2; h2; a3; b3; a4; b4; a5; b5; c5; d5; a6; b6; c6; d6;  dzi_0; dzi_1; g; mum_0];  
-Jac_mom=jacobian(momentum, Variables);
+
+% parameters=[a0; b0; a1; b1; a2; b2; c2; d2; e2; f2; g2; h2; a3; b3; a4; b4; a5; b5; c5; d5; a6; b6; c6; d6;  dzi_0; dzi_1; g; mum_0];  
+% Jac_mom=jacobian(momentum, Variables);
+% Jac_mom=simplify(Jac_mom);
+% Jac_mom= matlabFunction(Jac_mom, 'Vars', {[Variables; parameters]});
+% rhs_mom= matlabFunction(momentum, 'Vars', {[Variables; parameters]});
+
+Jac_mom=jacobian(momentum, [umi_0, umi_1, umi_2, ufi, phi_0, phi_1, cs_0, cs_1, cl_0, cl_1]);
 Jac_mom=simplify(Jac_mom);
-Jac_mom= matlabFunction(Jac_mom, 'Vars', {[Variables; parameters]});
-rhs_mom= matlabFunction(momentum, 'Vars', {[Variables; parameters]});
+Jac_mom= matlabFunction(Jac_mom, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_1, cs_0, cs_1, cl_0, cl_1, a0, b0, a1, b1, a2, b2, c2, d2, e2, f2, g2, h2, a3, b3, a4, b4, a5, b5, c5, d5, a6, b6, c6, d6,  dzi_0, dzi_1, g, mum_0});
+rhs_mom= matlabFunction(momentum, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_1, cs_0, cs_1, cl_0, cl_1, a0, b0, a1, b1, a2, b2, c2, d2, e2, f2, g2, h2, a3, b3, a4, b4, a5, b5, c5, d5, a6, b6, c6, d6,  dzi_0, dzi_1, g, mum_0});
 
 
 %% Continuity equation
@@ -107,12 +104,16 @@ syms dt
 % old bulk composition
 syms OLD_com
 
-Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
+% Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
 trans_comp=(phi_1*cl_1+(1-phi_1)*cs_1)-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt;
-Jac_ct=jacobian(trans_comp, Variables);
-Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
-rhs_ct= matlabFunction(trans_comp, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
 
+% Jac_ct=jacobian(trans_comp, Variables);
+% Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
+% rhs_ct= matlabFunction(trans_comp, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
+
+Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
+Jac_ct= matlabFunction(Jac_ct, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_1, OLD_com});
+rhs_ct= matlabFunction(trans_comp, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_1, OLD_com});
 
 %% Enthalpy transport equation
 syms cp Lf kt
@@ -120,56 +121,20 @@ syms cp Lf kt
 syms OLD_ent
 trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/20/Lf;
 Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
-Jac_ent=jacobian(trans_enthalpy, Variables);
+
+% Jac_ent=jacobian(trans_enthalpy, Variables);
+% Jac_ent=simplify(Jac_ent);
+% Jac_ent=matlabFunction(Jac_ent,'Vars',{[Variables; dzi_0; dzi_1; dzi_2; dt; cp; Lf; kt; OLD_ent]});
+% rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2; dt; cp; Lf; kt; OLD_ent]});
+
+Jac_ent=jacobian(trans_enthalpy, [ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2]);
 Jac_ent=simplify(Jac_ent);
-Jac_ent=matlabFunction(Jac_ent,'Vars',{[Variables; dzi_0; dzi_1; dzi_2; dt; cp; Lf; kt; OLD_ent]});
-rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2; dt; cp; Lf; kt; OLD_ent]});
-
-
-
-
+Jac_ent=matlabFunction(Jac_ent,'Vars',{ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent});
+rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent});
 %% solidus and liquidus
 % solidus and liquidus should be defined in temrs of normalized temperature T'=(T-Ts)/(Tl-Ts) where Tl and Ts is fixed when no volatile is present
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
 % T=func(cl)*(Tl-Ts)+Ts
-% syms Ts Tl
-% syms D1 % wather s/m parition coefficient
-% if Has_volatile==1
-%     % when volatile is present Tl and Ts become functions of bulk water content (thus cb2=cl2*phi+(1-phi)*cs2)
-%     % presure dependency is constant for each time step.
-%     cb2=cl2_1*phi_1+cs2_1*(1-phi_1)+S_1;
-%     Tl=a0*cb2/D1+b0;
-%     Ts=a1*cb2/D1+b1;
-%     Variables=[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1; ];
-% else
-%     Tl=a0;
-%     Ts=a1;
-%     Variables=[phi_1; T_1; cs_1; cl_1];
-% end
-% T_scaled=(T_1-Ts)/(Tl-Ts);
-% 
-% syms i2 j2 k2 l2 m2 n2 o2 p2
-% % the most general solidus constraint, quadra-linear form G(phi,T_scaled, Cs,Cl)=0
-% solidus= a2*phi_1 + b2*T_scaled + c2*cs_1 + d2*cl_1 ...
-%     + e2*phi_1.*T_scaled + f2*phi_1.*cs_1 + g2*phi_1.*cl_1 ...
-%     + h2*T_scaled.*cs_1 + i2*T_scaled.*cl_1 + j2*cs_1.*cl_1 ...
-%     + k2*phi_1.*T_scaled.*cs_1 + l2*phi_1.*T_scaled.*cl_1 ...
-%     + m2*phi_1.*cs_1.*cl_1 + n2*T_scaled.*cs_1.*cl_1 ...
-%     + o2*phi_1.*T_scaled.*cs_1.*cl_1 + p2;
-% 
-% 
-% 
-% Parameters=[a0; b0; a1; b1; ...
-%     a2; b2; c2; d2; e2; f2;g2; h2; i2; j2; k2; l2; m2; n2; o2; p2;...
-%     D1];
-% Jac_solidus=jacobian(solidus/100, Variables);
-% Jac_solidus=matlabFunction(Jac_solidus,'Vars',{[Variables; Parameters]});
-% rhs_solidus=matlabFunction(solidus,'Vars',{[Variables; Parameters]});
-% 
-% % In the most general form, liquidus and solidus are of the same format symbolicly 
-% Jac_liquidus=Jac_solidus;
-% rhs_liquidus=rhs_solidus;
-% 
 syms A1 n_order D1
 eps=1e-12;
 
@@ -199,21 +164,41 @@ Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps))/2;
 
 
 liquidus=(Constrain5-cl_1)/1e4;
-Jac_liquidus=jacobian(liquidus, Variables);
-% Jac_liquidus=simplify(Jac_liquidus);
-Jac_liquidus=matlabFunction(Jac_liquidus, 'Vars',{[Variables; Parameters; A1]});
-rhs_liquidus=matlabFunction(liquidus,'Vars',{[Variables; Parameters; A1]});
+
+% Jac_liquidus=jacobian(liquidus, Variables);
+% % Jac_liquidus=simplify(Jac_liquidus);
+% Jac_liquidus=matlabFunction(Jac_liquidus, 'Vars',{[Variables; Parameters; A1]});
+% rhs_liquidus=matlabFunction(liquidus,'Vars',{[Variables; Parameters; A1]});
+
+if Has_volatile==1 
+    Jac_liquidus=jacobian(liquidus, [phi_1, T_1, cs_1, cl_1, S_1, cs2_1, cl2_1]);
+    Jac_liquidus=matlabFunction(Jac_liquidus, 'Vars',[phi_1, T_1, cs_1, cl_1, S_1, cs2_1, cl2_1, a0,b0,a1,b1,D1, A1]);
+    rhs_liquidus=matlabFunction(liquidus,'Vars',     [phi_1, T_1, cs_1, cl_1, S_1, cs2_1, cl2_1, a0,b0,a1,b1,D1, A1]);
+else
+    Jac_liquidus=jacobian(liquidus, [phi_1, T_1, cs_1, cl_1]);
+    Jac_liquidus=matlabFunction(Jac_liquidus, 'Vars',[phi_1, T_1, cs_1, cl_1,       a0,b0,a1,b1,D1, A1]);
+    rhs_liquidus=matlabFunction(liquidus,'Vars',     [phi_1, T_1, cs_1, cl_1,       a0,b0,a1,b1,D1, A1]);
+end
 
 Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
 SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
 Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
-
-
 solidus=(Constrain4-cs_1)/1e4;
-Jac_solidus=jacobian(solidus, Variables);
-% Jac_solidus=simplify(Jac_solidus);
-Jac_solidus=matlabFunction(Jac_solidus,'Vars',{[Variables; Parameters; n_order]});
-rhs_solidus=matlabFunction(solidus,'Vars',{[Variables; Parameters; n_order]});
+
+% Jac_solidus=jacobian(solidus, Variables);
+% % Jac_solidus=simplify(Jac_solidus);
+% Jac_solidus=matlabFunction(Jac_solidus,'Vars',{[Variables; Parameters; n_order]});
+% rhs_solidus=matlabFunction(solidus,'Vars',{[Variables; Parameters; n_order]});
+
+if Has_volatile==1
+    Jac_solidus=jacobian(solidus, [phi_1, T_1, cs_1, cl_1, S_1, cs2_1, cl2_1]);
+    Jac_solidus=matlabFunction(Jac_solidus,'Vars',[phi_1, T_1, cs_1, cl_1, S_1, cs2_1, cl2_1, a0,b0,a1,b1,D1, n_order]);
+    rhs_solidus=matlabFunction(solidus,'Vars',[phi_1, T_1, cs_1, cl_1, S_1, cs2_1, cl2_1, a0,b0,a1,b1,D1, n_order]);
+else
+    Jac_solidus=jacobian(solidus, [phi_1, T_1, cs_1, cl_1]);
+    Jac_solidus=matlabFunction(Jac_solidus,'Vars',[phi_1, T_1, cs_1, cl_1, a0,b0,a1,b1,D1, n_order]);
+    rhs_solidus=matlabFunction(solidus,'Vars',[phi_1, T_1, cs_1, cl_1, a0,b0,a1,b1,D1, n_order]);
+end
 %% Volatile (H2O) component transport equation
 if Has_volatile==1
     % old volatile bulk composition
