@@ -204,16 +204,22 @@ if Has_volatile==1
     % old volatile bulk composition
     syms OLD_com2
     syms kf
-    Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
+    % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
     trans_comp2=((phi_1*cl2_1+(1-phi_1)*cs2_1+S_1)-OLD_com2-(ufi*(phi_0*cl2_0+phi_1*cl2_1)/2-ufi2*(phi_1*cl2_1+phi_2*cl2_2)/2+umi_1*((1-phi_0)/2*cs2_0+(1-phi_1)/2*cs2_1)-umi_2*((1-phi_1)/2*cs2_1+(1-phi_2)/2*cs2_2))/dzi_1*dt...
         -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
     % trans_comp2=((cl2_1+cs2_1+S_1)-OLD_com2-(ufi*(cl2_0+cl2_1)/2-ufi2*(cl2_1+cl2_2)/2+umi_1*(cs2_0+cs2_1)/2-umi_2*(cs2_1+cs2_2)/2)/dzi_1*dt...
     %     -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
-    Jac_ct2=jacobian(trans_comp2, Variables);
-    Jac_ct2=simplify(Jac_ct2);
-    Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {[Variables; dzi_0; dzi_1; dzi_2; dt; kf; OLD_com2]});
-    rhs_ct2= matlabFunction(trans_comp2, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2; dt; kf; OLD_com2]});
 
+    % Jac_ct2=jacobian(trans_comp2, Variables);
+    % Jac_ct2=simplify(Jac_ct2);
+    % Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {[Variables; dzi_0; dzi_1; dzi_2; dt; kf; OLD_com2]});
+    % rhs_ct2= matlabFunction(trans_comp2, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2; dt; kf; OLD_com2]});
+
+    
+    Jac_ct2=jacobian(trans_comp2, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2]);
+    Jac_ct2=simplify(Jac_ct2);
+    Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf, OLD_com2});
+    rhs_ct2= matlabFunction(trans_comp2, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf, OLD_com2});
 else
     Jac_ct2=[];
     rhs_ct2=[];
@@ -230,24 +236,31 @@ if Has_volatile==1
     T_capped=(T_1+500+sqrt((T_1-500)^2+eps))/2;
     Satl=a0*T_capped+b0-cl2_1;
     
-    Sats=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1+0.02;
-    Par=cl2_1*D1-cs2_1;
+    % Sats=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1+0.02;
+    
 
     % condition=(Satl+S_1-(sqrt(Satl-S_1)^2+eps))/1e4;
     condition=(Satl+S_1-sqrt((Satl-S_1)^2+eps))/1e4;
 
-    Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
-    Jac_lsat=jacobian(condition, Variables);
-    Jac_lsat= matlabFunction(Jac_lsat, 'Vars', {[Variables; a0; b0]});
-    rhs_lsat= matlabFunction(condition, 'Vars', {[Variables; a0; b0]});
+    % Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
+    % Jac_lsat=jacobian(condition, Variables);
+    % Jac_lsat= matlabFunction(Jac_lsat, 'Vars', {[Variables; a0; b0]}); 
+    % rhs_lsat= matlabFunction(condition, 'Vars', {[Variables; a0; b0]});
+    Jac_lsat=jacobian(condition, [ T_1,  S_1,  cl2_1]);
+    Jac_lsat= matlabFunction(Jac_lsat, 'Vars', {T_1,  S_1,  cl2_1, a0, b0});
+    rhs_lsat= matlabFunction(condition, 'Vars',{ T_1,  S_1,  cl2_1, a0, b0});
 
-    % condition=(Sats+Par-sqrt((Sats-Par)^2+eps))/1e4;
+    % % condition=(Sats+Par-sqrt((Sats-Par)^2+eps))/1e4;
+    Par=cl2_1*D1-cs2_1;
     condition=Par/1e4;
-    Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
+    % Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
 
-    Jac_ssat=jacobian(condition, Variables);
-    Jac_ssat= matlabFunction(Jac_ssat, 'Vars', {[Variables; cap_A; cap_B; D1]});
-    rhs_ssat= matlabFunction(condition, 'Vars', {[Variables; cap_A; cap_B; D1]});
+    % Jac_ssat=jacobian(condition, Variables);
+    % Jac_ssat= matlabFunction(Jac_ssat, 'Vars', {[Variables; cap_A; cap_B; D1]});
+    % rhs_ssat= matlabFunction(condition, 'Vars', {[Variables; cap_A; cap_B; D1]});
+    Jac_ssat=jacobian(condition, [ T_1, cs_1, S_1, cs2_1, cl2_1]);
+    Jac_ssat= matlabFunction(Jac_ssat, 'Vars', { T_1, cs_1, S_1, cs2_1, cl2_1, cap_A, cap_B, D1});
+    rhs_ssat= matlabFunction(condition, 'Vars', { T_1, cs_1, S_1, cs2_1, cl2_1, cap_A, cap_B, D1});
 else
     Jac_lsat=[];
     rhs_lsat=[];

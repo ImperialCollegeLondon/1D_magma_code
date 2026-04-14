@@ -11,7 +11,7 @@ clear;
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=0;
+Has_volatile=1;
 
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
@@ -1221,7 +1221,7 @@ kc=kc0*ones(N,1);
 if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator3(Has_volatile);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile);
 
 
     u_all_old=u_all;
@@ -1246,11 +1246,11 @@ if Use_Newton==1
         Ts0_coefficient=reshape(Ts0_coefficient, [], nC);
     end
     
-    % nC = size(C_coef_all,3);
-    % C_coef_all=reshape(C_coef_all, [], nC);
+    nC = size(C_coef_all,3);
+    C_coef_all=reshape(C_coef_all, [], nC);
     
     dt=0;
-    Newton_solver3;
+    Newton_solver2;
 end
 
 %% Set up the monitor

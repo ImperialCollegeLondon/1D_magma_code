@@ -216,6 +216,8 @@ for iter=1:Max_Newton_iter
     num_local=13;
 
     I = (2:N-1)';
+    i0=I-1;
+    i2=I+1;
     nI = length(I);
     um_1=X(I);
     um_2=X(I+1);
@@ -261,9 +263,9 @@ for iter=1:Max_Newton_iter
     T_0=X(I-1+(N+1)*2+N);
     T_1=X(I  +(N+1)*2+N);
     T_2=X(I+1+(N+1)*2+N);
-    RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(I-1)', dz(I)', dz(I+1)', dt, cp, Lf, kt0, H_old(I));
+    RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I));
     
-    J = Jac_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(I-1)', dz(I)', dz(I+1)', dt, cp, Lf, kt0, H_old(I));
+    J = Jac_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I));
     rows_block = repmat(I+(N+1)*2+N, 1, num_local);
     cols_block = [ ...
         I+(N+1), I+1+(N+1), ...
@@ -370,63 +372,6 @@ for iter=1:Max_Newton_iter
         entry_count = entry_count + num_local*(N-2);
     end
 
-
-
-
-    % if Has_volatile==1
-    %     num_local=7;
-    % else
-    %     num_local=4;
-    % end
-    % for i=2:N-1
-    %     if Has_volatile==1
-    %         %[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1; ]
-    %         column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3, i+(N+1)*2+N*4, i+(N+1)*2+N*5, i+(N+1)*2+N*6];
-    %         in=X(column_index);
-    % 
-    %         a=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),1);
-    %         b=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),2);
-    %         c=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),3);
-    %         d=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),4);
-    % 
-    %         A=b+c*Pressure(i)/8000;
-    %         B=a*Pressure(i)/8000+d;
-    % 
-    %         a=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),1);
-    %         b=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),2);
-    %         c=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),3);
-    %         d=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),4);
-    % 
-    %         C=b+c*Pressure(i)/40e3;
-    %         D=a*Pressure(i)/40e3+d;
-    %         Parameters=[A;B;C;D;Par_v];            
-    %     else
-    %         %[phi(i), T(i), Cs(i),  Cl(i)]
-    %         column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3];
-    %         in=X(column_index);
-    %         Parameters=[Ts0(1);Tl0(1);0;0; 0];
-    %     end
-    % 
-    %     vals(entry_count:entry_count+num_local-1)=Jac_solidus([in; Parameters;n_order]);
-    %     RHS(i+(N+1)*2+N*2)=rhs_solidus([in; Parameters;n_order]);
-    % 
-    %     rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*2;
-    %     % phi T cs cl
-    % 
-    %     cols(entry_count:entry_count+num_local-1)=column_index;
-    %     entry_count=entry_count+num_local;
-    % 
-    % 
-    % 
-    %     vals(entry_count:entry_count+num_local-1)=Jac_liquidus([in; Parameters; A1]);
-    %     RHS(i+(N+1)*2+N*3)=rhs_liquidus([in; Parameters; A1]);
-    % 
-    %     rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*3;
-    %     cols(entry_count:entry_count+num_local-1)=column_index;
-    %     entry_count=entry_count+num_local;
-    % 
-    % end    
-
     %fix the first and last cell value
     rows(entry_count+(0:1))=[1 N]+(N+1)*2+N*2;
     cols(entry_count+(0:1))=[1 N]+(N+1)*2+N*2;
@@ -440,57 +385,60 @@ for iter=1:Max_Newton_iter
     vals(entry_count+(0:1))=1;
     RHS([1 N]+(N+1)*2+N*3)=X([1 N]+(N+1)*2+N*3)-C_all_old([1 N]);
     entry_count=entry_count+2;
-    %% Volatile component transport assembly
+   %%
     if Has_volatile ==1
+   %% Volatile component transport assembly
         num_local=16;
-        for i=2:N-1
-            %umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2
-            in=[X([i ,i+1, i+(N+1)  ,i+1+(N+1),i-1+(N+1)*2, i+(N+1)*2,i+1+(N+1)*2,...
-                i-1+(N+1)*2+N*4, i+(N+1)*2+N*4, i+1+(N+1)*2+N*4,...
-                i-1+(N+1)*2+N*5, i+(N+1)*2+N*5, i+1+(N+1)*2+N*5, i-1+(N+1)*2+N*6, i+(N+1)*2+N*6, i+1+(N+1)*2+N*6]); dz(i-1);dz(i); dz(i+1); dt;  kf; Cb2_old(i)];
+        RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I));
 
-            vals(entry_count:entry_count+num_local-1)=Jac_ct2(in);
-            RHS(i+(N+1)*2+N*4)=rhs_ct2(in);
-
-            rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*4;
-            cols(entry_count:entry_count+num_local-1)=[i ,i+1, i+(N+1)  ,i+1+(N+1),i-1+(N+1)*2, i+(N+1)*2,i+1+(N+1)*2,...
-                i-1+(N+1)*2+N*4, i+(N+1)*2+N*4, i+1+(N+1)*2+N*4,...
-                i-1+(N+1)*2+N*5, i+(N+1)*2+N*5, i+1+(N+1)*2+N*5, i-1+(N+1)*2+N*6, i+(N+1)*2+N*6, i+1+(N+1)*2+N*6];
-
-            entry_count=entry_count+num_local;
-        end
+        cols_block = [ ...
+        I, I+1, ...
+        I+(N+1), I+1+(N+1), ...
+        I-1+(N+1)*2, I+(N+1)*2, I+1+(N+1)*2, ...
+        I-1+(N+1)*2+N*4, I+(N+1)*2+N*4, I+1+(N+1)*2+N*4, ...
+        I-1+(N+1)*2+N*5, I+(N+1)*2+N*5, I+1+(N+1)*2+N*5, ...
+        I-1+(N+1)*2+N*6, I+(N+1)*2+N*6, I+1+(N+1)*2+N*6];
+        idx = entry_count : entry_count + num_local*(N-2) - 1;
+        J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I));
+        rows_block = repmat(I+(N+1)*2+N*4, 1, num_local);
+        rows(idx) = rows_block(:);
+        cols(idx) = cols_block(:);
+        vals(idx) =J(:);
+        entry_count = entry_count + num_local*(N-2);
 
         %fix the first and last cell value
         rows(entry_count+(0:1))=[1 N]+(N+1)*2+N*4;
         cols(entry_count+(0:1))=[1 N]+(N+1)*2+N*4;
         vals(entry_count+(0:1))=1;
         RHS([1 N]+(N+1)*2)=X([1 N]+(N+1)*2+N*4)-S_old([1 N]);
-        entry_count=entry_count+2;        
+        entry_count=entry_count+2;  
+   %% solid saturation     
+        num_local=5;
+        RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);       
+        cols_block = [I+(N+1)*2+N, I+(N+1)*2+N*2, I+(N+1)*2+N*4, I+(N+1)*2+N*5, I+(N+1)*2+N*6];
 
-        %% Solid and melt saturation equation
-        num_local=6;
-        for i=2:N-1
-            % Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
-            column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
-            in=X(column_index);
-            
-            a0=dSdT(i)/100;
-            b0=b0_all(i);
+        idx = entry_count : entry_count + num_local*(N-2) - 1;
+        J=Jac_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);
+        J=repmat(J,nI,1); %for now, J is constant so can not automatically broadcasted
 
-            vals(entry_count:entry_count+num_local-1)=Jac_ssat([in;S_cap(1); S_cap(2); Par_v]);
-            RHS(i+(N+1)*2+N*5)=rhs_ssat([in;S_cap(1); S_cap(2); Par_v]);
-            rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*5;
-            cols(entry_count:entry_count+num_local-1)=column_index;
-            entry_count=entry_count+num_local;
+        rows_block = repmat(I+(N+1)*2+N*5, 1, num_local);
+        rows(idx) = rows_block(:);
+        cols(idx) = cols_block(:);
+        vals(idx) =J(:);
+        entry_count = entry_count + num_local*(N-2);
+  %% melt saturation       
+        num_local=3;
+        RHS(I+(N+1)*2+N*6)=rhs_lsat(T_1, S_1,  cl2_1, dSdT(I)/100, b0_all(I));
+        cols_block = [I+(N+1)*2+N, I+(N+1)*2+N*4,  I+(N+1)*2+N*6];
 
+        idx = entry_count : entry_count + num_local*(N-2) - 1;
+        J=Jac_lsat(T_1, S_1,  cl2_1, dSdT(I)/100, b0_all(I));
+        rows_block = repmat(I+(N+1)*2+N*6, 1, num_local);
+        rows(idx) = rows_block(:);
+        cols(idx) = cols_block(:);
+        vals(idx) =J(:);
+        entry_count = entry_count + num_local*(N-2);
 
-            vals(entry_count:entry_count+num_local-1)=Jac_lsat([in; a0; b0]);
-            RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);
-            rows(entry_count:entry_count+num_local-1)=i+(N+1)*2+N*6;
-            cols(entry_count:entry_count+num_local-1)=column_index;
-            entry_count=entry_count+num_local;
-        end
-        %fix the first and last cell value
         rows(entry_count+(0:1))=[1 N]+(N+1)*2+N*5;
         cols(entry_count+(0:1))=[1 N]+(N+1)*2+N*5;
         vals(entry_count+(0:1))=1;
@@ -626,63 +574,12 @@ for iter=1:Max_Newton_iter
         Param(:,21),Param(:,22),Param(:,23),Param(:,24),Param(:,25),Param(:,26),Param(:,27),Param(:,28)); 
 
         RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0,phi_1);
-        % for i=2:N
-        %     %Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1; cl2_0; cl2_1];
-        %     if Has_volatile==2
-        %         variable_indes=[i-1, i, i+1, i+(N+1), i-1+(N+1)*2, i+(N+1)*2, i-1+(N+1)*2+N*2, i+(N+1)*2+N*2, i-1+(N+1)*2+N*3, i+(N+1)*2+N*3, i-1+(N+1)*2+N*6, i+(N+1)*2+N*6];
-        %     else
-        %         %     Variables=[umi_0; umi_1;  umi_2; ufi; ufi2;phi_0; phi_1; phi_2; T_0; T_1; T_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
-        %         variable_indes=[i-1, i, i+1, i+(N+1), i-1+(N+1)*2, i+(N+1)*2, i-1+(N+1)*2+N*2, i+(N+1)*2+N*2, i-1+(N+1)*2+N*3, i+(N+1)*2+N*3];
-        %     end
-        % 
-        %     Variables=X(variable_indes);
-        %     %parameters=[a0; b0; a1; b1; a2; b2; c2; d2; e2; f2; g2; h2; a3; b3; a4; b4; a5; b5; c5; d5; a6; b6; c6; d6;  dzi_0; dzi_1; g; mum_0];
-        %     %Solid coefficients
-        %     Parameters=zeros(28,1);
-        %     % index_phi_0=max(min(floor(X(i-1+(N+1)*2) * N_mus) + 1, N_mus),1); %phi_0 index
-        %     Parameters(1:2)=mus_coef_all(index_phi_nmus(i-1),:)  ; %mus_0
-        % 
-        %     % index_phi_1=max(min(floor(X(i+(N+1)*2) * N_mus) + 1, N_mus),1); %phi_1 index
-        %     Parameters(3:4)=mus_coef_all(index_phi_nmus(i),:)  ; %mus_1
-        % 
-        %     % Coupling coefficients
-        %     % index_cl_1=min(floor(X(i+(N+1)*2+N*3) * N_C) + 1, N_C);%cl_1 index
-        %     % index_phi_1=max(min(floor(X(i+(N+1)*2) * N_C) + 1, N_C),1); %phi_1 index
-        %     if Has_volatile==2
-        %         index_cl2_1=min(floor(X(i+(N+1)*2+N*6) * N_C) + 1, N_C);%cl2_1 index
-        %         Parameters(5:12)=C_coef_all(index_phi_nc(i),index_cl_nc(i),index_cl2_1,:);
-        %     else
-        %         Parameters(5:8)=C_coef_all(index_phi_nc(i),index_cl_nc(i),:);
-        %     end
-        % 
-        %     % Density coefficients
-        %     % index_cs_0=min(floor(X(i-1+(N+1)*2+N*2) * N_rhos) + 1, N_rhos);%cs_0 index
-        %     Parameters(13:14)=rhos_coef_all(index_cs_nrhos(i-1),:);
-        %     % index_cs_1=min(floor(X(i-1+(N+1)*2+N*2) * N_rhos) + 1, N_rhos);%cs_1 index
-        %     Parameters(15:16)=rhos_coef_all(index_cs_nrhos(i),:);
-        % 
-        %     if Has_volatile==2
-        %         % index_cl2_0=min(floor(X(i-1+(N+1)*2+N*6) * N_C) + 1, N_C);%cl2_1 index
-        %         Parameters(17:20)=rhol_coef_all(index_cl_nc(i-1), index_cl2_nc(i-1),:);
-        %         Parameters(21:24)=rhol_coef_all(index_cl_nc(i), index_cl2_nc(i),:);
-        %     else
-        %         % index_cl_0=min(floor(X(i-1+(N+1)*2+N*3) * N_C) + 1, N_C);%cl_0 index
-        %         Parameters(17:18)=rhol_coef_all(index_cl_nc(i-1),:);
-        %         Parameters(21:22)=rhol_coef_all(index_cl_nc(i),:);
-        %     end
-        % 
-        %     % dz
-        %     Parameters(25:28)=[dz(i-1) dz(i) g mum_0];
-        % 
-        % 
-        %     RHS(i)=rhs_mom([Variables; Parameters]);
-        % end
-
-
-        
+              
 
         %
         I = (2:N-1)';
+        i0=I-1;
+        i2=I+1;
         nI = numel(I);
         um_1=X(I);
         um_2=X(I+1);
@@ -754,57 +651,30 @@ for iter=1:Max_Newton_iter
 
             RHS(I + (N+1)*2 + N*2)=rhs_solidus (phi_1, T_1, cs_1, cl_1,  Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5), n_order);
             RHS(I + (N+1)*2 + N*3)=rhs_liquidus(phi_1, T_1, cs_1, cl_1,  Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5), A1);
-        end
+        end    
         
-        % for i=2:N-1
-        %     if Has_volatile==1
-        %         %[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1; ]
-        %         column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3, i+(N+1)*2+N*4, i+(N+1)*2+N*5, i+(N+1)*2+N*6];
-        %         in=X(column_index);
-        % 
-        %         a=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),1);
-        %         b=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),2);
-        %         c=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),3);
-        %         d=Ts0_coefficient(index_pressure_nts(i), index_cb2_nts(i),4);
-        % 
-        %         A=b+c*Pressure(i)/8000;
-        %         B=a*Pressure(i)/8000+d;
-        % 
-        %         a=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),1);
-        %         b=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),2);
-        %         c=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),3);
-        %         d=Tl0_coefficient(index_pressure_ntl(i), index_cb2_ntl(i),4);
-        % 
-        %         C=b+c*Pressure(i)/40e3;
-        %         D=a*Pressure(i)/40e3+d;
-        %         Parameters=[A;B;C;D;Par_v];
-        %     else
-        %         %[phi(i), T(i), Cs(i),  Cl(i)]
-        %         column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*3];
-        %         in=X(column_index);
-        %         Parameters=[Ts0(1);Tl0(1);0;0; 0];
-        %     end
-        %     RHS(i+(N+1)*2+N*2)=rhs_solidus([in; Parameters; n_order]);
-        %     RHS(i+(N+1)*2+N*3)=rhs_liquidus([in; Parameters; A1]);            
-        % end
 
         if Has_volatile==1
-            for i=2:N-1
-                %umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2
-                in=[X([i ,i+1, i+(N+1)  ,i+1+(N+1),i-1+(N+1)*2, i+(N+1)*2,i+1+(N+1)*2,...
-                    i-1+(N+1)*2+N*4, i+(N+1)*2+N*4, i+1+(N+1)*2+N*4,...
-                    i-1+(N+1)*2+N*5, i+(N+1)*2+N*5, i+1+(N+1)*2+N*5, i-1+(N+1)*2+N*6, i+(N+1)*2+N*6, i+1+(N+1)*2+N*6]); dz(i-1);dz(i); dz(i+1); dt;  kf; Cb2_old(i)];
+            % for i=2:N-1
+            %     %umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2
+            %     in=[X([i ,i+1, i+(N+1)  ,i+1+(N+1),i-1+(N+1)*2, i+(N+1)*2,i+1+(N+1)*2,...
+            %         i-1+(N+1)*2+N*4, i+(N+1)*2+N*4, i+1+(N+1)*2+N*4,...
+            %         i-1+(N+1)*2+N*5, i+(N+1)*2+N*5, i+1+(N+1)*2+N*5, i-1+(N+1)*2+N*6, i+(N+1)*2+N*6, i+1+(N+1)*2+N*6]); dz(i-1);dz(i); dz(i+1); dt;  kf; Cb2_old(i)];
+            % 
+            %     RHS(i+(N+1)*2+N*4)=rhs_ct2(in);
+            % end
+            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I));
 
-                RHS(i+(N+1)*2+N*4)=rhs_ct2(in);
-            end
-            for i=2:N-1
-                column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
-                in=X(column_index);
-                a0=dSdT(i)/100;
-                b0=b0_all(i);
-                RHS(i+(N+1)*2+N*5)=rhs_ssat([in;S_cap(1); S_cap(2); Par_v]);
-                RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);
-            end
+            RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);
+            RHS(I+(N+1)*2+N*6)=rhs_lsat( T_1,       S_1,        cl2_1, dSdT(I)/100, b0_all(I));
+            % for i=2:N-1
+            %     column_index=[i+(N+1)*2, i+(N+1)*2+N, i+(N+1)*2+N*2, i+(N+1)*2+N*4,i+(N+1)*2+N*5, i+(N+1)*2+N*6 ];
+            %     in=X(column_index);
+            %     a0=dSdT(i)/100;
+            %     b0=b0_all(i);
+            %     RHS(i+(N+1)*2+N*5)=rhs_ssat([in;S_cap(1); S_cap(2); Par_v]);
+            %     RHS(i+(N+1)*2+N*6)=rhs_lsat([in;a0;b0]);
+            % end
         end
 
         temp_norm=max(abs(RHS)); 
@@ -881,18 +751,18 @@ if Has_volatile==1
 
     index_v_nts=max(min(floor(Cb2/13*100/Par_v*N_Ts)+1,N_Ts),1);    
     lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_v_nts);   
+    coef=Ts0_coefficient(lin_ts,:);
     for i=1:N
-        % coef=Ts0_coefficient(index_pressure_nts(i),index_v_nts(i),:);
-        coef=Ts0_coefficient(lin_ts,:);
-        Ts0(i)=coef(1)*Pressure(i)/8000+coef(2)*Cb2(i)/Par_v/13*100+coef(3)*Pressure(i)*Cb2(i)/Par_v/8000/13*100+coef(4);
+        % coef=Ts0_coefficient(index_pressure_nts(i),index_v_nts(i),:);        
+        Ts0(i)=coef(i,1)*Pressure(i)/8000+coef(i,2)*Cb2(i)/Par_v/13*100+coef(i,3)*Pressure(i)*Cb2(i)/Par_v/8000/13*100+coef(i,4);
     end
 
     index_v_ntl=max(min(floor(Cb2/20*100/Par_v*N_Ts)+1,N_Ts),1);
     lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_v_ntl);
+    coef=Tl0_coefficient(lin_tl,:);
     for i=1:N
-        % coef=Tl0_coefficient(index_pressure_ntl(i),index_v_ntl(i),:);
-        coef=Tl0_coefficient(lin_tl,:);
-        Tl0(i)=coef(1)*Pressure(i)/40e3+coef(2)*Cb2(i)/Par_v/20*100+coef(3)*Pressure(i)*Cb2(i)/Par_v/400/20+coef(4);
+        % coef=Tl0_coefficient(index_pressure_ntl(i),index_v_ntl(i),:);        
+        Tl0(i)=coef(i,1)*Pressure(i)/40e3+coef(i,2)*Cb2(i)/Par_v/20*100+coef(i,3)*Pressure(i)*Cb2(i)/Par_v/400/20+coef(i,4);
     end
     Ts=Tl0-Cb.^(1/n_order).*(Tl0-Ts0);
     Tl=A1*Cb.^2+(Ts0-Tl0-A1).*Cb+Tl0;
@@ -915,9 +785,9 @@ rhom=zeros(N+1,1);
 rhof=zeros(N+1,1);
 rho_b=zeros(N,1);
 
-% if min(Cl2)<0
-%     aaa=1;
-% end
+if iter>10
+    aaa=1;
+end
     
 % Total_cb2=sum(Cb2.*cellz);
 % disp(['CB2 conservation:' num2str(Total_cb2/Total_cb20)])
