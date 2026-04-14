@@ -92,8 +92,8 @@ for i=1:(Plot_size(1)*Plot_size(2))
               case 5
                   box on
                 Handel_all{i}(1)=plot(T,cellz/1000-Base_crust,'b','linewidth',2.5);
-                Handel_all{i}(2)=plot(Ts,cellz/1000-Base_crust,'r:','linewidth',2.5);
-               Handel_all{i}(3)=plot(Tl,cellz/1000-Base_crust,'r','linewidth',2.5);
+                Handel_all{i}(2)=plot(Ts0,cellz/1000-Base_crust,'r:','linewidth',2.5);
+               Handel_all{i}(3)=plot(Tl0,cellz/1000-Base_crust,'r','linewidth',2.5);
      
                 
                 %if Phase_Type==0

@@ -46,7 +46,7 @@ Phase_diagram_step_size,dummy,
 ,step_size,0.35
 
 n,dummy, 
-,n_order,11
+,n_order,15
 
 **DIFFERENT_DEEP_SOLIDUS**,dummy,
 Different_solidus_in_deep_crust_=1,dummy,
@@ -261,7 +261,7 @@ Geotherm_of_crust,dummy,
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
-,min_N,2000
+,min_N,1000
 
 maximum_number_of_cells,dummy,
 ,max_N,3000

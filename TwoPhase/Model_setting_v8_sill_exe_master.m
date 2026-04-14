@@ -28,7 +28,8 @@ if HHJPet==1
     for i=1:r
         assignin('base',names(i),Number(i))
     end
-       
+    
+    is_eutectic=1;
     % set values to zero that are used in sill_intrusion and solid_state
     % but not related to the chosen phase diagram 
     ol=0;
@@ -65,6 +66,7 @@ if HHJPet==1
 
 elseif SSPD==1
     Inputs= readtable('Input_Files/1AA_2phase_SSPD_master.txt');
+    is_eutectic=0;
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -110,6 +112,7 @@ elseif SSPD==1
 
 elseif FourMPD==1
     Inputs= readtable('Input_Files/1AA_2phase_FourMPD_master.txt');
+    is_eutectic=2;
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -499,7 +502,7 @@ min_show_range=Show_z(2)-Show_z(1);
 %% define the meshing and mesh adaptivity
 Adaptive_mesh=0;     % set to one to turn one the adaptive meshing.
 
-part1=linspace(0,LengthB,max(round(min_N/8),5));
+part1=linspace(0,LengthB,max(round(min_N/10),5));
 part2=linspace(0,2*Sill_length*fine_ratio,min_N);
 part3=0:part1(end)-part1(end-1):LengthT-2*Sill_length*fine_ratio;%max(round(min_N/8),5));
 nodez=[part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end)];
@@ -965,38 +968,38 @@ if Use_Newton==1
     Cl_range=linspace(0,1,N_sl);
     Cs_range=linspace(0,1,N_sl);
 
-    solidus_func=zeros(N_sl, length(T_range), N_sl, N_sl);  %use single precision for memory save
-    liquidus_func=zeros(N_sl, length(T_range), N_sl, N_sl); 
-    %In general solidus is F(phi, T, Cs, Cl)=0 
-    %solidus is cs=softmax(softmin(f,Cb),0);
-    A1_scaled=A1/(Tl0-Ts0);
-    B1_scaled=B1/(Tl0-Ts0);
-    C1_scaled=1;
-    for i=1:N_sl %phi
-        for j=1:length(T_range) %T
-            for k=1:N_sl %cs
-                for p=1:N_sl %cl
-                    if HHJPet == 1
-                        cb=Cl_range(p)*phi_range(i)+Cs_range(k)*(1-phi_range(i));                        
-                        temp=(max(1-T_range(j),0))^n_order;
-                        temp=min(cb,temp);
-                        solidus_func(i,j,k,p)=temp-Cs_range(k);
-                        
-                        temp=max(min(T_range(j),1),0);
-                        temp=(-B1_scaled-sqrt(B1_scaled^2-4*A1_scaled*(C1_scaled-temp)))/2/A1_scaled;
-                        temp=max(cb,temp);
-                        liquidus_func(i,j,k,p)=temp-Cl_range(p);
-                    elseif SSPD ==1
-
-                    elseif FourMPD==1
-
-                    end
-                end
-            end
-        end
-    end
-    solidus_coef_all=piecewiseFit(solidus_func);
-    liquidus_coef_all=piecewiseFit(liquidus_func);    
+    % solidus_func=zeros(N_sl, length(T_range), N_sl, N_sl);  %use single precision for memory save
+    % liquidus_func=zeros(N_sl, length(T_range), N_sl, N_sl); 
+    % %In general solidus is F(phi, T, Cs, Cl)=0 
+    % %solidus is cs=softmax(softmin(f,Cb),0);
+    % A1_scaled=A1/(Tl0-Ts0);
+    % B1_scaled=B1/(Tl0-Ts0);
+    % C1_scaled=1;
+    % for i=1:N_sl %phi
+    %     for j=1:length(T_range) %T
+    %         for k=1:N_sl %cs
+    %             for p=1:N_sl %cl
+    %                 if HHJPet == 1
+    %                     cb=Cl_range(p)*phi_range(i)+Cs_range(k)*(1-phi_range(i));                        
+    %                     temp=(max(1-T_range(j),0))^n_order;
+    %                     temp=min(cb,temp);
+    %                     solidus_func(i,j,k,p)=temp-Cs_range(k);
+    % 
+    %                     temp=max(min(T_range(j),1),0);
+    %                     temp=(-B1_scaled-sqrt(B1_scaled^2-4*A1_scaled*(C1_scaled-temp)))/2/A1_scaled;
+    %                     temp=max(cb,temp);
+    %                     liquidus_func(i,j,k,p)=temp-Cl_range(p);
+    %                 elseif SSPD ==1
+    % 
+    %                 elseif FourMPD==1
+    % 
+    %                 end
+    %             end
+    %         end
+    %     end
+    % end
+    % solidus_coef_all=piecewiseFit(solidus_func);
+    % liquidus_coef_all=piecewiseFit(liquidus_func);    
 
     
     %assjust all table numbers to be the cell number to be used later
@@ -1076,8 +1079,8 @@ if Has_volatile==1
     N_Ts=N_Ts-1;
     N_Tl=N_Tl-1;
 
-    V_crust=1.5;
-    V_sill=2;
+    V_crust=1.2;
+    V_sill=8;
     kf=1e-7;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1105,6 +1108,8 @@ if Has_volatile==1
     
     Ssaturation=S_cap(1)*Cs2+S_cap(2)*(1-Cs2);
     Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
+    index=find(cellz<3000,1,'last');
+    Cb2(1:index)=0;
     % Cb2=Cl2+Cs2+S;
 
     
@@ -1221,7 +1226,7 @@ kc=kc0*ones(N,1);
 if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile, is_eutectic);
 
 
     u_all_old=u_all;
@@ -1295,7 +1300,7 @@ end
 % Plot_configure=  {[1],[5],[6,7,8]};  
 if With_monitor==1
     if Has_volatile==1
-        Plot_configure=  {[1],[5],[6,7,8],1001,[2,3]};
+        Plot_configure=  {[1],[5],[6,7,8],1001};
     else
         if To_cal_mc==1
             Plot_configure=  {[1],[5],[6,7,8],[15],[16]};

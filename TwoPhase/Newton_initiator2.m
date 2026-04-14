@@ -1,7 +1,7 @@
 %% A general generator for Jacobians used in the 1D magma model
 %% HH 2026-03-13
 function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator...
-    (Has_volatile)
+    (Has_volatile, is_eutectic)
 % system valriables contain:
 % solid and melt velocities: us, uf
 % conservative quantities: melt fraction (phi),  temperature (T), solid major composition (Cs), melt major composition (Cl)
@@ -144,16 +144,16 @@ if Has_volatile==1
     cb2=cl2_1*phi_1+cs2_1*(1-phi_1)+S_1;
     Ts=a0*cb2/D1/0.13+b0;
     Tl=a1*cb2/D1/0.2+b1;
-    Variables=[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1];
+    % Variables=[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1];
 else
     Ts=a0;
     Tl=b0;
-    Variables=[phi_1; T_1; cs_1; cl_1];
+    % Variables=[phi_1; T_1; cs_1; cl_1];
 end
 
 C1= Tl;
 B1= Ts-A1-Tl;
-Parameters=[a0;b0;a1;b1; D1];
+% Parameters=[a0;b0;a1;b1; D1];
 Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 
 
@@ -180,10 +180,15 @@ else
     rhs_liquidus=matlabFunction(liquidus,'Vars',     [phi_1, T_1, cs_1, cl_1,       a0,b0,a1,b1,D1, A1]);
 end
 
-Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
-SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
-Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
-solidus=(Constrain4-cs_1)/1e4;
+if is_eutectic==1
+    eps2=1e-1;
+    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e4;
+else 
+    Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
+    SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
+    Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
+    solidus=(Constrain4-cs_1)/1e4;
+end
 
 % Jac_solidus=jacobian(solidus, Variables);
 % % Jac_solidus=simplify(Jac_solidus);
@@ -205,8 +210,11 @@ if Has_volatile==1
     syms OLD_com2
     syms kf
     % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
+    eps=1e-12;
+    S12flux=0.5*((S_2-S_1)-sqrt((S_2-S_1)^2+eps));
+    S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));
     trans_comp2=((phi_1*cl2_1+(1-phi_1)*cs2_1+S_1)-OLD_com2-(ufi*(phi_0*cl2_0+phi_1*cl2_1)/2-ufi2*(phi_1*cl2_1+phi_2*cl2_2)/2+umi_1*((1-phi_0)/2*cs2_0+(1-phi_1)/2*cs2_1)-umi_2*((1-phi_1)/2*cs2_1+(1-phi_2)/2*cs2_2))/dzi_1*dt...
-        -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
+        -kf*2/dzi_1*(S12flux/(dzi_2+dzi_1)-S01flux/(dzi_1+dzi_0))*dt)/20;
     % trans_comp2=((cl2_1+cs2_1+S_1)-OLD_com2-(ufi*(cl2_0+cl2_1)/2-ufi2*(cl2_1+cl2_2)/2+umi_1*(cs2_0+cs2_1)/2-umi_2*(cs2_1+cs2_2)/2)/dzi_1*dt...
     %     -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
 

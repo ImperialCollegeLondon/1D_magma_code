@@ -55,3 +55,51 @@ beta=1e4;
     Par=-1/beta*log(exp(-beta*(phi_1)^2)+exp(-beta*Par^2)); %log softmin
     % Par=(Par+sqrt(Par^2+eps))/2;
     condition=(sqrt(Sat^2+Par^2+eps)-(Sat+Par))/1e4
+
+
+    %%
+
+ a=linspace(-1,1,1e3);   
+b=(1-tanh(a/3e-2))/2;
+figure(9)
+clf;
+plot(a,b)
+
+
+%%
+i=49;
+eps=3e-2;
+        lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts(I), index_cb2_nts(I));
+        lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl(I), index_cb2_ntl(I));
+
+        coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
+        coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
+
+        % unpack
+        a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
+        c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
+
+        a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
+        c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
+
+                P = Pressure(I);
+
+        A = b_ts + c_ts .* (P/8000);
+        B = a_ts .* (P/8000) + d_ts;
+
+        C = b_tl + c_tl .* (P/40e3);
+        D = a_tl .* (P/40e3) + d_tl;
+
+    cb2=cl2_1(i)*phi_1(i)+cs2_1(i)*(1-phi_1(i))+S_1(i);
+    Ts=A(i)*cb2/Par_v/0.13+B(i);
+    Tl=C(i)*cb2/Par_v/0.2+D(i);
+
+
+C1= Tl;
+B1= Ts-A1-C1;
+% Parameters=[a0;b0;a1;b1; D1];
+Cb=phi_1(i)*cl_1(i)+(1-phi_1(i))*cs_1(i);
+
+
+    eps2=5e-2;
+    solidus=(Cb/2*(1-tanh((T_1(i)-Ts)/eps2))-cs_1(i))/1e4

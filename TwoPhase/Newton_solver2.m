@@ -453,11 +453,11 @@ for iter=1:Max_Newton_iter
     end
 %%
     norm_R = max(abs(RHS));
-    % if norm_R < Precision
-    %     fprintf('Converged in %d iterations\n', iter);
-    %     converged = true;
-    %     break;
-    % end
+    if norm_R < Precision
+        fprintf('Converged in %d iterations\n', iter);
+        converged = true;
+        break;
+    end
 
     Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
     
@@ -764,12 +764,22 @@ if Has_volatile==1
         % coef=Tl0_coefficient(index_pressure_ntl(i),index_v_ntl(i),:);        
         Tl0(i)=coef(i,1)*Pressure(i)/40e3+coef(i,2)*Cb2(i)/Par_v/20*100+coef(i,3)*Pressure(i)*Cb2(i)/Par_v/400/20+coef(i,4);
     end
-    Ts=Tl0-Cb.^(1/n_order).*(Tl0-Ts0);
+    
     Tl=A1*Cb.^2+(Ts0-Tl0-A1).*Cb+Tl0;
+    if is_eutectic==1
+        Ts=Ts0;
+    else         
+        Ts=Tl0-Cb.^(1/n_order).*(Tl0-Ts0);    
+    end
 else
-    % Ts=(1-max(Cb,1e-12).^(1/n_order))*(Tl0-Ts0)+Ts0; 
-    Ts=Tl0(1)-Cb.^(1/n_order).*(Tl0(1)-Ts0(1)); %local solidus
+    
     Tl=A1*Cb.^2+B1*Cb+C1; %local liquidus
+    if is_eutectic==1
+        Ts=Ts0(1)*ones(N,1);
+    else
+        % Ts=(1-max(Cb,1e-12).^(1/n_order))*(Tl0-Ts0)+Ts0; 
+        Ts=Tl0(1)-Cb.^(1/n_order).*(Tl0(1)-Ts0(1)); %local solidus        
+    end
 end
 
 
