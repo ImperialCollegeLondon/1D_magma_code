@@ -15,7 +15,7 @@ Use_Newton, dummy,
 ,Use_Newton,1
 
 CALCULATION_PRECISION,dummy,
-,Precision,1e-7
+,Precision,1e-8
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
 ,Max_iter,200
