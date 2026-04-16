@@ -73,14 +73,16 @@ for iter=1:Max_Newton_iter
     index_phi_nc=max(min(floor(X((1:N)+(N+1)*2) * N_C) + 1, N_C),1);
     index_cl_nc=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_C) + 1, N_C),1);
 
-    index_cs_nrhos=max(min(floor(X((1:N)+(N+1)*2+N*2) * N_rhos) + 1, N_rhos),1);   
-
+    index_cs_nrhos=max(min(floor(X((1:N)+(N+1)*2+N*2) * N_rhos) + 1, N_rhos),1);       
+    index_cl_nrhol=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_rhol) + 1, N_rhol),1);  
     if Has_volatile==1
         index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
         % cb2=phi*cl2+(1-phi)*cs2+S;
         cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
         index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
         index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Tl) + 1, N_Tl),1);
+
+        % index_cl2_nrhol=max(min(floor(X((1:N)+(N+1)*2+N*6)/0.1 * N_rhol) + 1, N_rhol),1);  
     end
     I = (2:N)';
     nI = numel(I);
@@ -146,11 +148,13 @@ for iter=1:Max_Newton_iter
 
     % density liquid
     if Has_volatile == 2
-        Param(:,17:20) = rhol_coef_all(index_cl_nc(i0), index_cl2_nc(i0), :);
-        Param(:,21:24) = rhol_coef_all(index_cl_nc(i1), index_cl2_nc(i1), :);
+        lin = sub2ind([N_rhol, N_rhol], index_cl_nrhol(i0), index_cl2_nrhol(i0));
+        Param(:,17:20) = rhol_coef_all(lin, :);
+        lin = sub2ind([N_rhol, N_rhol], index_cl_nrhol(i1), index_cl2_nrhol(i1));
+        Param(:,21:24) = rhol_coef_all(lin, :);
     else
-        Param(:,17:18) = rhol_coef_all(index_cl_nc(i0), :);
-        Param(:,21:22) = rhol_coef_all(index_cl_nc(i1), :);
+        Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
+        Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
     end
     % physical constants
     Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0*ones(nI,1)];
@@ -488,12 +492,15 @@ for iter=1:Max_Newton_iter
         index_cl_nc=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_C) + 1, N_C),1);
 
         index_cs_nrhos=max(min(floor(X((1:N)+(N+1)*2+N*2) * N_rhos) + 1, N_rhos),1);
+        index_cl_nrhol=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_rhol) + 1, N_rhol),1);  
         if Has_volatile==1
             index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
             % cb2=phi*cl2+(1-phi)*cs2+S;
             cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
             index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
             index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Ts) + 1, N_Ts),1);
+
+            % index_cl2_nrhol=max(min(floor(X((1:N)+(N+1)*2+N*6)/0.1 * N_rhol) + 1, N_rhol),1);
         end
 
         I = (2:N)';
@@ -560,11 +567,13 @@ for iter=1:Max_Newton_iter
 
         % density liquid
         if Has_volatile == 2
-            Param(:,17:20) = rhol_coef_all(index_cl_nc(i0), index_cl2_nc(i0), :);
-            Param(:,21:24) = rhol_coef_all(index_cl_nc(i1), index_cl2_nc(i1), :);
+            lin = sub2ind([N_rhol, N_rhol], index_cl_nrhol(i0), index_cl2_nrhol(i0));
+            Param(:,17:20) = rhol_coef_all(lin, :);
+            lin = sub2ind([N_rhol, N_rhol], index_cl_nrhol(i1), index_cl2_nrhol(i1));
+            Param(:,21:24) = rhol_coef_all(lin, :);
         else
-            Param(:,17:18) = rhol_coef_all(index_cl_nc(i0), :);
-            Param(:,21:22) = rhol_coef_all(index_cl_nc(i1), :);
+            Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
+            Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
         end
         % physical constants
         Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0*ones(nI,1)];
@@ -769,7 +778,7 @@ if Has_volatile==1
     if is_eutectic==1
         Ts=Ts0;
     else         
-        Ts=Tl0-Cb.^(1/n_order).*(Tl0-Ts0);    
+        Ts=Tl0-max(Cb,0).^(1/n_order).*(Tl0-Ts0);    
     end
 else
     
@@ -778,7 +787,7 @@ else
         Ts=Ts0(1)*ones(N,1);
     else
         % Ts=(1-max(Cb,1e-12).^(1/n_order))*(Tl0-Ts0)+Ts0; 
-        Ts=Tl0(1)-Cb.^(1/n_order).*(Tl0(1)-Ts0(1)); %local solidus        
+        Ts=Tl0(1)-max(Cb,0).^(1/n_order).*(Tl0(1)-Ts0(1)); %local solidus        
     end
 end
 

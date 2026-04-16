@@ -41,7 +41,7 @@ for i=1:(Plot_size(1)*Plot_size(2))
         j=Plot_configure{i};
         switch j
             case 1
-                box on
+                box off
                 Handel_all{i}(j)=plot(phi(1:N),cellz/1000-Base_crust,'b','linewidth',2.5);
 %                 Handel_all{i}(j)=plot(phi(1:N),cellz,'-o','markersize',3);
                 %yticks([-35 -32.5 -30 -27.5 -25 -22.5 -20])
@@ -52,7 +52,7 @@ for i=1:(Plot_size(1)*Plot_size(2))
                     ax_volatile=axes('Position',get(gca,'Position'),'XAxisLocation','top','Color','none','XColor','r','YColor','none');
                     hold on;
                     ylim(YLIMITS)
-                    xlim([0 0.2])
+                    xlim([0 0.15])
                     Handel_all{i}(2)=plot(ax_volatile,S,cellz/1000-Base_crust,'linewidth',1 ,'Parent',ax_volatile,'color','r');
                     xlabel('Volatile fraction(-)','fontsize',Font_Size,'color','r')
                 end

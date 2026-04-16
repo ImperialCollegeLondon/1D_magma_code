@@ -103,9 +103,12 @@ rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
 syms dt
 % old bulk composition
 syms OLD_com
-
+eps=1e-12;
+% min_cb=1e-3;
+% min_cb_strength=1e-3;
 % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
-trans_comp=(phi_1*cl_1+(1-phi_1)*cs_1)-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt;
+cb=phi_1*cl_1+(1-phi_1)*cs_1;
+trans_comp=cb-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt; %+min_cb_strength*(sqrt((cb-min_cb)^2+eps)-(cb-min_cb))
 
 % Jac_ct=jacobian(trans_comp, Variables);
 % Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});

@@ -105,7 +105,7 @@ RG_Perm_C_value_B,dummy,
 ,C_value_B_RG,0
 
 C_type_PorousSuspension=1_Porous=0,dummy,
-,C_type,1
+,C_type,0
 
 Perm_min_FLAG_No=0_Yes=1,dummy, 
 ,perm_min_FLAG,0

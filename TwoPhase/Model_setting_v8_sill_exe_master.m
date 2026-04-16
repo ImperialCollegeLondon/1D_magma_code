@@ -75,7 +75,7 @@ elseif SSPD==1
     end
     
     if mod(n_order,2)==0 % make sure n_order is an odd number
-        n_order=n_order+1;
+        n_order=n_order-1;
     end
     % set values to zero that are used in sill_intrusion and solid_state
     % but not related to the chosen phase diagram 
@@ -876,7 +876,7 @@ if Use_Newton==1
 
 
     % Coupling term coefficient, as a function of phi, Cl and Cl2 (if there is volatile) 
-    N_C=100;
+    N_C=200;
     phi_range=linspace(0,1,N_C);
     Cl_range=linspace(0,1,N_C);
     %calculate the melt viscosity range
@@ -908,7 +908,24 @@ if Use_Newton==1
             end
         end
         C_coef_all= piecewiseFit(C_values);
-    else % need update this
+    else %currently not taking Cl2 into account
+        % melt viscosity is a function of both Cl and Cl2
+        % vis_b1=  211.2559; vis_b2=-9.8778e+04; vis_b3=  1.4453e+05;
+        % vis_c1=0.2519; vis_c2=1.6674e+04; vis_c3=-2.5643e+04;
+        % 
+        % Cl2_range=linspace(0,1,N_C);
+        % SiO2=(Cl_range*74+(1-Cl_range)*47); % SiO2%
+        % H2O=Cl2_range*100; % H2O%  !!!
+        %     for i=1:N
+        %         P3=Pg_real(i)*100;
+        %         Saturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5);
+        %         H2O(i)=H2O(i)/Saturation;
+        %     end
+
+        % vis_B=vis_b1*SiO2+vis_b2*H2O+vis_b3*log(1+H2O);
+        % vis_C=vis_c1*SiO2+vis_c2*H2O+vis_c3*log(1+H2O);
+        % muf_order=-4.55+vis_B./(max(T,500)+273.15-vis_C);
+
         C_values=zeros(N_C,N_C); %phi, Cl, Cl2
         muf_range=10.^((mu_f2-mu_f1)*Ssio2_scaled+mu_f1);
         for i=1:N_C
@@ -929,22 +946,49 @@ if Use_Newton==1
     N_rhol=100;
     Cl_range=linspace(0,1,N_rhol);
     Cs_range=linspace(0,1,N_rhos);
-    if (HHJPet==1 || SSPD==1)
-        rhof=rhof_1*(1-Cl_range)+Cl_range*rhof_2;
-    elseif FourMPD==1
-        C_all_dim = Cl_range*(MgO_range(2)-MgO_range(1))+MgO_range(1);
-        %rhof changes depending on comp
-        rhof = C_all_dim.*0;
-        for i=1:1:length(C_all_dim)
-            if C_all_dim(i)>=crit_mg_si_melt
-                rhof(i) = rhof_2;
-            else
-                rhof(i) = rhof_m*C_all_dim(i)+rhof_c;
-            end
+    if Has_volatile==1 % currently not using H2O dependant rhof
+        if (HHJPet==1 || SSPD==1)
+            rhof=rhof_1*(1-Cl_range)+Cl_range*rhof_2;
+        elseif FourMPD==1
+            C_all_dim = Cl_range*(MgO_range(2)-MgO_range(1))+MgO_range(1);
+            %rhof changes depending on comp
+            rhof = C_all_dim.*0;
+            for i=1:1:length(C_all_dim)
+                if C_all_dim(i)>=crit_mg_si_melt
+                    rhof(i) = rhof_2;
+                else
+                    rhof(i) = rhof_m*C_all_dim(i)+rhof_c;
+                end
+            end    
         end
+        rhol_coef_all=piecewiseFit(rhof);
+    else
+        Cl2_range=linspace(0,0.1,N_rhol);        % 
+        Coef_melt_den=[-0.004542610349603, 0.000103097162684, 0.001102980266019, 0.000249259014492];
+        % rhof=zeros(N_rhol,N_rhol);
+        % for i=1:N_rhol
+        %     for j=1:N_rhol
+        %         x_other=1-Cl_range(i)-Cl2_range(j);
+        % 
+        %         VMX=Cl2_range(j).*Cl_range(i).*Coef_melt_den(1)+Cl_range(i).*Coef_melt_den(2)+Cl2_range(j)*Coef_melt_den(3)+Coef_melt_den(4);
+        %         V_all=Cl_range(i).*26.86e-6/0.06009+Cl2_range(j).*26.27e-6/0.01802+x_other.*VMX;
+        %         rhof(i,j) =1/V_all;
+        %     end
+        % end
+        SiO2=(Cl_range*74+(1-Cl_range)*47)/100; %SiO2%
 
+        [Cl_grid, Cl2_grid] = meshgrid(SiO2, Cl2_range);
+        x_other = 1 - Cl_grid - Cl2_grid;
+        VMX = Cl2_grid .* Cl_grid * Coef_melt_den(1) + ...
+            Cl_grid  * Coef_melt_den(2) + ...
+            Cl2_grid * Coef_melt_den(3) + ...
+            Coef_melt_den(4);
+        V_all = Cl_grid  .* (26.86e-6 / 0.06009) + ...
+            Cl2_grid .* (26.27e-6 / 0.01802) + ...
+            x_other .* VMX;
+        rhof = 1 ./ V_all;
+        rhol_coef_all=piecewiseFit(rhof);
     end
-    rhol_coef_all=piecewiseFit(rhof);
 
 
     rhom=rhom_1*(1-Cs_range)+Cs_range*rhom_2;
@@ -1080,7 +1124,7 @@ if Has_volatile==1
     N_Tl=N_Tl-1;
 
     V_crust=1.2;
-    V_sill=8;
+    V_sill=5;
     kf=1e-6;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1249,6 +1293,9 @@ if Use_Newton==1
 
         nC = size(Ts0_coefficient,3);
         Ts0_coefficient=reshape(Ts0_coefficient, [], nC);
+        
+        % nC = size(rhol_coef_all,3);
+        % rhol_coef_all=reshape(rhol_coef_all, [], nC);
     end
     
     nC = size(C_coef_all,3);
@@ -1309,6 +1356,9 @@ if With_monitor==1
         end
     end    
     Plot_settings_master;
+    Update_frequency=2; %every X sec
+    Start_timer=tic;
+    Monitor_frame=0;
 end
 
 
