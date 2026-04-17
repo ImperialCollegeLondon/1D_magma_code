@@ -720,17 +720,22 @@ for iter=1:Max_Newton_iter
     end
     X_pre=X;
 end
-if iter<=5
-    if dt<0.01*Max_dt
-        dt=min(dt*1.5, Max_dt);
-    elseif dt<0.05*Max_dt
-        dt=min(dt*1.2, Max_dt);
-    else
-        dt=min(dt*1.1, Max_dt);
+if dt>1e-6*Year
+    if iter<=5
+        if dt<0.01*Max_dt
+            dt=min(dt*1.5, Max_dt);
+        elseif dt<0.05*Max_dt
+            dt=min(dt*1.2, Max_dt);
+        else
+            dt=min(dt*1.1, Max_dt);
+        end
+        dt_intended=dt;
+    elseif iter>=10
+        dt=min(dt*0.9, Max_dt);
+        dt_intended=dt;
     end
-elseif iter>=10
-    dt=min(dt*0.9, Max_dt);
 end
+
 % um=X(1:N+1);
 % uf=X(N+2:2*N+2);
 u_all=[X(N+2:2*N+2); X(1:N+1)];
@@ -804,10 +809,6 @@ rhom=zeros(N+1,1);
 rhof=zeros(N+1,1);
 rho_b=zeros(N,1);
 
-if iter>10
-    aaa=1;
-end
-    
 % Total_cb2=sum(Cb2.*cellz);
 % disp(['CB2 conservation:' num2str(Total_cb2/Total_cb20)])
 

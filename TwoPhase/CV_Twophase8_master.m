@@ -239,6 +239,9 @@ else
     
     sill_intrusion_master
     
+    dt=0;
+    Newton_solver2;
+    
     % Update sillcount
     SillCount=1;
 
@@ -552,6 +555,7 @@ while Time<End_time
 %%
     if Use_Newton==1
         % Two_phase_Newton;
+        dt=dt_intended;
         Newton_solver2;
     else
         kt=kt_background*ones(N,1);

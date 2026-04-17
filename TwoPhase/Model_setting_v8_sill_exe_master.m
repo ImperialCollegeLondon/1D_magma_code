@@ -11,7 +11,7 @@ clear;
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=1;
+Has_volatile=0;
 
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
@@ -557,7 +557,7 @@ injection_densB = injection_densF.*injection_phi + injection_densM.*(1-injection
 %% Setting up time step
 %
 dt0=dt0Y*Year;
-dt=dt0;
+dt_intended=dt0;
 Max_dt=Max_dtY*Year;
 
 Min_dt=Min_dtY*Year;
@@ -946,7 +946,7 @@ if Use_Newton==1
     N_rhol=100;
     Cl_range=linspace(0,1,N_rhol);
     Cs_range=linspace(0,1,N_rhos);
-    if Has_volatile==1 % currently not using H2O dependant rhof
+    if Has_volatile~=1 % currently not using H2O dependant rhof
         if (HHJPet==1 || SSPD==1)
             rhof=rhof_1*(1-Cl_range)+Cl_range*rhof_2;
         elseif FourMPD==1
@@ -1367,10 +1367,12 @@ Top0=0;
 max_adaptive_number=2;
 to_adapt=1;
 
-min_change=5e-3;
+min_change=2e-3;
 max_change=3e-2;
 
-min_dx=3;   % minimal cell length
+min_dx=2;   % minimal cell length
 max_dx=80; % maximum cell length
-min_N=300;  % minimal number of allowed cells
+min_N=500;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells
+
+

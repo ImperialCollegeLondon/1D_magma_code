@@ -1,16 +1,6 @@
 %CAB 30/1/23
 %Sill intrusion function file.
-%function [dz, nodez, N, cellz, Cb, H, T, phi, C_all, Cphi_all, u_all,ol, opx,cpx,feld, ol_mg, px_mg, opx_mg, cpx_mg, feld_mg, sol_mn, ol_mn, OG_composition, Conservative_pos,...
- %   Base_crust, Initial_dN,Initial_dC, Ts, Tl, depthTsCN] = ... 
-  %                                                      sill_intrusion_master(HHJPet,SSPD,FourMPD,N,depthN,depthCN,dz,dzF, Cb, H, T, C_all,phi, u_all,ol,opx,cpx,feld, ...
-   %                                                      ol_mg, px_mg, opx_mg, cpx_mg, feld_mg, sol_mn, ol_mn,...
-    %                                                    SillNodez, Sillcomp, SillH, SillTemp, SillMF, SillCf, SillCm, OG_composition,...
-      %                                                  Conservative_pos, Base_crust,Sill_length, Initial_dN,Initial_dC, Ts, TsD, ...
-       %                                                 depthTsCN,HighTsF,cp,Lf, DT,DC,lm1,lc1, crit_cb4,crit_cb5,s5T,...
-        %                                                liq_P2_C,liq_P3_C, liq_k1,liq_a1,liq_b1,liq_k2,liq_a2,liq_b2,liq_k3,liq_a3,liq_b3,A1,B1,C1,alpha, n_PD)
-
-
-        %% sill intruson master
+%% sill intruson master
 
 %% Start and end nodes of sill depths
 
@@ -152,11 +142,16 @@ if HighTsF==1
     end
 else
     for i=1:1:N
-        
-         [Ts(i),Tl(i),~,~]=solid_state_Ts_Tl_local_master(HHJPet,SSPD,FourMPD, Cb(i),cp,Lf,DT,DC,lm1,lc1, crit_cb4,crit_cb5,s5T,...
+        [Ts(i),Tl(i),~,~]=solid_state_Ts_Tl_local_master(HHJPet,SSPD,FourMPD, Cb(i),cp,Lf,DT,DC,lm1,lc1, crit_cb4,crit_cb5,s5T,...
                                                     liq_P2_C, liq_P3_C, liq_k1,liq_a1,liq_b1,liq_k2,liq_a2,liq_b2,liq_k3,liq_a3,liq_b3,A1,B1,C1,alpha, n_PD);
-
-         
-       
     end
 end
+
+
+%%
+phi_old=phi;
+u_all_old=u_all;
+H_old=H;
+T_old=T;
+C_all_old=C_all;
+Cb_old=Cb;

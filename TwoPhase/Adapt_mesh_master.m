@@ -15,18 +15,22 @@ index=find(phi(1:N)>0,1,'last');
 if nodez(index+1)>Top0
     Top0=nodez(index+1);
 end
+fine_margin=500; %meter
 
-
+% Cb_sum=sum((C_all(1:N).*phi(1:N)+C_all(N+1:end).*phi(N+1:end)).*dz');
+% H_sum=sum((cp*T+phi(1:N)*Lf).*dz');
 while num_adaptive<=max_adaptive_number && to_adapt==1
     phi=phi(1:N);
     Cl=C_all(1:N);
     Cs=C_all(N+1:2*N);
-
+    
     node_new=nodez;
 
     deleted=0;
     pass=0;
-
+    
+    ul=u_all(1:N+1);
+    us=u_all(N+2:end);
     % OG_Cb_FM = project_cell2node(nodez,dz,OG_Cb);
 
     Change = abs(diff(phi(1:N)));
@@ -41,10 +45,10 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
     end
 
 
-    newL=nodez(4:N)-nodez(2:N-2);
+    newL=nodez(3:N+1)-nodez(1:N-1);
     if N>min_N
 
-        for i=3:N-1
+        for i=3:N-1 %node number
             if pass==1
                 pass=0;
                 continue;
@@ -52,14 +56,15 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
 
            
 
-            if Change(i-deleted)<min_change &&...
-                    newL(i-deleted)<max_dx &&...
-                    node_new(i-deleted)<Top0
+            if Change(i-deleted-1)<min_change &&...
+                    newL(i-deleted-1)<max_dx &&...
+                    node_new(i-deleted)<Top0 && phi(i-deleted-1)<0.5 && phi(i-deleted)<0.5
 
                 node_new(i-deleted)=[];
 
-                u_all([i-deleted,i-deleted*2+N])=[];
-
+                
+                ul(i-deleted)=[];
+                us(i-deleted)=[];
                 %conservative coarsen
                 Cb_all=((phi(i-deleted-1).*Cl(i-deleted-1)+(1-phi(i-deleted-1))*Cs(i-deleted-1))*dz(i-deleted-1)+...
                        (phi(i-deleted)  .*Cl(i-deleted)  +(1-phi(i-deleted))  *Cs(i-deleted))  *dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
@@ -77,7 +82,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                     Cl(i-deleted-1)=(Cb_all-(1-phi(i-deleted-1))*Cs(i-deleted-1))/phi(i-deleted-1);
                 end
                 
-                phi(i-deleted)=[];   %Careful! delete item needs to be done in one-go
+                dz(i-deleted)=[]; 
+                phi(i-deleted)=[];   %Careful! deleting item needs to be done in one-go
                 T(i-deleted)=[];
                 Cs(i-deleted)=[];
                 Cl(i-deleted)=[];
@@ -88,6 +94,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                     Cs2(i-deleted)=[];
                     Cl2(i-deleted)=[];
                     S(i-deleted)=[];
+                    Lsaturation(i-deleted)=[];
+                    Ssaturation(i-deleted)=[];
                 end
 
                 % OG_Cb(i-deleted-1,:)=(OG_Cb(i-deleted-1,:)*dz(i-deleted-1)+OG_Cb(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
@@ -101,10 +109,9 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 % rho(i-deleted,:)=[];
 
 
-                Ts(i-deleted)=[];
-                Tl(i-deleted)=[];
-                Lsaturation(i-deleted)=[];
-                Ssaturation(i-deleted)=[];
+                % Ts(i-deleted)=[];
+                % Tl(i-deleted)=[];
+
 
                 % Pg_real(i-deleted)=[];
                 % cp(i-deleted,:)=[];
@@ -119,8 +126,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
     if N<max_N
         dz=nodez(2:end)-nodez(1:end-1);
         dphi=abs(phi(2:end)-phi(1:end-1));
-        
-        fine_margin=500; %meter
+
+
         index=find(phi>0,1,'last');
         index2=find(nodez>nodez(index)+fine_margin,1,'first');
         to_refine=zeros(length(phi)-1,1);
@@ -130,7 +137,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
 
         to_refine=((dphi>max_change)| to_refine) & dz(1:end-1)'>min_dx*2  & dz(2:end)'>min_dx*2;
         index=find(to_refine);
-        
+
         if ~isempty(index)
             out = index(1); % always keep the first element
             for i = 2:length(index)
@@ -161,6 +168,10 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             T_new = [T_new(1:i); T_new(i:i+1); T_new(i+1:end)];
             Cl_new = [Cl_new(1:i); Cl_new(i:i+1); Cl_new(i+1:end)];
             Cs_new = [Cs_new(1:i); Cs_new(i:i+1); Cs_new(i+1:end)];
+
+
+            ul=[ul(1:i); ul(i+1); ul(i+1); ul(i+1:end) ];
+            us=[us(1:i); us(i+1); us(i+1); us(i+1:end) ];
             if Has_volatile==1
                 S_new = [S_new(1:i); S_new(i:i+1); S_new(i+1:end)];
                 Cl2_new = [Cl2_new(1:i); Cl2_new(i:i+1); Cl2_new(i+1:end)];
@@ -168,7 +179,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             end
             offset=offset+2;
         end
-        
+
 
         node_new = nodez;
         shift = 0;
@@ -182,7 +193,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             node_new = [node_new(1:i-1), left_avg, node_new(i), right_avg, node_new(i+1:end)];
             shift = shift + 2;   
         end
-        
+
         phi=phi_new;
         Cl=Cl_new;
         Cs=Cs_new;
@@ -193,13 +204,6 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             Cs2=Cs2_new;
         end
     end
-
-    
-
-
-
-
-
     cellz_new=(node_new(1:end-1)+node_new(2:end))/2;  % cell center points
 
     N_old=N;
@@ -216,6 +220,25 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
 
     phi=[phi; 1-phi];
     C_all=[Cl;Cs];
+    u_all=[ul;us];
 
+    H=phi(1:N)*Lf+cp*T;
+    Cb=phi(1:N).*Cl+(1-phi(1:N)).*Cs;
 end
 
+
+
+% Cb_sum2=sum((Cl.*phi(1:N)+Cs.*(1-phi(1:N))).*dz');
+% H_sum2=sum((cp*T+phi(1:N)*Lf).*dz');
+
+% disp(['component conservation:' num2str((Cb_sum2-Cb_sum)/Cb_sum)]);
+% disp(['enthalpy conservation:' num2str((H_sum2-H_sum)/H_sum)]);
+
+dt=0;
+phi_old=phi;
+u_all_old=u_all;
+H_old=H;
+T_old=T;
+C_all_old=C_all;
+Cb_old=Cb;
+Newton_solver2;
