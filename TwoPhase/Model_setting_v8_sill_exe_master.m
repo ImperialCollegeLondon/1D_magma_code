@@ -1362,4 +1362,15 @@ if With_monitor==1
 end
 
 
-%%
+%% Mesh adaptivity
+Top0=0;
+max_adaptive_number=2;
+to_adapt=1;
+
+min_change=5e-3;
+max_change=3e-2;
+
+min_dx=3;   % minimal cell length
+max_dx=80; % maximum cell length
+min_N=300;  % minimal number of allowed cells
+max_N=8000; % maximum number of allowed cells

@@ -513,6 +513,8 @@ while Time<End_time
             end
         end
 
+        
+        Adapt_mesh_master
 
         counter=counter+1;
         improve=1;
@@ -1155,10 +1157,10 @@ while Time<End_time
     end
 
     if With_monitor==1
-        if toc>Monitor_frame*Update_frequency
+        % if toc>Monitor_frame*Update_frequency
             Update_plot_master
             Monitor_frame=Monitor_frame+1;
-        end
+        % end
     end
 
 

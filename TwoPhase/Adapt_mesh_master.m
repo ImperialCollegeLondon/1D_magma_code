@@ -1,142 +1,221 @@
-%% A mesh adaptivity procudure, based on melt fracton and bulk composition changes
+%% A mesh adaptivity procudure, based on melt fracton and Mass_data changes
 % Haiyang Hu
 % 2022-Sep-26
 % both conservative and  non-conservative schemes are available
+% 2023-Mar-12 modified for three phase model
 
+% Adaption by CAB to add OG_Cb so that we can track mass conservation
+
+
+%Mass_data=[m1,n1,v1,m2,n2,v2,v3];
 num_adaptive=0;
 to_adapt=1;
+
+index=find(phi(1:N)>0,1,'last');
+if nodez(index+1)>Top0
+    Top0=nodez(index+1);
+end
+
+
 while num_adaptive<=max_adaptive_number && to_adapt==1
-phi_FM=project_cell2node(nodez,dz,phi(1:N));
-Cb_FM=project_cell2node(nodez,dz,Cb(1:N));
-node_new=nodez;
+    phi=phi(1:N);
+    Cl=C_all(1:N);
+    Cs=C_all(N+1:2*N);
 
-% cellz_save=cellz;
-% nodez_save=nodez;
-% u_save=u_all;
-% phi_save=phi;
-% T_save=T;
-% H_save=H;
-% Cb_save=Cb;
-% C_all_save=C_all;
+    node_new=nodez;
 
+    deleted=0;
+    pass=0;
 
-deleted=0;
-pass=0;
-if N>min_N
-    for i=3:N-1
-        if pass==1
-            pass=0;
-            continue;
-        end
-          
-        newL=nodez(i+1)-nodez(i-1);
-        if abs(phi_FM(i+1)-phi_FM(i-1))<dphi_min && abs(Cb_FM(i+1)-Cb_FM(i-1))<dCb_min &&newL<max_dx && newL<(node_new(i+2-deleted)-node_new(i+1-deleted))*aspect_ratio && newL<(node_new(i-1-deleted)-node_new(i-2-deleted))*aspect_ratio
-            node_new(i-deleted)=[];
-            u_all([i-deleted,i-deleted*2+N])=[];
+    % OG_Cb_FM = project_cell2node(nodez,dz,OG_Cb);
 
+    Change = abs(diff(phi(1:N)));
 
-            H(i-deleted-1)=(H(i-deleted-1)*dz(i-deleted-1)+H(i-deleted)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
-            H(i-deleted)=[];
-            Cb(i-deleted-1)=(Cb(i-deleted-1)*dz(i-deleted-1)+Cb(i-deleted)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
-            Cb(i-deleted)=[];
-            
-            [phi(i-deleted-1),T(i-deleted-1),C_all(i-deleted-1), C_all(i-deleted*2-1+N), ~]=poro_component_solve(Cb(i-deleted-1), H(i-deleted-1),A1, B1, C1, A2, B2, C2, ae, Lf, rhof, cp,Precision);
-            phi(i-deleted*2-1+N)=1-phi(i-deleted-1);
+    Change = max(Change, abs(diff(Cl)));
+    Change = max(Change, abs(diff(Cs)));
 
-            phi([i-deleted, i-deleted*2+N])=[];   %Careful! delete item needs to be done in one-go
-            T(i-deleted)=[];
-            C_all([i-deleted, i-deleted*2+N] )=[];
-
-            deleted=deleted+1;
-            pass=1;
-        end
+    if Has_volatile == 1
+        Change = max(Change, abs(diff(S)));
+        Change = max(Change, abs(diff(Cl2)));
+        Change = max(Change, abs(diff(Cs2)));
     end
-end
 
 
-if N<max_N
-    added=0;
-    temp=length(node_new);
-    dz=node_new(2:end)-node_new(1:end-1);
-    phi_FM=project_cell2node(node_new,dz,phi(1:temp-1));
-    nodez_temp=node_new;
-%     H_FM=project_cell2node(node_new,dz,H);
-%     Cb_FM=project_cell2node(node_new,dz,Cb);
-%     C_all_FM=zeros(temp*2,1);
-%     C_all_FM(1:temp)=project_cell2node(node_new,dz,C_all(1:temp-1));
-%     C_all_FM(temp+1:end)=project_cell2node(node_new,dz,C_all(temp:end));
-%     phi_new=phi_FM;
-    Cl=C_all(1:temp-1);
-    Cs=C_all(temp:end);
-    phi_cut=phi(1:temp-1);
-    for i=3:temp-1
-        olddphi=abs(phi_FM(i)-phi_FM(i-1));
-        oldL=nodez_temp(i)-nodez_temp(i-1);
-        if olddphi>dphi_max && oldL>min_dx*2
-            insert_node=min(ceil(olddphi/dphi_max), floor(oldL/min_dx));
+    newL=nodez(4:N)-nodez(2:N-2);
+    if N>min_N
 
-            node_new=[node_new(1:i-2+added) linspace(node_new(i-1+added),node_new(i+added), insert_node+1) node_new(i+1+added:end)];
-            u_all=[u_all(1:i-2+added); linspace(u_all(i-1+added),u_all(i+added), insert_node+1)'; u_all(i+1+added: temp+added); u_all(temp+1+added:temp+i-2+added*2); linspace(u_all(temp+i-1+added*2),u_all(temp+i+added*2)', insert_node+1)'; u_all(temp+i+1+added*2:end)];
-
-% conservative scheme,   
-%             grad=(H(i+added)-H(i-2+added))/(dz(i-1+added)+dz(i+added)/2+dz(i-2+added)/2);
-%             X=(H(i-1+added)*insert_node-grad*insert_node*(insert_node-1)/2)/insert_node;
-%             H=[H(1:i-2+added);  linspace(X,X+(insert_node-1)*grad, insert_node)';   H(i+added:end)];
-              H=[H(1:i-2+added);  ones(insert_node,1)*H(i-1+added);   H(i+added:end)];
-%             grad=(Cb(i+added)-Cb(i-2+added))/(dz(i-1+added)+dz(i+added)/2+dz(i-2+added)/2);
-%             X=(Cb(i-1+added)*insert_node-grad*insert_node*(insert_node-1)/2)/insert_node;
-%             Cb=[Cb(1:i-2+added);  linspace(X,X+(insert_node-1)*grad, insert_node)';   Cb(i+added:end)];
-              Cb=[Cb(1:i-2+added);  ones(insert_node,1)*Cb(i-1+added);   Cb(i+added:end)];
-% non-conservative scheme 
-%             h1=(H(i-2+added)*dz(i-1+added)+H(i-1+added)*dz(i-2+added))/(dz(i-1+added)+dz(i-2+added));   
-%             h2=(H(i-1+added)*dz(i+added)+H(i+added)*dz(i-1+added))/(dz(i+added)+dz(i-1+added)); 
-%             grad=(h2-h1)/dz(i-1+added);
-%             H=[H(1:i-2+added);  linspace(h1+grad*dz(i-1+added)/insert_node*0.5,h2-grad*dz(i-1+added)/insert_node*0.5, insert_node)'; H(i+added:end)]; 
-% 
-%             h1=(Cb(i-2+added)*dz(i-1+added)+Cb(i-1+added)*dz(i-2+added))/(dz(i-1+added)+dz(i-2+added));   
-%             h2=(Cb(i-1+added)*dz(i+added)+Cb(i+added)*dz(i-1+added))/(dz(i+added)+dz(i-1+added)); 
-%             grad=(h2-h1)/dz(i-1+added);
-%             Cb=[Cb(1:i-2+added);  linspace(h1+grad*dz(i-1+added)/insert_node*0.5,h2-grad*dz(i-1+added)/insert_node*0.5, insert_node)'; Cb(i+added:end)]; 
-            phi_temp=zeros(insert_node,1);
-            C_all_temp=zeros(insert_node,2);
-            T_temp=zeros(insert_node,1);
-            for j=1: insert_node
-                [phi_temp(j),T_temp(j), C_all_temp(j,1), C_all_temp(j,2),  ~]=poro_component_solve(Cb(i-2+added+j), H(i-2+added+j),A1, B1, C1, A2, B2, C2, ae, Lf, rhof, cp,Precision);
+        for i=3:N-1
+            if pass==1
+                pass=0;
+                continue;
             end
-            phi_cut=[phi_cut(1:i-2+added);  phi_temp;   phi_cut(i+added:end)];
-            Cl=[Cl(1:i-2+added);  C_all_temp(:,1);   Cl(i+added:end)];
-            Cs=[Cs(1:i-2+added);  C_all_temp(:,2);   Cs(i+added:end)];
-%             C_all=[C_all(1:i-2+added);  C_all_temp(:,1);   C_all(i+added:temp+added); C_all(temp+1+added:temp+i-2+added*2);  C_all_temp(:,2);   C_all(temp+i+added*2:end)];
-            T=[T(1:i-2+added); T_temp;   T(i+added:end)];
-            added=added+insert_node-1;
+
+           
+
+            if Change(i-deleted)<min_change &&...
+                    newL(i-deleted)<max_dx &&...
+                    node_new(i-deleted)<Top0
+
+                node_new(i-deleted)=[];
+
+                u_all([i-deleted,i-deleted*2+N])=[];
+
+                %conservative coarsen
+                Cb_all=((phi(i-deleted-1).*Cl(i-deleted-1)+(1-phi(i-deleted-1))*Cs(i-deleted-1))*dz(i-deleted-1)+...
+                       (phi(i-deleted)  .*Cl(i-deleted)  +(1-phi(i-deleted))  *Cs(i-deleted))  *dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
+
+                H_all=((cp*T(i-deleted-1)+phi(i-deleted-1)*Lf)*dz(i-deleted-1)+(cp*T(i-deleted)+phi(i-deleted)*Lf)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
+
+                phi(i-deleted-1)=(phi(i-deleted-1)+phi(i-deleted))/2;
+                T(i-deleted-1)=(H_all-phi(i-deleted-1)*Lf)/cp;
+
+                if phi(i-deleted-1)<1e-8
+                    Cs(i-deleted-1)=Cb_all;
+                    Cl(i-deleted-1)=1;
+                else
+                    Cs(i-deleted-1)=(Cs(i-deleted-1)+Cs(i-deleted))/2;
+                    Cl(i-deleted-1)=(Cb_all-(1-phi(i-deleted-1))*Cs(i-deleted-1))/phi(i-deleted-1);
+                end
+                
+                phi(i-deleted)=[];   %Careful! delete item needs to be done in one-go
+                T(i-deleted)=[];
+                Cs(i-deleted)=[];
+                Cl(i-deleted)=[];
+                if Has_volatile==1
+                    Cs2(i-deleted-1)=(Cs2(i-deleted-1)+Cs2(i-deleted))/2;
+                    Cl2(i-deleted-1)=(Cl2(i-deleted-1)+Cl2(i-deleted))/2;
+                    S(i-deleted-1)=(S(i-deleted-1)+S(i-deleted))/2;
+                    Cs2(i-deleted)=[];
+                    Cl2(i-deleted)=[];
+                    S(i-deleted)=[];
+                end
+
+                % OG_Cb(i-deleted-1,:)=(OG_Cb(i-deleted-1,:)*dz(i-deleted-1)+OG_Cb(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
+                % OG_Cb(i-deleted,:)=0;                    
+
+                % if To_recored_intrusion_marker==1
+                %     Intrusion_marker_static(i-deleted)=[];
+                %     Intrusion_marker_dynamics(i-deleted)=[];
+                % end
+
+                % rho(i-deleted,:)=[];
+
+
+                Ts(i-deleted)=[];
+                Tl(i-deleted)=[];
+                Lsaturation(i-deleted)=[];
+                Ssaturation(i-deleted)=[];
+
+                % Pg_real(i-deleted)=[];
+                % cp(i-deleted,:)=[];
+
+                deleted=deleted+1;
+                pass=1;
+            end
         end
     end
+
+    nodez=node_new;
+    if N<max_N
+        dz=nodez(2:end)-nodez(1:end-1);
+        dphi=abs(phi(2:end)-phi(1:end-1));
+        
+        fine_margin=500; %meter
+        index=find(phi>0,1,'last');
+        index2=find(nodez>nodez(index)+fine_margin,1,'first');
+        to_refine=zeros(length(phi)-1,1);
+        if index2-index<fine_margin/min_dx/2
+            to_refine(index:index2)=1;
+        end
+
+        to_refine=((dphi>max_change)| to_refine) & dz(1:end-1)'>min_dx*2  & dz(2:end)'>min_dx*2;
+        index=find(to_refine);
+        
+        if ~isempty(index)
+            out = index(1); % always keep the first element
+            for i = 2:length(index)
+                if index(i) ~= out(end) + 1
+                    out = [out; index(i)];
+                end
+            end
+            to_refine=out;
+        else
+            to_refine=[];
+        end
+
+        offset = 0; 
+
+        phi_new=phi;
+        T_new=T;
+        Cl_new=Cl;
+        Cs_new=Cs;
+        if Has_volatile==1
+            S_new=S;
+            Cl2_new=Cl2;
+            Cs2_new=Cs2;
+        end
+
+        for k=1:numel(to_refine)
+            i = to_refine(k) + offset;
+            phi_new = [phi_new(1:i); phi_new(i:i+1); phi_new(i+1:end)];
+            T_new = [T_new(1:i); T_new(i:i+1); T_new(i+1:end)];
+            Cl_new = [Cl_new(1:i); Cl_new(i:i+1); Cl_new(i+1:end)];
+            Cs_new = [Cs_new(1:i); Cs_new(i:i+1); Cs_new(i+1:end)];
+            if Has_volatile==1
+                S_new = [S_new(1:i); S_new(i:i+1); S_new(i+1:end)];
+                Cl2_new = [Cl2_new(1:i); Cl2_new(i:i+1); Cl2_new(i+1:end)];
+                Cs2_new = [Cs2_new(1:i); Cs2_new(i:i+1); Cs2_new(i+1:end)];
+            end
+            offset=offset+2;
+        end
+        
+
+        node_new = nodez;
+        shift = 0;
+
+        for k = 1:numel(to_refine)
+            i = to_refine(k) + shift+1;
+
+            left_avg  = (node_new(i-1) + node_new(i)) / 2;
+            right_avg = (node_new(i) + node_new(i+1)) / 2;
+
+            node_new = [node_new(1:i-1), left_avg, node_new(i), right_avg, node_new(i+1:end)];
+            shift = shift + 2;   
+        end
+        
+        phi=phi_new;
+        Cl=Cl_new;
+        Cs=Cs_new;
+        T=T_new;
+        if Has_volatile==1
+            S=S_new;
+            Cl2=Cl2_new;
+            Cs2=Cs2_new;
+        end
+    end
+
+    
+
+
+
+
+
+    cellz_new=(node_new(1:end-1)+node_new(2:end))/2;  % cell center points
+
+    N_old=N;
+    N=length(node_new)-1;
+    nodez=node_new;
+    cellz=(nodez(1:end-1)+nodez(2:end))/2;  % cell center points
+    dz=nodez(2:end)-nodez(1:end-1);
+
+    disp(['Number of nodes: ', num2str(N)])
+    if abs(N_old-N)/N_old<0.05
+        to_adapt=0;
+    end
+    num_adaptive=num_adaptive+1;
+
+    phi=[phi; 1-phi];
     C_all=[Cl;Cs];
-    phi=[phi_cut;1-phi_cut];
+
 end
-Cphi_all=C_all.*phi;
 
-cellz_new=(node_new(1:end-1)+node_new(2:end))/2;  % cell center points
-
-N_old=N;
-N=length(node_new)-1;
-nodez=node_new;
-cellz=cellz_new;  % cell center points
-dz=nodez(2:end)-nodez(1:end-1);
-
-% if N>max_N
-%     min_dx=min_dx*1.1;
-%     max_dx=max_dx*1.1;
-% end
-
-% if N<min_N
-%     min_dx=min_dx*0.9;
-% %     max_dx=max_dx*0.9;
-% end
-disp(['Number of nodes: ', num2str(N)])
-if abs(N_old-N)/N_old<0.05
-    to_adapt=0;
-end
-num_adaptive=num_adaptive+1;
-end
-% Plot_settings;
