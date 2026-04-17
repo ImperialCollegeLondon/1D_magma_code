@@ -94,8 +94,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                     Cs2(i-deleted)=[];
                     Cl2(i-deleted)=[];
                     S(i-deleted)=[];
-                    Lsaturation(i-deleted)=[];
-                    Ssaturation(i-deleted)=[];
+                    % Lsaturation(i-deleted)=[];
+                    % Ssaturation(i-deleted)=[];
                 end
 
                 % OG_Cb(i-deleted-1,:)=(OG_Cb(i-deleted-1,:)*dz(i-deleted-1)+OG_Cb(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
@@ -127,14 +127,15 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
         dz=nodez(2:end)-nodez(1:end-1);
         dphi=abs(phi(2:end)-phi(1:end-1));
 
-
-        index=find(phi>0,1,'last');
-        index2=find(nodez>nodez(index)+fine_margin,1,'first');
         to_refine=zeros(length(phi)-1,1);
-        if index2-index<fine_margin/min_dx/2
-            to_refine(index:index2)=1;
-        end
+        index=find(phi>1e-2,1,'last');
+        if ~isempty(index)
+            index2=find(nodez<nodez(index)+fine_margin,1,'last');
 
+            if index2-index<fine_margin/min_dx/2
+                to_refine(index:index2)=1;
+            end
+        end
         to_refine=((dphi>max_change)| to_refine) & dz(1:end-1)'>min_dx*2  & dz(2:end)'>min_dx*2;
         index=find(to_refine);
 
@@ -241,4 +242,10 @@ H_old=H;
 T_old=T;
 C_all_old=C_all;
 Cb_old=Cb;
+if Has_volatile==1
+    S_old=S;
+    Cs2_old=Cs2;
+    Cl2_old=Cl2;
+end
+Last_adapted=Time;
 Newton_solver2;

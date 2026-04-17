@@ -11,7 +11,7 @@ clear;
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=0;
+Has_volatile=1;
 
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
@@ -946,7 +946,7 @@ if Use_Newton==1
     N_rhol=100;
     Cl_range=linspace(0,1,N_rhol);
     Cs_range=linspace(0,1,N_rhos);
-    if Has_volatile~=1 % currently not using H2O dependant rhof
+    if Has_volatile~=2 % currently not using H2O dependant rhof
         if (HHJPet==1 || SSPD==1)
             rhof=rhof_1*(1-Cl_range)+Cl_range*rhof_2;
         elseif FourMPD==1
@@ -1363,12 +1363,18 @@ end
 
 
 %% Mesh adaptivity
+Adaptive_mesh=1; %
+Adaptive_step_gap=10;
+Adaptive_step_time=20*Year;
+
+Last_adapted=0;
+
 Top0=0;
 max_adaptive_number=2;
 to_adapt=1;
 
 min_change=2e-3;
-max_change=3e-2;
+max_change=2e-2;
 
 min_dx=2;   % minimal cell length
 max_dx=80; % maximum cell length

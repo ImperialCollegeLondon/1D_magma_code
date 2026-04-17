@@ -155,3 +155,9 @@ H_old=H;
 T_old=T;
 C_all_old=C_all;
 Cb_old=Cb;
+if Has_volatile==1
+    S_old=S;
+    Cs2_old=Cs2;
+    Cl2_old=Cl2;
+end
+Just_intruded=1;

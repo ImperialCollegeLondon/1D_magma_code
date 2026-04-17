@@ -260,7 +260,7 @@ end
 
 tic;
 while Time<End_time
-    %% CAB - INTRUDE SILLS 
+    %% CAB - INTRUDE SILLS         
         if SillCount<SillNo 
             if Time > SillCount*SillRate-dt
                 if Time < SillCount*SillRate+dt
@@ -516,8 +516,9 @@ while Time<End_time
             end
         end
 
-        
-        Adapt_mesh_master
+        if (Adaptive_mesh==1 && mod(counter,Adaptive_step_gap)==1 && Time-Last_adapted>Adaptive_step_time) || Just_intruded
+            Adapt_mesh_master
+        end
 
         counter=counter+1;
         improve=1;
@@ -979,14 +980,7 @@ while Time<End_time
     
 
    
-    %% Adaptive mesh
-   % if Adaptive_mesh==1 && mod(counter,Adaptive_step_gap)==1
-%         save('temp.mat')
-    %    Adapt_mesh;
-    %end
-
-
-   
+  
 
 %% CAB - OUTPUT
 
@@ -1170,7 +1164,7 @@ while Time<End_time
 
 
      
-    
+    Just_intruded=0;
 end
 toc;
 fclose(File_echo);
