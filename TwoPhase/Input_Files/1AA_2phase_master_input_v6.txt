@@ -214,13 +214,13 @@ Density_emplacement_Flag_DensityEmplacement_GT_0,dummy,
 ,DensF,0
 
 Underaccretion_flag_if_gt_0,dummy,
-,OverF,1
+,OverF,0
 
 Melt_fraction_emplacement_Flag_if_GT_0,dummy,
 ,MFSill_flag,1
 
 Melt_fraction_for_Emplacement_below,dummy,
-,MFSill_int,0
+,MFSill_int,0.2
 
 Random_emplacement_Flag_RandomEmplacement_GT_0,dummy,
 ,RandF,0
@@ -237,8 +237,8 @@ Fine_meshed_region_ratio_compared_to_sillregion,dummy,
 Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
-Sill_injected_every_N_Myr,dummy,
-,injection_rate,5e-5
+Sill_injected_every_N_Kyr,dummy,
+,injection_rate,5e-2
 
 Total_number_of_sills_intruded,dummy,
 ,Tot_SillN,1

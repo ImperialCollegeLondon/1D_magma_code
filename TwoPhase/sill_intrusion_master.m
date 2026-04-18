@@ -161,3 +161,4 @@ if Has_volatile==1
     Cl2_old=Cl2;
 end
 Just_intruded=1;
+Last_intrusion_depth=nodez(depthN);

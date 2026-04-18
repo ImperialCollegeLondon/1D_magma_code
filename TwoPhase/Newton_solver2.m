@@ -236,9 +236,9 @@ for iter=1:Max_Newton_iter
     cl_0=X(I-1+(N+1)*2+N*3);
     cl_1=X(I  +(N+1)*2+N*3);
     cl_2=X(I+1+(N+1)*2+N*3);
-    RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(I)', Cb_old(I));
+    RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I));
 
-    J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(I)', Cb_old(I));
+    J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I));
     rows_block = repmat(I+(N+1)*2, 1, num_local);
     cols_block = [ ...
         I, I+1, ...
@@ -476,7 +476,7 @@ for iter=1:Max_Newton_iter
     du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
     
     alpha = 1.0;
-    for ls = 1:5
+    for ls = 1:8
         X = X_pre + alpha * du;
         % force 1>phi>0
         X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),-0.99e-2);
@@ -603,12 +603,12 @@ for iter=1:Max_Newton_iter
         cl_0=X(I-1+(N+1)*2+N*3);
         cl_1=X(I  +(N+1)*2+N*3);
         cl_2=X(I+1+(N+1)*2+N*3);
-        RHS(I+N+1)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(I)', Cb_old(I));
+        RHS(I+N+1)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)',dz(i2)', Cb_old(I));
         
         T_0=X(I-1+(N+1)*2+N);
         T_1=X(I  +(N+1)*2+N);
         T_2=X(I+1+(N+1)*2+N);
-        RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(I-1)', dz(I)', dz(I+1)', dt, cp, Lf, kt0, H_old(I));
+        RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I));
         
         %
         if Has_volatile==1
@@ -664,14 +664,6 @@ for iter=1:Max_Newton_iter
         
 
         if Has_volatile==1
-            % for i=2:N-1
-            %     %umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2
-            %     in=[X([i ,i+1, i+(N+1)  ,i+1+(N+1),i-1+(N+1)*2, i+(N+1)*2,i+1+(N+1)*2,...
-            %         i-1+(N+1)*2+N*4, i+(N+1)*2+N*4, i+1+(N+1)*2+N*4,...
-            %         i-1+(N+1)*2+N*5, i+(N+1)*2+N*5, i+1+(N+1)*2+N*5, i-1+(N+1)*2+N*6, i+(N+1)*2+N*6, i+1+(N+1)*2+N*6]); dz(i-1);dz(i); dz(i+1); dt;  kf; Cb2_old(i)];
-            % 
-            %     RHS(i+(N+1)*2+N*4)=rhs_ct2(in);
-            % end
             RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I));
 
             RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);
