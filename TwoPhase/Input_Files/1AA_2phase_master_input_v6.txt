@@ -238,10 +238,10 @@ Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
 Sill_injected_every_N_Kyr,dummy,
-,injection_rate,5e-2
+,injection_rate,2e-1
 
 Total_number_of_sills_intruded,dummy,
-,Tot_SillN,1
+,Tot_SillN,4
 
 Composition_of_sills_Sio2,dummy,
 ,Comp_sill,50

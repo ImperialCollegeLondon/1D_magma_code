@@ -1381,4 +1381,5 @@ max_dx=80; % maximum cell length
 min_N=500;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells
 
+min_dx0=min_dx;
 

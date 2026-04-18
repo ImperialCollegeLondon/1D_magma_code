@@ -242,6 +242,7 @@ else
     dt=0;
     Newton_solver2;
     
+    Cb_all0=sum(Cb.*dz');
     % Update sillcount
     SillCount=1;
 
@@ -259,6 +260,10 @@ end
 
 
 tic;
+dt_history=zeros(1,10);
+dt_history_index=1;
+Easy_converge=0;
+
 while Time<End_time
     %% CAB - INTRUDE SILLS         
         if SillCount<SillNo 
@@ -512,7 +517,7 @@ while Time<End_time
                     
                     sill_intrusion_master;
 
-
+                    Cb_all0=sum(Cb.*dz');
                     %Update sill count 
                     SillCount=SillCount+1;
                 end
@@ -570,7 +575,39 @@ while Time<End_time
     if Use_Newton==1
         % Two_phase_Newton;
         dt=dt_intended;
+        % dt_history(dt_history_index)=dt;
+        % if dt_history_index<10
+        %     dt_history_index=dt_history_index+1;
+        % else
+        %     dt_history_index=1;
+        % end
+        % if (max(dt_history)-min(dt_history))/max(min(dt_history),1e-6)<1.3 && min(dt_history)<1e-1*Year
+        %     dt=Max_dtY*Year/10;
+        % end
         Newton_solver2;
+        
+        if (iter==Max_Newton_iter)|| dt<Max_dtY*Year/1e4
+            min_dx=min_dx/4;
+            Adapt_mesh_master;
+            dt=dt0Y*Year;
+            Newton_solver2;
+            min_dx=min_dx*2;
+
+            if iter==Max_Newton_iter
+            error('Newton solver not converged before max iteration');
+            end
+            Easy_converge=0;
+        else
+            Easy_converge=Easy_converge+1;
+        end
+        
+        if Easy_converge>10
+            min_dx=min_dx0;
+            Easy_converge=0;
+        end
+        
+        Cb_all=sum(Cb.*dz');
+        disp(['conservation:' num2str(Cb_all/Cb_all0)])
     else
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');
@@ -925,7 +962,6 @@ while Time<End_time
          %   figure(8)
           %  clf;
         %end
-        %     Cb_all=sum(Cb(CDN_index1).*dz(CDN_index1)');
     %CAB - iteration for the timestep ends
     % CAB - added improve which highlights the precision level
     %disp([counter, iter, improve/Precision])

@@ -160,5 +160,9 @@ if Has_volatile==1
     Cs2_old=Cs2;
     Cl2_old=Cl2;
 end
+dt=0;
+Newton_solver2;
+
 Just_intruded=1;
 Last_intrusion_depth=nodez(depthN);
+dt_intended=dt0Y*Year;
