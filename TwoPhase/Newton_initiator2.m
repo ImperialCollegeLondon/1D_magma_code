@@ -64,7 +64,7 @@ end
 syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
-eps=1e-12;
+eps=1e-6;
 momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
@@ -103,18 +103,22 @@ rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
 syms dt
 % old bulk composition
 syms OLD_com
-eps=1e-12;
 % min_cb=1e-3;
 % min_cb_strength=1e-3;
 % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
-cb=phi_1*cl_1+(1-phi_1)*cs_1;
-trans_comp=cb-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt; %+min_cb_strength*(sqrt((cb-min_cb)^2+eps)-(cb-min_cb))
+k_stable=1e-7;
+cb_0=phi_0*cl_0+(1-phi_0)*cs_0;
+cb_1=phi_1*cl_1+(1-phi_1)*cs_1;
+cb_2=phi_2*cl_2+(1-phi_2)*cs_2;
+trans_comp=cb_1-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt...
+    ; %-1/(1+exp(K*(cb_1^2-5e-2^2)))*k_stable*2/dzi_1*((cb_2-cb_1)/(dzi_2+dzi_1)-(cb_1-cb_0)/(dzi_1+dzi_0))*dt
 
 % Jac_ct=jacobian(trans_comp, Variables);
 % Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
 % rhs_ct= matlabFunction(trans_comp, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
-
+trans_comp=simplify(trans_comp);
 Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
+Jac_ct=simplify(Jac_ct);
 Jac_ct= matlabFunction(Jac_ct, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_1, OLD_com});
 rhs_ct= matlabFunction(trans_comp, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_1, OLD_com});
 
@@ -139,7 +143,8 @@ rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2,
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
 % T=func(cl)*(Tl-Ts)+Ts
 syms A1 n_order D1
-eps=1e-12;
+eps=1e-6;
+K=1e3;
 
 if Has_volatile==1
     % when volatile is present Tl and Ts become functions of bulk water content (thus cb2=cl2*phi+(1-phi)*cs2)
@@ -160,10 +165,19 @@ B1= Ts-A1-Tl;
 Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 
 
+
+
+
 MINT=((T_1+C1+50)-sqrt((T_1-C1-50)^2+eps))/2;
 Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
 SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps))/2;
 Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps))/2;
+
+% MINT=-1/K*log(exp(-K*T_1/1000)+exp(-K*(C1+50)/1000))*1000;
+% Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
+% SMIN=-1/K*log(exp(-K*Cond5)+exp(-K*1));
+% Constrain5=1/K*log(exp(K*Cb)+exp(K*SMIN));
+
 
 
 liquidus=(Constrain5-cl_1)/1e4;
@@ -183,13 +197,18 @@ else
     rhs_liquidus=matlabFunction(liquidus,'Vars',     [phi_1, T_1, cs_1, cl_1,       a0,b0,a1,b1,D1, A1]);
 end
 
+
+cs_min=1e-2;
 if is_eutectic==1
     eps2=1e-1;
     solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e4;
 else 
     Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
-    SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
-    Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
+    % SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
+    % Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
+
+    SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
+    Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
     solidus=(Constrain4-cs_1)/1e4;
 end
 
@@ -240,7 +259,7 @@ end
 % melt saturation is a function of temperature and presusre. Pressure dependency part is a constant in the constraint
 % e.g. Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100-v2;
 syms cap_A cap_B
-eps=1e-12;
+eps=1e-6;
 % beta=1e4;
 if Has_volatile==1
     % cl2_1_cor=(cl2_1+sqrt(cl2_1^2+eps))/2;
