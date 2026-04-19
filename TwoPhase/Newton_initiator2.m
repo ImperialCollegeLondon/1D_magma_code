@@ -102,25 +102,78 @@ rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
 %% Major component transport equation
 syms dt
 % old bulk composition
-syms OLD_com k_stable
+syms OLD_com k_stable 
 
-% Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
-% k_stable=1e-11;
 cb_0=phi_0*cl_0+(1-phi_0)*cs_0;
 cb_1=phi_1*cl_1+(1-phi_1)*cs_1;
 cb_2=phi_2*cl_2+(1-phi_2)*cs_2;
-trans_comp=cb_1-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt...
-    -k_stable*2/dzi_1*((cb_2-cb_1)/(dzi_2+dzi_1)-(cb_1-cb_0)/(dzi_1+dzi_0))*dt; %1/(1+exp(K*(cb_1-5e-2)))*
+% 
+% flux_in =  ufi*(phi_0*cl_0 + phi_1*cl_1)/2 +  umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+% 
+% flux_out = ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
+% 
+% trans_comp=cb_1-OLD_com-( flux_in - alpha_1 * flux_out ) / dzi_1 * dt...
+%     ; %1/(1+exp(K*(cb_1-5e-2)))*  %-k_stable*2/dzi_1*((cb_2-cb_1)/(dzi_2+dzi_1)-(cb_1-cb_0)/(dzi_1+dzi_0))*dt
+% 
+% % Jac_ct=jacobian(trans_comp, Variables);
+% % Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
+% % rhs_ct= matlabFunction(trans_comp, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
+% trans_comp=simplify(trans_comp);
+% Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
+% Jac_ct=simplify(Jac_ct);
+% Jac_ct= matlabFunction(Jac_ct, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_0, dzi_1, dzi_2,OLD_com, k_stable});
+% rhs_ct= matlabFunction(trans_comp, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_0, dzi_1, dzi_2,OLD_com, k_stable});
 
-% Jac_ct=jacobian(trans_comp, Variables);
-% Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
-% rhs_ct= matlabFunction(trans_comp, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
-trans_comp=simplify(trans_comp);
+
+% control parameters (face-based)
+% syms alpha_m alpha_p
+
+
+
+%----------------------------------------
+% RAW FLUXES (as in your code)
+%----------------------------------------
+F_m = ...
+    ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
+    umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+
+F_p = ...
+    ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
+    umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
+
+K_cut=100;
+alpha_p=1./(1+exp(K_cut*(-cb_1+3e-2)));
+alpha_m=1./(1+exp(K_cut*(-cb_0+3e-2)));
+%----------------------------------------
+% APPLY CONTROL ONLY TO OUTGOING PART
+%----------------------------------------
+F_m_ctrl = alpha_m * F_m ;
+F_p_ctrl = alpha_p * F_p ;
+
+%----------------------------------------
+% TRANSPORT EQUATION (MODIFIED)
+%----------------------------------------
+% trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt;
+trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt-k_stable*2/dzi_1*((cb_2-cb_1)/(dzi_2+dzi_1)-(cb_1-cb_0)/(dzi_1+dzi_0))*dt;
+trans_comp = simplify(trans_comp);
+
+
 Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
-Jac_ct=simplify(Jac_ct);
-Jac_ct= matlabFunction(Jac_ct, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_0, dzi_1, dzi_2,OLD_com, k_stable});
-rhs_ct= matlabFunction(trans_comp, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_0, dzi_1, dzi_2,OLD_com, k_stable});
+Jac_ct = simplify(Jac_ct);
 
+Jac_ct = matlabFunction(Jac_ct, 'Vars', ...
+   {umi_1, umi_2, ufi, ufi2, ...
+    phi_0, phi_1, phi_2, ...
+    cs_0, cs_1, cs_2, ...
+    cl_0, cl_1, cl_2, ... %cb_1    
+    dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable});
+
+rhs_ct = matlabFunction(trans_comp, 'Vars', ...
+   {umi_1, umi_2, ufi, ufi2, ...
+    phi_0, phi_1, phi_2, ...
+    cs_0, cs_1, cs_2, ...
+    cl_0, cl_1, cl_2, ... %alpha_m, alpha_p, ...
+    dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable});
 %% Enthalpy transport equation
 syms cp Lf kt
 % old enthalpy

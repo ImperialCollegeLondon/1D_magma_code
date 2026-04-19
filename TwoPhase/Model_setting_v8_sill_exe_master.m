@@ -5,7 +5,7 @@
 % If code or comments are written by Catherine Booth, it is annotated CAB
 
 clear;
-
+fclose('all'); % close all files
 %execute='1AA_4M_2_phase_HS_mc_input_update_2.txt';
 
 
@@ -940,7 +940,7 @@ if Use_Newton==1
 
     
     % mum_0=max(Ref_Bulk_MN,max(max(C_values)));
-    mum_0=sqrt(Ref_Bulk_MN);
+    mum_0=Ref_Bulk_MN;
     % Density coefficients
     N_rhos=10;
     N_rhol=100;
@@ -1373,10 +1373,10 @@ Top0=0;
 max_adaptive_number=2;
 to_adapt=1;
 
-min_change=2e-3;
-max_change=2e-2;
+min_change=1e-3;
+max_change=1e-2;
 
-min_dx=2;   % minimal cell length
+min_dx=1;   % minimal cell length
 max_dx=80; % maximum cell length
 min_N=500;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells

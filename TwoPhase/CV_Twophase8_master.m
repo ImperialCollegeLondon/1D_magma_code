@@ -574,6 +574,9 @@ while Time<End_time
 %%
     if Use_Newton==1
         % Two_phase_Newton;
+        if dt_intended<1e-5*Year
+            dt_intended=1*Year;
+        end
         dt=dt_intended;
         % dt_history(dt_history_index)=dt;
         % if dt_history_index<10
@@ -584,10 +587,11 @@ while Time<End_time
         % if (max(dt_history)-min(dt_history))/max(min(dt_history),1e-6)<1.3 && min(dt_history)<1e-1*Year
         %     dt=Max_dtY*Year/10;
         % end
+        
         Newton_solver2;
         
         if (iter==Max_Newton_iter)|| dt<Max_dtY*Year/1e4
-            min_dx=min_dx/4;
+            min_dx=min_dx/2;
             Adapt_mesh_master;
             dt=dt0Y*Year;
             Newton_solver2;

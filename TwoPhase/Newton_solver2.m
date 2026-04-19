@@ -57,21 +57,26 @@ if Has_volatile==1
     b0_all=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-8*dSdT;
 end
 
-nLeft = 3;
-nRight = 3;
-targets=find(Cb<2e-2);
-all_neighbors = [];
-for i = 1:length(targets)
-    idx = targets(i);
-    
-    leftBound  = max(1, idx - nLeft);
-    rightBound = min(N, idx + nRight);
-    
-    all_neighbors = [all_neighbors, leftBound:rightBound];
-end
-all_neighbors = unique(all_neighbors);
-to_diffuse=ones(N,1)/1e2;
-to_diffuse(all_neighbors)=1;
+% K=500;
+% alpha_p=1./(1+exp(K*(-Cb+2e-2)));
+% alpha_m=[1; alpha_p(1:end-1)];
+
+
+% nLeft = 3;
+% nRight = 3;
+% targets=find(Cb<2e-2);
+% all_neighbors = [];
+% for i = 1:length(targets)
+%     idx = targets(i);
+% 
+%     leftBound  = max(1, idx - nLeft);
+%     rightBound = min(N, idx + nRight);
+% 
+%     all_neighbors = [all_neighbors, leftBound:rightBound];
+% end
+% all_neighbors = unique(all_neighbors);
+to_diffuse=ones(N,1)/1e1;
+% to_diffuse(all_neighbors)=1;
 
 Norm_pre=1e3;
 Not_improve=0;
@@ -253,9 +258,12 @@ for iter=1:Max_Newton_iter
     cl_1=X(I  +(N+1)*2+N*3);
     cl_2=X(I+1+(N+1)*2+N*3);
     k_stable=1e-8*(phi_1>1e-2).*to_diffuse(I);
-    RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable);
+    % RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable);
 
+    % J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable);
+    RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable);
     J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable);
+
     rows_block = repmat(I+(N+1)*2, 1, num_local);
     cols_block = [ ...
         I, I+1, ...
@@ -484,17 +492,12 @@ for iter=1:Max_Newton_iter
     Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
     
     du = Matrix_A \ (-RHS);
-    % if any(isnan(du))
-    %     dt=dt*0.5;   
-    %     X=X0;
-    %     disp(['Decrease dt, dt=' num2str(dt/Year)]) 
-    %     continue
-    % end
+
     % Force constant values on boundary
     du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
     
     alpha = 1.0;
-    for ls = 1:10
+    for ls = 1:8
         X = X_pre + alpha * du;
         % force 1>phi>0
         X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),-0.99e-2);
@@ -622,8 +625,9 @@ for iter=1:Max_Newton_iter
         cl_1=X(I  +(N+1)*2+N*3);
         cl_2=X(I+1+(N+1)*2+N*3);
         k_stable=1e-8*(phi_1>1e-2).*to_diffuse(I);
-        RHS(I+N+1)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)',dz(i2)', Cb_old(I), k_stable);
-        
+        % RHS(I+N+1)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)',dz(i2)', Cb_old(I), k_stable);
+
+        RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable);
         T_0=X(I-1+(N+1)*2+N);
         T_1=X(I  +(N+1)*2+N);
         T_2=X(I+1+(N+1)*2+N);
@@ -703,6 +707,15 @@ for iter=1:Max_Newton_iter
             break;            
         end
         alpha = alpha * 0.5;
+    end
+
+    if any(isnan(X(I  +(N+1)*2+N)))
+        dt=dt*0.5;   
+        X=X0;
+        Not_improve=0;
+        Norm_pre=1e3;
+        disp(['Decrease dt, dt=' num2str(dt/Year)]) 
+        continue
     end
     if temp_norm < Precision
         fprintf('Converged in %d iterations\n', iter);
@@ -807,7 +820,6 @@ else
         Ts=Tl0(1)-max(Cb,0).^(1/n_order).*(Tl0(1)-Ts0(1)); %local solidus        
     end
 end
-
 
 
 
