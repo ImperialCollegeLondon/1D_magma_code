@@ -4,7 +4,7 @@
 
 % If code or comments are written by Catherine Booth, it is annotated CAB
 
-clear;
+clear all;
 fclose('all'); % close all files
 %execute='1AA_4M_2_phase_HS_mc_input_update_2.txt';
 
@@ -438,6 +438,13 @@ if MU_type==0 % MU_type=0 - Nature model, MU_type=1 - Costa 2019
     end
     mu_all=4/3*mu_m+xi_m;
 else
+
+      
+    target_fun = @(epsilon) compute_F(0.99, epsilon, phistar, gamma, B_vis, BS_ratio) ...
+                      - (ref_shear/ref_shear2) * compute_F(0.5, epsilon, phistar, gamma, B_vis, BS_ratio);
+
+    epsilon0 = 1e-3;   % initial guess
+    epsilon = fzero(target_fun, [1e-5 1]);
     F=(1-epsilon)*erf(pi^0.5/2/(1-epsilon)*phi_range/phistar.*(1+(phi_range/phistar).^gamma));
 
     ref_mu=(1+(phi_range/phistar).^sigma)./(1-F).^(B_vis*phistar);
@@ -458,12 +465,13 @@ end
 f3 = figure(3);
 clf;
 set(gca,'TickDir','out');
-semilogy(phi_range,mu_m)
-hold on
-semilogy(phi_range,xi_m, 'x-')
 semilogy(phi_range,mu_all)
-ylim([min(mu_m)/2 max(mu_all)])
-legend({'Shear','Bulk','Sum'})
+hold on
+% semilogy(phi_range,mu_m)
+% semilogy(phi_range,xi_m, 'x-')
+
+ylim([min(mu_all)/2 max(mu_all)])
+legend({'Sum','Shear','Bulk',})
 % saveas(f3,'Shear_bulk_viscosity','svg')
 
 %%
@@ -791,9 +799,10 @@ rho_mean=2700;
 %saveas(f2,'Density_fig','svg')
 
 %% Data output
-Step_counts=0;
+
 
 Record_data=0; % set to 1 to save the simulation data
+Step_counts=0;
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;
 Record_time=[0:Out_time*Year:End_time];%[0:1:50 55:5:230]*Year;  % the time at which the simulation will be saved
@@ -801,14 +810,21 @@ Record_time=[0:Out_time*Year:End_time];%[0:1:50 55:5:230]*Year;  % the time at w
 min_cons=0.98;max_cons=1.02;
 min_res=0;max_res=1;
 % Record_time=[1:5]*Year;
-%if Record_data==1
- %   if Record_time(1)==0
-  %      eval(['save(''mu' num2str(mu_m) '_cut' num2str(Contribution_cut)  'T=' num2str(round(0/Year)) '.mat'')']);
-   %     Record_index=2;
-    %else
-     %   Record_index=1;
-    %end
-%end
+
+
+%A compact reusable data ouput
+Record_data2=1;
+if Record_data2==1
+    saveEvery  = 100; %steps contained in each data file 
+    if Has_volatile==0
+        snapshots = struct('nodez',{},'us', {}, 'ul', {}, 'phi',{}, 'T',{},'Cs', {}, 'Cl',{},                          'Tr',{},'Time',{});
+    else
+        snapshots = struct('nodez',{},'us', {}, 'ul', {}, 'phi',{}, 'T',{},'Cs', {}, 'Cl',{},'S',{}, 'Cs2',{},'Cl2',{},'Tr',{},'Time',{});
+    end
+    chunkIdx=0;
+    Initial_record_period=5*Year;
+    Record_period=Initial_record_period;    
+end
 
 %% plotting output
 if HHJPet==1 || SSPD==1
@@ -1142,6 +1158,7 @@ if Has_volatile==1
 
     S=zeros(N,1);
     Cl2=min(V_crust/Par_v*ones(N,1)/100, Lsaturation);
+    Cl2(cellz<3000)=1e-5;
     % Cl2=V_crust/Par_v*ones(N,1)/100;
     % Cs2=V_crust*ones(N,1)/100;
     Cs2=Cl2*Par_v;
@@ -1271,7 +1288,8 @@ if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
     [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile, is_eutectic);
-
+    
+    disp(['All Jacobians generated/loaded']);
 
     u_all_old=u_all;
     H_old=H;
@@ -1301,8 +1319,8 @@ if Use_Newton==1
     nC = size(C_coef_all,3);
     C_coef_all=reshape(C_coef_all, [], nC);
     
-    dt=0;
-    Newton_solver2;
+    Advance_time=0;
+    Newton_solver3;
 end
 
 %% Set up the monitor
@@ -1360,7 +1378,7 @@ if With_monitor==1
     Start_timer=tic;
     Monitor_frame=0;
 end
-
+Adaptive_show_range=1;
 
 %% Mesh adaptivity
 Adaptive_mesh=1; %
@@ -1383,3 +1401,13 @@ max_N=8000; % maximum number of allowed cells
 
 min_dx0=min_dx;
 
+
+
+function ref_all = compute_F(phi_range, epsilon, phistar, gamma, B_vis, BS_ratio)
+    sigma=13-gamma;  
+    F = (1 - epsilon) * erf(sqrt(pi)/2/(1 - epsilon) ...
+        * phi_range/phistar .* (1 + (phi_range/phistar).^gamma));    
+    ref_mu=(1+(phi_range/phistar).^sigma)./(1-F).^(B_vis*phistar);
+    ref_xi=ref_mu./max(0.0,phi_range)./(1-phi_range)*BS_ratio;
+    ref_all=4/3*ref_mu+ref_xi;
+end

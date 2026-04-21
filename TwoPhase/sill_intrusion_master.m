@@ -120,8 +120,8 @@ Cphi_all = [C_all(1:N).*phi(1:N); C_all(N+1:2*N).*phi(N+1:2*N)];
 u_all = [u_all(1:Start_depthN); zeros(SillNodez,1); u_all(Start_depthN+1:Start_depth2N); zeros(SillNodez,1); u_all(Start_depth2N+1:end)];
 
 %% Update mass conservation
-OG_composition=OG_composition+mean(Sillcomp)*SillNodez;
-Conservative_pos(2)=Conservative_pos(2)+SillNodez;
+% OG_composition=OG_composition+mean(Sillcomp)*SillNodez;
+% Conservative_pos(2)=Conservative_pos(2)+SillNodez;
 
 %% Update base_crust
 Base_crust=Base_crust+Sill_length/1000;
@@ -160,8 +160,9 @@ if Has_volatile==1
     Cs2_old=Cs2;
     Cl2_old=Cl2;
 end
-dt=0;
-Newton_solver2;
+
+% Advance_time=0;
+% Newton_solver3;
 
 Just_intruded=1;
 Last_intrusion_depth=nodez(depthN);

@@ -235,7 +235,7 @@ end
 % disp(['component conservation:' num2str((Cb_sum2-Cb_sum)/Cb_sum)]);
 % disp(['enthalpy conservation:' num2str((H_sum2-H_sum)/H_sum)]);
 
-dt=0;
+
 phi_old=phi;
 u_all_old=u_all;
 H_old=H;
@@ -248,4 +248,7 @@ if Has_volatile==1
     Cl2_old=Cl2;
 end
 Last_adapted=Time;
-Newton_solver2;
+
+dt=0;
+% Advance_time=0;
+% Newton_solver3;

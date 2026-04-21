@@ -141,14 +141,14 @@ F_p = ...
     ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
     umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
 
-K_cut=100;
+K_cut=800;
 alpha_p=1./(1+exp(K_cut*(-cb_1+3e-2)));
 alpha_m=1./(1+exp(K_cut*(-cb_0+3e-2)));
 %----------------------------------------
 % APPLY CONTROL ONLY TO OUTGOING PART
 %----------------------------------------
-F_m_ctrl = alpha_m * F_m ;
-F_p_ctrl = alpha_p * F_p ;
+F_m_ctrl =  F_m ;
+F_p_ctrl =  F_p ;
 
 %----------------------------------------
 % TRANSPORT EQUATION (MODIFIED)
@@ -250,7 +250,7 @@ else
 end
 
 
-cs_min=1e-2;
+cs_min=0;
 if is_eutectic==1
     eps2=1e-1;
     solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e4;
@@ -287,8 +287,11 @@ if Has_volatile==1
     eps=1e-12;
     S12flux=0.5*((S_2-S_1)-sqrt((S_2-S_1)^2+eps));
     S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));
-    trans_comp2=((phi_1*cl2_1+(1-phi_1)*cs2_1+S_1)-OLD_com2-(ufi*(phi_0*cl2_0+phi_1*cl2_1)/2-ufi2*(phi_1*cl2_1+phi_2*cl2_2)/2+umi_1*((1-phi_0)/2*cs2_0+(1-phi_1)/2*cs2_1)-umi_2*((1-phi_1)/2*cs2_1+(1-phi_2)/2*cs2_2))/dzi_1*dt...
-        -kf*2/dzi_1*(S12flux/(dzi_2+dzi_1)-S01flux/(dzi_1+dzi_0))*dt-kf_stable/dzi_1*((cl2_2-cl2_1)/(dzi_2+dzi_1)-(cl2_1-cl2_0)/(dzi_1+dzi_0))*dt)/20; %
+    cb2_0=phi_0*cl2_0+(1-phi_0)*cs2_0+S_0;
+    cb2_1=phi_1*cl2_1+(1-phi_1)*cs2_1+S_1;
+    cb2_2=phi_2*cl2_2+(1-phi_2)*cs2_2+S_2;
+    trans_comp2=(cb2_1-OLD_com2-(ufi*(phi_0*cl2_0+phi_1*cl2_1)/2-ufi2*(phi_1*cl2_1+phi_2*cl2_2)/2+umi_1*((1-phi_0)/2*cs2_0+(1-phi_1)/2*cs2_1)-umi_2*((1-phi_1)/2*cs2_1+(1-phi_2)/2*cs2_2))/dzi_1*dt...
+        -kf*2/dzi_1*(S12flux/(dzi_2+dzi_1)-S01flux/(dzi_1+dzi_0))*dt-kf_stable/dzi_1*((cb2_2-cb2_1)/(dzi_2+dzi_1)-(cb2_1-cb2_0)/(dzi_1+dzi_0))*dt)/20; %
     % trans_comp2=((cl2_1+cs2_1+S_1)-OLD_com2-(ufi*(cl2_0+cl2_1)/2-ufi2*(cl2_1+cl2_2)/2+umi_1*(cs2_0+cs2_1)/2-umi_2*(cs2_1+cs2_2)/2)/dzi_1*dt...
     %     -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
 

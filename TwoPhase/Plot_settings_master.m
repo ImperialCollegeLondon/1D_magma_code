@@ -3,8 +3,9 @@
 %Plot_Label={'Melt fraction, $$\phi (-)$$','uf','um','Enthalpy','Temperature($$^\circ$$C)','Cl','Cs','$$\bar{C}$$','St', 'Solid_vis(%)','$$\Delta\phi$$','$$\sum|\Delta\phi|$$', 'Cb', '$$\sum|\Delta\phi|$$', '$$\sum\Delta\phi$$','$$\sum\Delta\bar{C}$$','$$\Delta\bar{C}$$','$$\sum|\Delta\bar{C}|$$'};
 Font_Size=13;
 % YLIMITS=[crust_bottom crust_top];
-YLIMITS=[-Injection_depth-Sill_length/1000-0.3, -Injection_depth+0.3];
+YLIMITS=[-Injection_depth-Sill_length/1000-0.05, -Injection_depth+0.05];
 %YLIMITS=[-35 -20];
+Show_z=YLIMITS;
 
 Step_counts=0;
 % Initialize all the plottings
@@ -22,7 +23,7 @@ S_or_Cb=1;  %1 for showing SiO2
 figure(13)
 clf; set(gcf,'color','w','position',[10,10,1650,1200]);
 % title(['Compaction Length=',num2str(Compaction_length)])
-Plot_configure=reshape(Plot_configure',[1,Plot_size(1)*Plot_size(2)]);
+% Plot_configure=reshape(Plot_configure',[1,Plot_size(1)*Plot_size(2)]);
 
 for i=1:(Plot_size(1)*Plot_size(2))
     A_handel=subplot(Plot_size(1),Plot_size(2),i);hold on

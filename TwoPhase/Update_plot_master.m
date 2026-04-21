@@ -1,6 +1,28 @@
 if Step_counts>=Update_frame || Time>=End_time
     Step_counts=0;
+    
+    if Adaptive_show_range==1
+        Active=find(phi(1:N)>1e-3);
+        if ~isempty(Active)
+            Margin=[-100 100];  %in meters
+            Active_range=(cellz([Active(1) Active(end)])+Margin-nodez(end))/1000;
 
+            if Active_range(1)<Show_z(1) 
+                % Show_z(1)=Active_range(1)+Margin(1);
+                Show_z(1)=Active_range(1)-(Active_range(2)-Active_range(1))*0.13;
+            end
+            if Active_range(2)>Show_z(2)
+                % Show_z(2)=Active_range(2)+Margin(2);
+                Show_z(2)=Active_range(2)+(Active_range(2)-Active_range(1))*0.2;
+            end
+            ax = findall(13, 'Type', 'axes');
+            for i=2:length(ax)
+                set(ax(i),'ylim',Show_z)
+            end
+        end
+    end
+
+        
     for i=1:(Plot_size(1)*Plot_size(2))
         if isscalar(Plot_configure{i})
             j=Plot_configure{i};

@@ -5,6 +5,12 @@
 % S cs2 cl2: length N
 % HH, Mar 2026
 
+
+
+
+
+
+%%
 %estimate the total degree of entries
 % nnz=(3+1)*(N+1)+2*N... %momentum 
 %     +2*(N+1)+N     ... %continuity
@@ -40,6 +46,8 @@ else
 end
 X0=X;
 X_pre=X;
+
+
 if Has_volatile==1
     %preprocessing pressure index data
     Pressure=(nodez(end)-cellz)*g*rho_mean/1e5+1; %in bar
@@ -57,27 +65,18 @@ if Has_volatile==1
     b0_all=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-8*dSdT;
 end
 
-% K=500;
-% alpha_p=1./(1+exp(K*(-Cb+2e-2)));
-% alpha_m=[1; alpha_p(1:end-1)];
+to_diffuse=ones(N,1)/1e2;
 
 
-% nLeft = 3;
-% nRight = 3;
-% targets=find(Cb<2e-2);
-% all_neighbors = [];
-% for i = 1:length(targets)
-%     idx = targets(i);
-% 
-%     leftBound  = max(1, idx - nLeft);
-%     rightBound = min(N, idx + nRight);
-% 
-%     all_neighbors = [all_neighbors, leftBound:rightBound];
+
+%% 
+% if dt_intended<1e-5*Year
+%     dt_intended=1*Year;
 % end
-% all_neighbors = unique(all_neighbors);
-to_diffuse=ones(N,1)/1e1;
-% to_diffuse(all_neighbors)=1;
+% dt=dt_intended;
+% Time_intended=Time+Record_period;
 
+% while Time<Time_intended
 Norm_pre=1e3;
 Not_improve=0;
 for iter=1:Max_Newton_iter
@@ -418,7 +417,7 @@ for iter=1:Max_Newton_iter
     if Has_volatile ==1
    %% Volatile component transport assembly
         num_local=16;
-        k_stable2=kf*1e-4*(phi_1>1e-3);
+        k_stable2=kf*1e-5*(phi_1>1e-3);
         RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I), k_stable2);
 
         cols_block = [ ...
@@ -687,7 +686,7 @@ for iter=1:Max_Newton_iter
         
 
         if Has_volatile==1
-            k_stable2=kf*1e-4*(phi_1>1e-3);
+            k_stable2=kf*1e-5*(phi_1>1e-3);
             RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I), k_stable2);
 
             RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);

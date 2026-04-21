@@ -125,7 +125,7 @@ N_vis,dummy,
 ,N_vis,1e4
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
-,MU_type,0
+,MU_type,1
 
 Mush_bulk_visc_min_FLAG_No=0_Yes=1,dummy,
 ,mu_min_FLAG,0
@@ -159,8 +159,11 @@ sigma_max,dummy,
 epsilon,dummy,
 ,epsilon,1e-3
 
-Reference_shear_visc,dummy,
-,ref_shear,1e18
+Reference_shear_visc(at phi=0),dummy,
+,ref_shear,1e17
+
+Reference_shear_visc(at phi=0.5),dummy,
+,ref_shear2,1e15
 
 Bulk_To_Shear_ratio,dummy,
 ,BS_ratio,0.6
@@ -238,10 +241,10 @@ Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
 Sill_injected_every_N_Kyr,dummy,
-,injection_rate,2e-1
+,injection_rate,5e-1
 
 Total_number_of_sills_intruded,dummy,
-,Tot_SillN,4
+,Tot_SillN,10
 
 Composition_of_sills_Sio2,dummy,
 ,Comp_sill,50

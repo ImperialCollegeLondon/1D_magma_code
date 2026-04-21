@@ -264,265 +264,266 @@ dt_history=zeros(1,10);
 dt_history_index=1;
 Easy_converge=0;
 
+
 while Time<End_time
+    if mod(round(Time/Year),500)<5
+        aaa=1;
+    end
     %% CAB - INTRUDE SILLS         
-        if SillCount<SillNo 
-            if Time > SillCount*SillRate-dt
-                if Time < SillCount*SillRate+dt
+    if SillCount<SillNo
+        if Time > SillCount*SillRate
+            % Finding intrusion depth - either initial depth or
+            % density.
 
-                    % Finding intrusion depth - either initial depth or
-                    % density.
-
-                    depthCN=0;
-                    depthN=0;
-                    
-
-                    if DensF>0 && MFSill_flag>0
-
-                        for i=1:1:N
-
-                                if depthCN==0 && phi(i)>MFSill_int
-                                    if RandF>0 % random intrusion of sills around depth
-                                        RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                        depthCN=i+RF;
-                                        depthN=i-1+RF;
-                                        disp(Time)
-                                        disp('Sill intruded randomly around melt fraction difference')
-                                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                                            cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference with a random shifting of', ...
-                                            RF*dzF, 'm, at', Time/Year/1000, 'ka');
-                
-                                    else
-                                        depthCN=i;
-                                        depthN=i-1;
-                                        disp(Time)
-                                        disp('Sill intruded by melt fraction difference')
-                                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                                            cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference at', Time/Year/1000, 'ka');
-                                    end
-                                end
-
-                                if SillDens>=rho_b(i) && depthCN==0 
-                                    if RandF>0 %random intrusion of sills around depth
-                                        RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                        depthCN=i+RF;
-                                        depthN=i+RF-1;
-                                        disp(Time)
-                                        disp('Sill intruded randomly around density' )
-                                        fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
-                                        cellz(depthCN)/1000-Base_crust, 'km by density with a random shifting of', ...
-                                        RF*dzF, 'm, at', Time/Year/1000, 'ka');
-            
-                                    else %no random intrusion of sills around depth
-                                        depthCN=i;
-                                        depthN=i-1;
-                                        disp(Time)
-                                        disp('Sill intruded by density')
-                                        fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
-                                        cellz(depthCN)/1000-Base_crust, 'km at', Time/Year/1000, 'ka');
-                                    end 
-                                
-                                
-                                
-                                end
-                        end
-
-                         if depthCN==0 
-                            if RandF>0 % random intrusion of sills around depth
-                                RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                depthCN=Initial_dC+RF;
-                                depthN=Initial_dN+RF;
-                                disp(Time)
-                                disp('Sill intruded randomly around initial depth (overaccretion) ')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
-                                    RF*dzF, 'm, at', Time/Year/1000, 'ka');
-        
-                            else
-                                depthCN=Initial_dC;
-                                depthN=Initial_dN;
-                                disp(Time)
-                                disp('Sill intruded by initial depth (overaccretion)')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
-                            end
-                         end
-                 
+            depthCN=0;
+            depthN=0;
 
 
-                    
-                    
-                    elseif DensF>0 % density intrusion
-                        for i = 1:1:N
-                            if SillDens>=rho_b(i) && depthCN==0 
-                                if RandF>0 %random intrusion of sills around depth
-                                    RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                    depthCN=i+RF;
-                                    depthN=i+RF-1;
-                                    disp(Time)
-                                    disp('Sill intruded randomly around density' )
-                                    fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by density with a random shifting of', ...
-                                    RF*dzF, 'm, at', Time/Year/1000, 'ka');
-        
-                                else %no random intrusion of sills around depth
-                                    depthCN=i;
-                                    depthN=i-1;
-                                    disp(Time)
-                                    disp('Sill intruded by density')
-                                    fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km at', Time/Year/1000, 'ka');
-                                end 
-                                
-                                
-                                
-                            end
-                        end
+            if DensF>0 && MFSill_flag>0
 
-                         if depthCN==0 
-                            if RandF>0 % random intrusion of sills around depth
-                                RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                depthCN=Initial_dC+RF;
-                                depthN=Initial_dN+RF;
-                                disp(Time)
-                                disp('Sill intruded randomly around initial depth (overaccretion) ')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
-                                    RF*dzF, 'm, at', Time/Year/1000, 'ka');
-        
-                            else
-                                depthCN=Initial_dC;
-                                depthN=Initial_dN;
-                                disp(Time)
-                                disp('Sill intruded by initial depth (overaccretion)')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
-                            end
-                        end
+                for i=1:1:N
 
-
-
-        
-                    
-
-
-                    elseif MFSill_flag>0 % melt fraction                        
-                        if RandF>0
+                    if depthCN==0 && phi(i)>MFSill_int
+                        if RandF>0 % random intrusion of sills around depth
                             RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                            depthCN=i+RF;
+                            depthN=i-1+RF;
+                            disp(Time)
+                            disp('Sill intruded randomly around melt fraction difference')
+                            fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                                cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference with a random shifting of', ...
+                                RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
                         else
-                            RF=0;
-                        end
-                        index=find(phi(1:N)>MFSill_int,1,'first');
-                        if ~isempty(index)
-                            depthCN=index+RF;
-                            depthN=depthN+1;
-                        else
-                            index=find(nodez>Last_intrusion_depth,1,'first');
-                            depthCN=index+RF;
-                            depthN=depthN+1;
-                        end
-                        % for i=1:1:N
-                        % 
-                        %     if depthCN==0 && phi(i)>MFSill_int
-                        %         if RandF>0 % random intrusion of sills around depth
-                        %             RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                        %             depthCN=i+RF;
-                        %             depthN=i-1+RF;
-                        %             disp(Time)
-                        %             disp('Sill intruded randomly around melt fraction difference')
-                        %             fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                        %                 cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference with a random shifting of', ...
-                        %                 RF*dzF, 'm, at', Time/Year/1000, 'ka');
-                        % 
-                        %         else
-                        %             depthCN=i;
-                        %             depthN=i-1;
-                        %             disp(Time)
-                        %             disp('Sill intruded by melt fraction difference')
-                        %             fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                        %                 cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference at', Time/Year/1000, 'ka');
-                        %         end
-                        %     end
-                        % end
-                        % 
-                        % if depthCN==0 
-                        %     if RandF>0 % random intrusion of sills around depth
-                        %         RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                        %         depthCN=Initial_dC+RF;
-                        %         depthN=Initial_dN+RF;
-                        %         disp(Time)
-                        %         disp('Sill intruded randomly around initial depth (overaccretion) ')
-                        %         fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                        %             cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
-                        %             RF*dzF, 'm, at', Time/Year/1000, 'ka');
-                        % 
-                        %     else
-                        %         depthCN=Initial_dC;
-                        %         depthN=Initial_dN;
-                        %         disp(Time)
-                        %         disp('Sill intruded by initial depth (overaccretion)')
-                        %         fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                        %             cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
-                        %     end
-                        % end
-
-                    elseif OverF==0 % overaccretion
-
-                        if depthCN==0 
-                            if RandF>0 % random intrusion of sills around depth
-                                RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                depthCN=Initial_dC+RF;
-                                depthN=Initial_dN+RF;
-                                disp(Time)
-                                disp('Sill intruded randomly around initial depth (overaccretion) ')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (overaccretion)  with a random shifting of', ...
-                                    RF*dzF, 'm, at', Time/Year/1000, 'ka');
-        
-                            else
-                                depthCN=Initial_dC;
-                                depthN=Initial_dN;
-                                disp(Time)
-                                disp('Sill intruded by initial depth (overaccretion)')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (overaccretion) at', Time/Year/1000, 'ka');
-                            end
-                        end
-
-
-                    else  % underaccretion
-                        if depthCN==0 
-                            if RandF>0 % random intrusion of sills around depth
-                                RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
-                                depthCN=Initial_dC+RF-SillCount*SillNodez;
-                                depthN=Initial_dN+RF-SillCount*SillNodez;
-                                disp(Time)
-                                disp('Sill intruded randomly around initial depth (underaccretion) ')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
-                                    RF*dzF, 'm, at', Time/Year/1000, 'ka');
-        
-                            else
-                                depthCN=Initial_dC-SillCount*SillNodez;
-                                depthN=Initial_dN-SillCount*SillNodez;
-                                disp(Time)
-                                disp('Sill intruded by initial depth (underaccretion)')
-                                fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
-                                    cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
-                            end
+                            depthCN=i;
+                            depthN=i-1;
+                            disp(Time)
+                            disp('Sill intruded by melt fraction difference')
+                            fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                                cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference at', Time/Year/1000, 'ka');
                         end
                     end
-                        
-                        
-                    
-                    sill_intrusion_master;
 
-                    Cb_all0=sum(Cb.*dz');
-                    %Update sill count 
-                    SillCount=SillCount+1;
+                    if SillDens>=rho_b(i) && depthCN==0
+                        if RandF>0 %random intrusion of sills around depth
+                            RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                            depthCN=i+RF;
+                            depthN=i+RF-1;
+                            disp(Time)
+                            disp('Sill intruded randomly around density' )
+                            fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
+                                cellz(depthCN)/1000-Base_crust, 'km by density with a random shifting of', ...
+                                RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
+                        else %no random intrusion of sills around depth
+                            depthCN=i;
+                            depthN=i-1;
+                            disp(Time)
+                            disp('Sill intruded by density')
+                            fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
+                                cellz(depthCN)/1000-Base_crust, 'km at', Time/Year/1000, 'ka');
+                        end
+
+
+
+                    end
+                end
+
+                if depthCN==0
+                    if RandF>0 % random intrusion of sills around depth
+                        RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                        depthCN=Initial_dC+RF;
+                        depthN=Initial_dN+RF;
+                        disp(Time)
+                        disp('Sill intruded randomly around initial depth (overaccretion) ')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
+                            RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
+                    else
+                        depthCN=Initial_dC;
+                        depthN=Initial_dN;
+                        disp(Time)
+                        disp('Sill intruded by initial depth (overaccretion)')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
+                    end
+                end
+
+
+
+
+
+            elseif DensF>0 % density intrusion
+                for i = 1:1:N
+                    if SillDens>=rho_b(i) && depthCN==0
+                        if RandF>0 %random intrusion of sills around depth
+                            RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                            depthCN=i+RF;
+                            depthN=i+RF-1;
+                            disp(Time)
+                            disp('Sill intruded randomly around density' )
+                            fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
+                                cellz(depthCN)/1000-Base_crust, 'km by density with a random shifting of', ...
+                                RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
+                        else %no random intrusion of sills around depth
+                            depthCN=i;
+                            depthN=i-1;
+                            disp(Time)
+                            disp('Sill intruded by density')
+                            fprintf(File_echo, '%6s %5.5f %6s %5.5f %6s \n', 'Sill intruded at', ...
+                                cellz(depthCN)/1000-Base_crust, 'km at', Time/Year/1000, 'ka');
+                        end
+
+
+
+                    end
+                end
+
+                if depthCN==0
+                    if RandF>0 % random intrusion of sills around depth
+                        RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                        depthCN=Initial_dC+RF;
+                        depthN=Initial_dN+RF;
+                        disp(Time)
+                        disp('Sill intruded randomly around initial depth (overaccretion) ')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
+                            RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
+                    else
+                        depthCN=Initial_dC;
+                        depthN=Initial_dN;
+                        disp(Time)
+                        disp('Sill intruded by initial depth (overaccretion)')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
+                    end
+                end
+
+
+
+
+
+
+
+            elseif MFSill_flag>0 % melt fraction
+                if RandF>0
+                    RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                else
+                    RF=0;
+                end
+                index=find(phi(1:N)>MFSill_int,1,'first');
+                if ~isempty(index)
+                    depthCN=index+RF;
+                    depthN=depthN+1;
+                else
+                    index=find(nodez>Last_intrusion_depth,1,'first');
+                    depthCN=index+RF;
+                    depthN=depthCN+1;
+                end
+                % for i=1:1:N
+                %
+                %     if depthCN==0 && phi(i)>MFSill_int
+                %         if RandF>0 % random intrusion of sills around depth
+                %             RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                %             depthCN=i+RF;
+                %             depthN=i-1+RF;
+                %             disp(Time)
+                %             disp('Sill intruded randomly around melt fraction difference')
+                %             fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                %                 cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference with a random shifting of', ...
+                %                 RF*dzF, 'm, at', Time/Year/1000, 'ka');
+                %
+                %         else
+                %             depthCN=i;
+                %             depthN=i-1;
+                %             disp(Time)
+                %             disp('Sill intruded by melt fraction difference')
+                %             fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                %                 cellz(depthCN)/1000-Base_crust, 'km by melt fraction difference at', Time/Year/1000, 'ka');
+                %         end
+                %     end
+                % end
+                %
+                % if depthCN==0
+                %     if RandF>0 % random intrusion of sills around depth
+                %         RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                %         depthCN=Initial_dC+RF;
+                %         depthN=Initial_dN+RF;
+                %         disp(Time)
+                %         disp('Sill intruded randomly around initial depth (overaccretion) ')
+                %         fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                %             cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
+                %             RF*dzF, 'm, at', Time/Year/1000, 'ka');
+                %
+                %     else
+                %         depthCN=Initial_dC;
+                %         depthN=Initial_dN;
+                %         disp(Time)
+                %         disp('Sill intruded by initial depth (overaccretion)')
+                %         fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                %             cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
+                %     end
+                % end
+
+            elseif OverF==0 % overaccretion
+
+                if depthCN==0
+                    if RandF>0 % random intrusion of sills around depth
+                        RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                        depthCN=Initial_dC+RF;
+                        depthN=Initial_dN+RF;
+                        disp(Time)
+                        disp('Sill intruded randomly around initial depth (overaccretion) ')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (overaccretion)  with a random shifting of', ...
+                            RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
+                    else
+                        depthCN=Initial_dC;
+                        depthN=Initial_dN;
+                        disp(Time)
+                        disp('Sill intruded by initial depth (overaccretion)')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (overaccretion) at', Time/Year/1000, 'ka');
+                    end
+                end
+
+
+            else  % underaccretion
+                if depthCN==0
+                    if RandF>0 % random intrusion of sills around depth
+                        RF=round((2.*rand_injectN).*rand(1,1)-rand_injectN);
+                        depthCN=Initial_dC+RF-SillCount*SillNodez;
+                        depthN=Initial_dN+RF-SillCount*SillNodez;
+                        disp(Time)
+                        disp('Sill intruded randomly around initial depth (underaccretion) ')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s %5.5f %6s\n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion)  with a random shifting of', ...
+                            RF*dzF, 'm, at', Time/Year/1000, 'ka');
+
+                    else
+                        depthCN=Initial_dC-SillCount*SillNodez;
+                        depthN=Initial_dN-SillCount*SillNodez;
+                        disp(Time)
+                        disp('Sill intruded by initial depth (underaccretion)')
+                        fprintf(File_echo, '%s %5.5f %s %5.5f %6s \n', 'Sill intruded at', ...
+                            cellz(depthCN)/1000-Base_crust, 'km by initial depth (underaccretion) at', Time/Year/1000, 'ka');
+                    end
                 end
             end
+
+
+
+            sill_intrusion_master;
+
+            Cb_all0=sum(Cb.*dz');
+            %Update sill count
+            SillCount=SillCount+1;
         end
+    end
 %%
 
         % increase timestep if needed, not for Newton's method
@@ -573,43 +574,10 @@ while Time<End_time
        
 %%
     if Use_Newton==1
-        % Two_phase_Newton;
-        if dt_intended<1e-5*Year
-            dt_intended=1*Year;
-        end
-        dt=dt_intended;
-        % dt_history(dt_history_index)=dt;
-        % if dt_history_index<10
-        %     dt_history_index=dt_history_index+1;
-        % else
-        %     dt_history_index=1;
-        % end
-        % if (max(dt_history)-min(dt_history))/max(min(dt_history),1e-6)<1.3 && min(dt_history)<1e-1*Year
-        %     dt=Max_dtY*Year/10;
-        % end
-        
-        Newton_solver2;
-        
-        if (iter==Max_Newton_iter)|| dt<Max_dtY*Year/1e4
-            min_dx=min_dx/2;
-            Adapt_mesh_master;
-            dt=dt0Y*Year;
-            Newton_solver2;
-            min_dx=min_dx*2;
 
-            if iter==Max_Newton_iter
-            error('Newton solver not converged before max iteration');
-            end
-            Easy_converge=0;
-        else
-            Easy_converge=Easy_converge+1;
-        end
-        
-        if Easy_converge>10
-            min_dx=min_dx0;
-            Easy_converge=0;
-        end
-        
+        Advance_time=1;
+        Newton_solver3;
+     
         Cb_all=sum(Cb.*dz');
         disp(['conservation:' num2str(Cb_all/Cb_all0)])
     else
