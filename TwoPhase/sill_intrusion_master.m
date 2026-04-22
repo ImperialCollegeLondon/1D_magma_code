@@ -161,8 +161,8 @@ if Has_volatile==1
     Cl2_old=Cl2;
 end
 
-% Advance_time=0;
-% Newton_solver3;
+Advance_time=0;
+Newton_solver3;
 
 Just_intruded=1;
 Last_intrusion_depth=nodez(depthN);

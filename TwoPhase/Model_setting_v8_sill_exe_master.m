@@ -822,7 +822,7 @@ if Record_data2==1
         snapshots = struct('nodez',{},'us', {}, 'ul', {}, 'phi',{}, 'T',{},'Cs', {}, 'Cl',{},'S',{}, 'Cs2',{},'Cl2',{},'Tr',{},'Time',{});
     end
     chunkIdx=0;
-    Initial_record_period=5*Year;
+    Initial_record_period=20*Year;
     Record_period=Initial_record_period;    
 end
 
@@ -1158,7 +1158,7 @@ if Has_volatile==1
 
     S=zeros(N,1);
     Cl2=min(V_crust/Par_v*ones(N,1)/100, Lsaturation);
-    Cl2(cellz<3000)=1e-5;
+    Cl2(cellz<9000)=1e-5;
     % Cl2=V_crust/Par_v*ones(N,1)/100;
     % Cs2=V_crust*ones(N,1)/100;
     Cs2=Cl2*Par_v;
@@ -1197,12 +1197,12 @@ if Has_volatile==1
     index_v_nts=max(min(floor(V_sill/13/Par_v*N_Ts)+1,N_Ts),1);
     index_pressure_nts=max(min(floor(Pressure_injection/8000*N_Ts)+1,N_Ts),1);
     coef=Ts0_coefficient(index_pressure_nts,index_v_nts,:);
-    Ts0_sill=coef(1)*Pressure_injection/8000+coef(2)*V_sill/13+coef(3)*Pressure(i)*V_sill/8000/13+coef(4);
+    Ts0_sill=coef(1)*Pressure_injection/8000+coef(2)*V_sill/13+coef(3)*Pressure_injection*V_sill/8000/13+coef(4);
     
     index_v_ntl=max(min(floor(V_sill/20/Par_v*N_Ts)+1,N_Ts),1);
     index_pressure_ntl=max(min(floor(Pressure_injection/40e3*N_Ts)+1,N_Ts),1);
     coef=Tl0_coefficient(index_pressure_ntl,index_v_ntl,:);
-    Tl0_sill=coef(1)*Pressure_injection/40e3+coef(2)*V_sill/13+coef(3)*Pressure(i)*V_sill/40e3/20+coef(4);
+    Tl0_sill=coef(1)*Pressure_injection/40e3+coef(2)*V_sill/20+coef(3)*Pressure_injection*V_sill/40e3/20+coef(4);
 
     Total_cb20=sum(Cb2.*cellz');
 else
@@ -1374,7 +1374,7 @@ if With_monitor==1
         end
     end    
     Plot_settings_master;
-    Update_frequency=2; %every X sec
+    Update_frequency=20; %every X sec
     Start_timer=tic;
     Monitor_frame=0;
 end
@@ -1382,8 +1382,8 @@ Adaptive_show_range=1;
 
 %% Mesh adaptivity
 Adaptive_mesh=1; %
-Adaptive_step_gap=10;
-Adaptive_step_time=20*Year;
+Adaptive_step_gap=2;
+Adaptive_step_time=10*Year;
 
 Last_adapted=0;
 
@@ -1391,10 +1391,10 @@ Top0=0;
 max_adaptive_number=2;
 to_adapt=1;
 
-min_change=1e-3;
-max_change=1e-2;
+min_change=3e-3;
+max_change=3e-2;
 
-min_dx=1;   % minimal cell length
+min_dx=3;   % minimal cell length
 max_dx=80; % maximum cell length
 min_N=500;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells

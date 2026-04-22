@@ -195,7 +195,7 @@ rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2,
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
 % T=func(cl)*(Tl-Ts)+Ts
 syms A1 n_order D1
-eps=1e-6;
+
 K=1e3;
 
 if Has_volatile==1
@@ -218,12 +218,13 @@ Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 
 
 
-
+eps=1e-3;
+eps2=1e-8;
 
 MINT=((T_1+C1+50)-sqrt((T_1-C1-50)^2+eps))/2;
 Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
-SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps))/2;
-Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps))/2;
+SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps2))/2;
 
 % MINT=-1/K*log(exp(-K*T_1/1000)+exp(-K*(C1+50)/1000))*1000;
 % Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
@@ -232,7 +233,7 @@ Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps))/2;
 
 
 
-liquidus=(Constrain5-cl_1)/1e4;
+liquidus=(Constrain5-cl_1)/1e5;
 
 % Jac_liquidus=jacobian(liquidus, Variables);
 % % Jac_liquidus=simplify(Jac_liquidus);
@@ -253,7 +254,7 @@ end
 cs_min=0;
 if is_eutectic==1
     eps2=1e-1;
-    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e4;
+    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e5;
 else 
     Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
     % SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
@@ -284,7 +285,7 @@ if Has_volatile==1
     syms OLD_com2
     syms kf kf_stable
     % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
-    eps=1e-12;
+    eps=1e-10;
     S12flux=0.5*((S_2-S_1)-sqrt((S_2-S_1)^2+eps));
     S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));
     cb2_0=phi_0*cl2_0+(1-phi_0)*cs2_0+S_0;
@@ -315,6 +316,7 @@ end
 % e.g. Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100-v2;
 syms cap_A cap_B
 eps=1e-6;
+eps2=1e-10;
 % beta=1e4;
 if Has_volatile==1
     % cl2_1_cor=(cl2_1+sqrt(cl2_1^2+eps))/2;
@@ -325,7 +327,7 @@ if Has_volatile==1
     
 
     % condition=(Satl+S_1-(sqrt(Satl-S_1)^2+eps))/1e4;
-    condition=(Satl+S_1-sqrt((Satl-S_1)^2+eps))/1e4;
+    condition=(Satl+S_1-sqrt((Satl-S_1)^2+eps2))/1e4;
 
     % Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
     % Jac_lsat=jacobian(condition, Variables);

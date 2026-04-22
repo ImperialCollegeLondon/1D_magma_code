@@ -8,8 +8,10 @@
 
 
 %Mass_data=[m1,n1,v1,m2,n2,v2,v3];
-num_adaptive=0;
+num_adaptive=1;
 to_adapt=1;
+
+
 
 index=find(phi(1:N)>0,1,'last');
 if nodez(index+1)>Top0
@@ -48,7 +50,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
     newL=nodez(3:N+1)-nodez(1:N-1);
     if N>min_N
 
-        for i=3:N-1 %node number
+        for i=3:N-1 %cell number
             if pass==1
                 pass=0;
                 continue;
@@ -56,8 +58,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
 
            
 
-            if Change(i-deleted-1)<min_change &&...
-                    newL(i-deleted-1)<max_dx &&...
+            if Change(i-1)<min_change &&...
+                    newL(i-1)<max_dx &&...
                     node_new(i-deleted)<Top0 && phi(i-deleted-1)<0.5 && phi(i-deleted)<0.5
 
                 node_new(i-deleted)=[];
@@ -68,19 +70,55 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 %conservative coarsen
                 Cb_all=((phi(i-deleted-1).*Cl(i-deleted-1)+(1-phi(i-deleted-1))*Cs(i-deleted-1))*dz(i-deleted-1)+...
                        (phi(i-deleted)  .*Cl(i-deleted)  +(1-phi(i-deleted))  *Cs(i-deleted))  *dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
+                
+                Cb2_all=((phi(i-deleted-1).*Cl2(i-deleted-1)+(1-phi(i-deleted-1))*Cs2(i-deleted-1)+ S(i-deleted-1))*dz(i-deleted-1)+...
+                         (phi(i-deleted)  .*Cl2(i-deleted)  +(1-phi(i-deleted))  *Cs2(i-deleted)  + S(i-deleted))  *dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
 
                 H_all=((cp*T(i-deleted-1)+phi(i-deleted-1)*Lf)*dz(i-deleted-1)+(cp*T(i-deleted)+phi(i-deleted)*Lf)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
 
                 phi(i-deleted-1)=(phi(i-deleted-1)+phi(i-deleted))/2;
                 T(i-deleted-1)=(H_all-phi(i-deleted-1)*Lf)/cp;
+                
+                % if i-deleted-1==161
+                %     aaa=1
+                % end
+    Pressure=(nodez(end)-(node_new(i-deleted-1)+node_new(i-deleted))/2)*g*rho_mean/1e5+1; %in bar
+    index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
+    index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
+                index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
+                index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
 
-                if phi(i-deleted-1)<1e-8
-                    Cs(i-deleted-1)=Cb_all;
-                    Cl(i-deleted-1)=1;
-                else
-                    Cs(i-deleted-1)=(Cs(i-deleted-1)+Cs(i-deleted))/2;
-                    Cl(i-deleted-1)=(Cb_all-(1-phi(i-deleted-1))*Cs(i-deleted-1))/phi(i-deleted-1);
-                end
+            lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
+            lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
+
+            coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
+            coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
+
+            % unpack
+            a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
+            c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
+
+            a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
+            c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
+
+
+
+                    ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
+                    tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
+                    C1= tl;
+                    B1= ts-A1-tl;
+eps=1e-3;
+eps2=1e-8;
+
+                    MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
+                    Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
+                    SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+                    Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
+                    
+                    Cl(i-deleted-1)=(Cl(i-deleted-1)+Cl(i-deleted))/2;
+                    Cs(i-deleted-1)=(Cb_all-phi(i-deleted-1)*Cl(i-deleted-1))/(1-phi(i-deleted-1));
+
+                % end
                 
                 dz(i-deleted)=[]; 
                 phi(i-deleted)=[];   %Careful! deleting item needs to be done in one-go
@@ -88,15 +126,20 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 Cs(i-deleted)=[];
                 Cl(i-deleted)=[];
                 if Has_volatile==1
-                    Cs2(i-deleted-1)=(Cs2(i-deleted-1)+Cs2(i-deleted))/2;
-                    Cl2(i-deleted-1)=(Cl2(i-deleted-1)+Cl2(i-deleted))/2;
                     S(i-deleted-1)=(S(i-deleted-1)+S(i-deleted))/2;
+
+                    Cl2(i-deleted-1)=(Cb2_all-S(i-deleted-1))/(phi(i-deleted-1)+Par_v*(1-phi(i-deleted-1)));
+                    Cs2(i-deleted-1)=Cl2(i-deleted-1)*Par_v;
+
+                    
                     Cs2(i-deleted)=[];
                     Cl2(i-deleted)=[];
                     S(i-deleted)=[];
                     % Lsaturation(i-deleted)=[];
                     % Ssaturation(i-deleted)=[];
                 end
+                Ts(i-deleted)=[];
+                Tl(i-deleted)=[];
 
                 % OG_Cb(i-deleted-1,:)=(OG_Cb(i-deleted-1,:)*dz(i-deleted-1)+OG_Cb(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
                 % OG_Cb(i-deleted,:)=0;                    
@@ -109,8 +152,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 % rho(i-deleted,:)=[];
 
 
-                % Ts(i-deleted)=[];
-                % Tl(i-deleted)=[];
+
 
 
                 % Pg_real(i-deleted)=[];
@@ -249,6 +291,6 @@ if Has_volatile==1
 end
 Last_adapted=Time;
 
-dt=0;
-% Advance_time=0;
-% Newton_solver3;
+
+Advance_time=0;
+Newton_solver3;

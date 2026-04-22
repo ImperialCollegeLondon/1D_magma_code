@@ -205,13 +205,13 @@ Only_record_contribution_if_MF_decreasing,dummy,
 
 *****************Defining_sill_length_and_injection_parameters*****************,dummy,
 Base_of_crust_km,dummy,
-,Base_crust,25
+,Base_crust,40
 
 Top_of_crust_km,dummy,
 ,Top_crust,0
 
 Injection_depth_km,dummy,
-,Injection_depth,18
+,Injection_depth,30
 
 Density_emplacement_Flag_DensityEmplacement_GT_0,dummy,
 ,DensF,0
@@ -232,7 +232,7 @@ Random_injection_length_above_and_low_metres,dummy,
 ,Rand_inject,200
 
 Length_of_sill_metres,dummy,
-,Sill_length,100
+,Sill_length,50
 
 Fine_meshed_region_ratio_compared_to_sillregion,dummy,
 ,fine_ratio,8.33
@@ -241,10 +241,10 @@ Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
 Sill_injected_every_N_Kyr,dummy,
-,injection_rate,5e-1
+,injection_rate,0.5
 
 Total_number_of_sills_intruded,dummy,
-,Tot_SillN,10
+,Tot_SillN,400
 
 Composition_of_sills_Sio2,dummy,
 ,Comp_sill,50
@@ -260,7 +260,7 @@ Composition_of_deep_crust,dummy,
 ,Cb_initialVD,55
 
 Geotherm_of_crust,dummy,
-,T_geo,30
+,T_geo,25
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
@@ -298,7 +298,7 @@ Courant_Number,dummy,
 ,Courant, 0.45
 
 End_time_of_model_in_years,dummy,
-,End_timeY,500e3
+,End_timeY,10e6
 
 Output_Rate_of_data_plots_in_years,dummy,
 ,Out_time,10

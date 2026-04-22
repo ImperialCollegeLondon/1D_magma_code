@@ -239,8 +239,6 @@ else
     
     sill_intrusion_master
     
-    dt=0;
-    Newton_solver2;
     
     Cb_all0=sum(Cb.*dz');
     % Update sillcount
@@ -266,9 +264,9 @@ Easy_converge=0;
 
 
 while Time<End_time
-    if mod(round(Time/Year),500)<5
-        aaa=1;
-    end
+    % if mod(round(Time/Year),500)<4
+    %     save('temp.mat')
+    % end
     %% CAB - INTRUDE SILLS         
     if SillCount<SillNo
         if Time > SillCount*SillRate
@@ -536,30 +534,15 @@ while Time<End_time
         end
 
         if (Adaptive_mesh==1 && mod(counter,Adaptive_step_gap)==1 && Time-Last_adapted>Adaptive_step_time) || Just_intruded
+            % disp(['Temp save'])
+            % save('temp.mat')
             Adapt_mesh_master
         end
 
         counter=counter+1;
         improve=1;
         iter=0;
-        phi_old=phi;
-        u_all_old=u_all;
-        H_old=H;
-        T_old=T;
-        C_all_old=C_all;
-        Cphi_all_old=Cphi_all;
-        Cb_old=Cb;
-        Gamma=zeros(2*length(cellz),1); % Melft
-        Type_record=zeros(N,2);
-        Type_fix=zeros(N,1);
-        type_index=1;
-        C_values=zeros(N+1,1);
-
-        if Has_volatile==1
-            S_old=S;
-            Cs2_old=Cs2;
-            Cl2_old=Cl2;            
-        end
+        
         
         %Injecting=0;
         %Sill_injection=0;
@@ -581,6 +564,25 @@ while Time<End_time
         Cb_all=sum(Cb.*dz');
         disp(['conservation:' num2str(Cb_all/Cb_all0)])
     else
+        phi_old=phi;
+        u_all_old=u_all;
+        H_old=H;
+        T_old=T;
+        C_all_old=C_all;
+        Cphi_all_old=Cphi_all;
+        Cb_old=Cb;
+        Gamma=zeros(2*length(cellz),1); % Melft
+        Type_record=zeros(N,2);
+        Type_fix=zeros(N,1);
+        type_index=1;
+        C_values=zeros(N+1,1);
+
+        if Has_volatile==1
+            S_old=S;
+            Cs2_old=Cs2;
+            Cl2_old=Cl2;            
+        end
+
         kt=kt_background*ones(N,1);
         ind1=find(dz<max(dz)*0.9,1,'first');
         ind2=find(dz<max(dz)*0.9,1,'last');
