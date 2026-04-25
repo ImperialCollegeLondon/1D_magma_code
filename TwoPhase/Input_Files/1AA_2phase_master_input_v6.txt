@@ -241,7 +241,7 @@ Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
 Sill_injected_every_N_Kyr,dummy,
-,injection_rate,0.5
+,injection_rate,1
 
 Total_number_of_sills_intruded,dummy,
 ,Tot_SillN,400

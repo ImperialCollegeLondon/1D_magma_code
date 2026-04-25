@@ -1140,7 +1140,7 @@ if Has_volatile==1
     N_Tl=N_Tl-1;
 
     V_crust=1.2;
-    V_sill=5;
+    V_sill=8;
     kf=1e-6;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1320,6 +1320,7 @@ if Use_Newton==1
     C_coef_all=reshape(C_coef_all, [], nC);
     
     Advance_time=0;
+    Time_intended=1*Year;
     Newton_solver3;
 end
 
@@ -1391,7 +1392,7 @@ Top0=0;
 max_adaptive_number=2;
 to_adapt=1;
 
-min_change=3e-3;
+min_change=1e-3;
 max_change=3e-2;
 
 min_dx=3;   % minimal cell length

@@ -70,13 +70,16 @@ end
 
 
 %% 
+
+Time_old=Time;
 if Record_data2==1
     Time_gap=Record_period;
 else
     Time_gap=Max_dtY*Year;
 end
-Time_old=Time;
-Time_intended=Time+Time_gap;
+if Advance_time==1
+    Time_intended=Time_intended+Time_gap;
+end
 while Time<Time_intended-Time_gap*1e-5
     if dt_intended<1e-4*Year
         dt_intended=1*Year;
@@ -268,15 +271,14 @@ while Time<Time_intended-Time_gap*1e-5
         cl_0=X(I-1+(N+1)*2+N*3);
         cl_1=X(I  +(N+1)*2+N*3);
         cl_2=X(I+1+(N+1)*2+N*3);
+
         % cb=phi_1.*cl_1+(1-phi_1).*cs_1;
         % enhance=(cb>0.995)*1e2;
         scale=ones(N,1);
         scale(Cb_old<2e-3)=1e4;
-        k_stable=1e-9*(phi_1>1e-2).*scale(I);
+        k_stable=1e-10*(phi_1>1e-2).*scale(I);
         
-        % RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable);
 
-        % J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable);
         RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable);
         J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable);
 
@@ -435,7 +437,8 @@ while Time<Time_intended-Time_gap*1e-5
             %% Volatile component transport assembly
             num_local=16;
             k_stable2=kf*1e-4*(phi_1>1e-3);
-            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I), k_stable2);
+            k_effective=kf*(S_1>1e-5);
+            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  k_effective, Cb2_old(I), k_stable2);
 
             cols_block = [ ...
                 I, I+1, ...
@@ -445,7 +448,7 @@ while Time<Time_intended-Time_gap*1e-5
                 I-1+(N+1)*2+N*5, I+(N+1)*2+N*5, I+1+(N+1)*2+N*5, ...
                 I-1+(N+1)*2+N*6, I+(N+1)*2+N*6, I+1+(N+1)*2+N*6];
             idx = entry_count : entry_count + num_local*(N-2) - 1;
-            J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I), kf/1e5);
+            J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  k_effective, Cb2_old(I), k_stable2);
             rows_block = repmat(I+(N+1)*2+N*4, 1, num_local);
             rows(idx) = rows_block(:);
             cols(idx) = cols_block(:);
@@ -509,16 +512,18 @@ while Time<Time_intended-Time_gap*1e-5
 
         du = Matrix_A \ (-RHS);
         if ~isreal(du) || any(isnan(du))
-            dt_intended=dt_intended*0.5;
-            dt=dt/2;
-            if dt<1e-4*Year
-                dt=1*Year;
-            end
-            X=X0;
-            Not_improve=0;
-            Norm_pre=1e3;
-            disp(['Decrease dt, dt=' num2str(dt/Year)])
-            continue
+            % dt_intended=dt_intended*0.5;
+            % dt=dt/2;
+            % if dt<1e-4*Year
+            %     dt=1*Year;
+            % end
+            % X=X0;
+            % Not_improve=0;
+            % Norm_pre=1e3;
+            % disp(['Decrease dt, dt=' num2str(dt/Year)])
+            % continue
+            iter=Max_Newton_iter;
+            break
         end
         % Force constant values on boundary
         du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
@@ -654,9 +659,7 @@ while Time<Time_intended-Time_gap*1e-5
 
             scale=ones(N,1);
             scale(Cb_old<2e-3)=1e4;
-            k_stable=1e-9*(phi_1>1e-2).*scale(I);
-            % RHS(I+N+1)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)',dz(i2)', Cb_old(I), k_stable);
-
+            k_stable=1e-10*(phi_1>1e-2).*scale(I);
             RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable);
             T_0=X(I-1+(N+1)*2+N);
             T_1=X(I  +(N+1)*2+N);
@@ -718,7 +721,8 @@ while Time<Time_intended-Time_gap*1e-5
 
             if Has_volatile==1
                 k_stable2=kf*1e-4*(phi_1>1e-3);
-                RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf, Cb2_old(I), k_stable2);
+                k_effective=kf*(S_1>1e-5);
+                RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  k_effective, Cb2_old(I), k_stable2);
 
                 RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);
                 RHS(I+(N+1)*2+N*6)=rhs_lsat( T_1,       S_1,        cl2_1, dSdT(I)/100, b0_all(I));
@@ -764,13 +768,14 @@ while Time<Time_intended-Time_gap*1e-5
         else
             Not_improve=Not_improve+1;
             if Not_improve>5 && Advance_time==1
-                if Has_volatile==0
-                    % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old];
-                    X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N)];
-                else
-                    % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
-                    X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
-                end
+                % if Has_volatile==0
+                %     % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old];
+                %     X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N)];
+                % else
+                %     % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
+                %     X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
+                % end
+                X=X0;
                 dt_intended=dt_intended*0.5;
                 dt=dt/2;
                 disp(['Decrease dt, dt=' num2str(dt/Year)])
@@ -784,9 +789,10 @@ while Time<Time_intended-Time_gap*1e-5
         X_pre=X;
     end
     Cb=X((1:N)+2*N+2).*X((1:N)+2*N+2+N*3)+(1-X((1:N)+2*N+2)).*X((1:N)+2*N+2+N*2);
-    if (iter>=Max_Newton_iter || dt<1e-8*Year  || min(Cb)<1e-3) && Advance_time==1
+    if (iter>=Max_Newton_iter || dt<1e-8*Year  ) && Advance_time==1 %%|| min(Cb)<1e-3
         min_dx=min_dx/2;
         Adapt_mesh_master;
+        Advance_time=1;
         min_dx=min_dx*2;
         if Has_volatile==0
             Dof=(N+1)*2+N*4;
@@ -854,7 +860,7 @@ while Time<Time_intended-Time_gap*1e-5
     end
     if Time<Time_intended %update all old values
         Cb_old=Cb;
-        Cb2=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
+        Cb2_old=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
         H_old=X((1:N)+2*N+2)*Lf+X((1:N)+2*N+2+N)*cp;
     end
 end

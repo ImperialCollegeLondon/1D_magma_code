@@ -132,23 +132,27 @@ cb_2=phi_2*cl_2+(1-phi_2)*cs_2;
 
 %----------------------------------------
 % RAW FLUXES (as in your code)
-%----------------------------------------
-F_m = ...
-    ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
-    umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+% %----------------------------------------
+% F_m = ...
+%     ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
+%     umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+% 
+% F_p = ...
+%     ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
+%     umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
 
-F_p = ...
-    ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
-    umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
+
+F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
+F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
 
 K_cut=800;
-alpha_p=1./(1+exp(K_cut*(-cb_1+3e-2)));
-alpha_m=1./(1+exp(K_cut*(-cb_0+3e-2)));
+alpha_p=1./(1+exp(K_cut*(-cb_1+1e-2)));
+alpha_m=1./(1+exp(K_cut*(-cb_0+1e-2)));
 %----------------------------------------
 % APPLY CONTROL ONLY TO OUTGOING PART
 %----------------------------------------
-F_m_ctrl =  F_m ;
-F_p_ctrl =  F_p ;
+F_m_ctrl =  alpha_m*F_m ;
+F_p_ctrl =  alpha_p*F_p ;
 
 %----------------------------------------
 % TRANSPORT EQUATION (MODIFIED)
@@ -285,14 +289,38 @@ if Has_volatile==1
     syms OLD_com2
     syms kf kf_stable
     % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
-    eps=1e-10;
+    eps=1e-12;
+    
+    Smin=1e-6;
+    dS12=S_2-S_1;
+    eps12=(1e-2*dS12^2+Smin)^2;
+    dS01=S_1-S_0;
+    eps01=(1e-2*dS01^2+Smin)^2;
+    
     S12flux=0.5*((S_2-S_1)-sqrt((S_2-S_1)^2+eps));
-    S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));
+    S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));    
+    
     cb2_0=phi_0*cl2_0+(1-phi_0)*cs2_0+S_0;
     cb2_1=phi_1*cl2_1+(1-phi_1)*cs2_1+S_1;
     cb2_2=phi_2*cl2_2+(1-phi_2)*cs2_2+S_2;
-    trans_comp2=(cb2_1-OLD_com2-(ufi*(phi_0*cl2_0+phi_1*cl2_1)/2-ufi2*(phi_1*cl2_1+phi_2*cl2_2)/2+umi_1*((1-phi_0)/2*cs2_0+(1-phi_1)/2*cs2_1)-umi_2*((1-phi_1)/2*cs2_1+(1-phi_2)/2*cs2_2))/dzi_1*dt...
-        -kf*2/dzi_1*(S12flux/(dzi_2+dzi_1)-S01flux/(dzi_1+dzi_0))*dt-kf_stable/dzi_1*((cb2_2-cb2_1)/(dzi_2+dzi_1)-(cb2_1-cb2_0)/(dzi_1+dzi_0))*dt)/20; %
+
+    %
+    % F_m = ...
+    %     ufi*(phi_0*cl2_0 + phi_1*cl2_1)/2 + ...
+    %     umi_1*((1-phi_0)/2*cs2_0 + (1-phi_1)/2*cs2_1);
+    % 
+    % F_p = ...
+    %     ufi2*(phi_1*cl2_1 + phi_2*cl2_2)/2 + ...
+    %     umi_2*((1-phi_1)/2*cs2_1 + (1-phi_2)/2*cs2_2);
+    
+    
+    F_m=ufi*phi_0*cl2_0+umi_1*(1-phi_1)*cs2_1;
+    F_p=ufi2*phi_1*cl2_1+umi_2*(1-phi_2)*cs2_2;
+    
+
+
+    trans_comp2=(cb2_1-OLD_com2- (F_m - F_p)/dzi_1 * dt...
+        -kf*2/dzi_1*(S12flux/(dzi_2+dzi_1)-S01flux/(dzi_1+dzi_0))*dt-kf_stable/dzi_1*((cb2_2-cb2_1)/(dzi_2+dzi_1)-(cb2_1-cb2_0)/(dzi_1+dzi_0))*dt)/1e3; %
     % trans_comp2=((cl2_1+cs2_1+S_1)-OLD_com2-(ufi*(cl2_0+cl2_1)/2-ufi2*(cl2_1+cl2_2)/2+umi_1*(cs2_0+cs2_1)/2-umi_2*(cs2_1+cs2_2)/2)/dzi_1*dt...
     %     -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
 
@@ -316,7 +344,7 @@ end
 % e.g. Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100-v2;
 syms cap_A cap_B
 eps=1e-6;
-eps2=1e-10;
+eps2=1e-15;
 % beta=1e4;
 if Has_volatile==1
     % cl2_1_cor=(cl2_1+sqrt(cl2_1^2+eps))/2;
