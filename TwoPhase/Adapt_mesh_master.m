@@ -204,64 +204,82 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             Cl2_new=Cl2;
             Cs2_new=Cs2;
         end
-        dz_new=dz;
+
+
+        dz_new=dz;        
+        node_new = nodez;
+
+        % shift = 0;
+        % for k = 1:numel(to_refine)
+        %     i = to_refine(k) + shift+1;
+        % 
+        %     left_avg  = (node_new(i-1) + node_new(i)) / 2;
+        %     right_avg = (node_new(i) + node_new(i+1)) / 2;
+        % 
+        %     node_new = [node_new(1:i-1), left_avg, right_avg, node_new(i+1:end)];
+        % 
+        %     dz_new=node_new(2:end)-node_new(1:end-1);
+        %     shift = shift + 1;
+        % end
 
         for k=1:numel(to_refine)
             i = to_refine(k) + offset;
-
-            Cb_all=((phi_new(i).*Cl_new(i)    +(1-phi(i))    *Cs_new(i))  *dz_new(i)+...
-                  (phi_new(i+1).*Cl_new(i+1)  +(1-phi(i+1))  *Cs_new(i+1))*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
-
-            Cb2_all=((phi_new(i).*Cl2_new(i)    +(1-phi(i))    *Cs2_new(i)  +S_new(i)  )*dz_new(i)+...
-                  (phi_new(i+1).*Cl2_new(i+1)  +(1-phi(i+1))  *Cs2_new(i+1) +S_new(i+1))*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
-
-            H_all=((cp*T(i)+phi(i)*Lf)*dz(i)+(cp*T(i+1)+phi(i+1)*Lf)*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
-
             
 
+
+            Cb_all=((phi_new(i).*Cl_new(i)    +(1-phi_new(i))    *Cs_new(i))  *dz_new(i)+...
+                  (phi_new(i+1).*Cl_new(i+1)  +(1-phi_new(i+1))  *Cs_new(i+1))*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
+
+            Cb2_all=((phi_new(i).*Cl2_new(i)    +(1-phi_new(i))    *Cs2_new(i)  +S_new(i)  )*dz_new(i)+...
+                  (phi_new(i+1).*Cl2_new(i+1)  +(1-phi_new(i+1))  *Cs2_new(i+1) +S_new(i+1))*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
+
+            H_all=((cp*T_new(i)+phi_new(i)*Lf)*dz_new(i)+(cp*T_new(i+1)+phi_new(i+1)*Lf)*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
+
+
+
+            %
             phi_gap=sum(phi_new(i:i+1))/2;
             phi_new = [phi_new(1:i); phi_gap; phi_new(i+1:end)];
 
             T_gap=(H_all-phi_gap*Lf)/cp;
             T_new = [T_new(1:i); T_gap; T_new(i+1:end)];
 
-%     Pressure=(sum(node_new(i-1:i+1))+nodez_new(i))/4*g*rho_mean/1e5+1; %in bar
-%     index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
-%     index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
-%                 index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
-%                 index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
-% 
-%             lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
-%             lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
-% 
-%             coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
-%             coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
-% 
-%             % unpack
-%             a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
-%             c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
-% 
-%             a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
-%             c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
-% 
-% 
-% 
-%                     ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
-%                     tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
-%                     C1= tl;
-%                     B1= ts-A1-tl;
-% eps=0.1;
-% eps2=1e-6;
-% 
-%                     MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
-%                     Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
-%                     SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
-%                     Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
-% 
-%                     Cl(i-deleted-1)=(Cl(i-deleted-1)+Cl(i-deleted))/2;
-%                     Cs(i-deleted-1)=(Cb_all-phi(i-deleted-1)*Cl(i-deleted-1))/(1-phi(i-deleted-1));
-%+++++
-            Cl_gap=(Cl_new(i)+Cl_new(i+1))/2;
+    Pressure=(sum(node_new(i:i+2))+node_new(i+1))/4*g*rho_mean/1e5+1; %in bar
+    index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
+    index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
+                index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
+                index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
+
+            lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
+            lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
+
+            coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
+            coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
+
+            % unpack
+            a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
+            c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
+
+            a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
+            c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
+
+
+
+                    ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
+                    tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
+                    C1= tl;
+                    B1= ts-A1-tl;
+eps=0.1;
+eps2=1e-6;
+
+                    MINT=((T_gap+C1+50)-sqrt((T_gap-C1-50)^2+eps))/2;
+                    Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
+                    SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+                    Cl_gap=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
+
+
+% +++++
+            % Cl_gap=(Cl_new(i)+Cl_new(i+1))/2;
             Cl_new = [Cl_new(1:i); Cl_gap; Cl_new(i+1:end)];
             Cs_gap=(Cb_all-phi_gap*Cl_gap)/(1-phi_gap);
             Cs_new = [Cs_new(1:i); Cs_gap; Cs_new(i+1:end)];
@@ -278,24 +296,17 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 Cs2_gap=Cl2_gap*Par_v;
                 Cs2_new = [Cs2_new(1:i); Cs2_gap; Cs2_new(i+1:end)];
             end
+
+                        %
+            left_avg  = (node_new(i) + node_new(i+1)) / 2;
+            right_avg = (node_new(i+1) + node_new(i+2)) / 2;
+            node_new = [node_new(1:i), left_avg, right_avg, node_new(i+2:end)];
+            dz_new=node_new(2:end)-node_new(1:end-1);
             offset=offset+1;
         end
 
 
-        node_new = nodez;
-        shift = 0;
 
-        for k = 1:numel(to_refine)
-            i = to_refine(k) + shift+1;
-
-            left_avg  = (node_new(i-1) + node_new(i)) / 2;
-            right_avg = (node_new(i) + node_new(i+1)) / 2;
-
-            node_new = [node_new(1:i-1), left_avg, right_avg, node_new(i+1:end)];
-
-            dz_new=node_new(2:end)-node_new(1:end-1);
-            shift = shift + 1;   
-        end
 
         phi=phi_new;
         Cl=Cl_new;
@@ -351,11 +362,11 @@ if Has_volatile==1
 end
 Last_adapted=Time;
 
-% Cb=Cl.*phi(1:N)+Cs.*(1-phi(1:N));
-% Cb_all=sum(Cb.*dz');
-% Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
-% Cb2_all=sum(Cb2.*dz');
-% disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
+Cb=Cl.*phi(1:N)+Cs.*(1-phi(1:N));
+Cb_all=sum(Cb.*dz');
+Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
+Cb2_all=sum(Cb2.*dz');
+disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
 
 Advance_time=0;
 Newton_solver3;
