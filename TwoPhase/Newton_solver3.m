@@ -906,7 +906,7 @@ while Time<Time_intended-Time_gap*1e-5
     if Time<Time_intended %update all old values
         Cb_old=Cb;
         Cb2_old=Cb2; %X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
-        H_old=X((1:N)+2*N+2)*Lf+X((1:N)+2*N+2+N)*cp;
+        H_old=X((1:N)+2*N+2)*Lf+X((1:N)+2*N+2+N)*cp;      
     end
 end
 %%

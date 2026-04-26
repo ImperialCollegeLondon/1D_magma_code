@@ -204,17 +204,18 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             Cl2_new=Cl2;
             Cs2_new=Cs2;
         end
+        dz_new=dz;
 
         for k=1:numel(to_refine)
             i = to_refine(k) + offset;
 
-            Cb_all=((phi_new(i).*Cl(i)    +(1-phi(i))    *Cs(i))  *dz(i)+...
-                  (phi_new(i+1).*Cl(i+1)  +(1-phi(i+1))  *Cs(i+1))*dz(i+1))/(dz(i)+dz(i+1));
+            Cb_all=((phi_new(i).*Cl_new(i)    +(1-phi(i))    *Cs_new(i))  *dz_new(i)+...
+                  (phi_new(i+1).*Cl_new(i+1)  +(1-phi(i+1))  *Cs_new(i+1))*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
 
-            Cb2_all=((phi_new(i).*Cl2(i)    +(1-phi(i))    *Cs2(i))  *dz(i)+...
-                  (phi_new(i+1).*Cl2(i+1)  +(1-phi(i+1))  *Cs2(i+1))*dz(i+1))/(dz(i)+dz(i+1));
+            Cb2_all=((phi_new(i).*Cl2_new(i)    +(1-phi(i))    *Cs2_new(i)  +S_new(i)  )*dz_new(i)+...
+                  (phi_new(i+1).*Cl2_new(i+1)  +(1-phi(i+1))  *Cs2_new(i+1) +S_new(i+1))*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
 
-            H_all=((cp*T(i)+phi(i)*Lf)*dz(i)+(cp*T(i+1)+phi(i+1)*Lf)*dz(i+1))/(dz(i)+dz(i+1));
+            H_all=((cp*T(i)+phi(i)*Lf)*dz(i)+(cp*T(i+1)+phi(i+1)*Lf)*dz_new(i+1))/(dz_new(i)+dz_new(i+1));
 
             
 
@@ -269,7 +270,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             ul=[ul(1:i); ul(i+1);  ul(i+1:end) ];
             us=[us(1:i); us(i+1);  us(i+1:end) ];
             if Has_volatile==1
-                S_gap=mean(S_new(i:i+1));
+                S_gap=sum(S_new(i:i+1))/2;
                 S_new = [S_new(1:i); S_gap; S_new(i+1:end)];
 
                 Cl2_gap=(Cb2_all-S_gap)/(phi_gap+(1-phi_gap)*Par_v);
@@ -291,6 +292,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             right_avg = (node_new(i) + node_new(i+1)) / 2;
 
             node_new = [node_new(1:i-1), left_avg, right_avg, node_new(i+1:end)];
+
+            dz_new=node_new(2:end)-node_new(1:end-1);
             shift = shift + 1;   
         end
 
@@ -348,6 +351,11 @@ if Has_volatile==1
 end
 Last_adapted=Time;
 
+% Cb=Cl.*phi(1:N)+Cs.*(1-phi(1:N));
+% Cb_all=sum(Cb.*dz');
+% Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
+% Cb2_all=sum(Cb2.*dz');
+% disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
 
 Advance_time=0;
 Newton_solver3;
