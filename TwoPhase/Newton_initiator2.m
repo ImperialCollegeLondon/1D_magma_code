@@ -202,8 +202,8 @@ Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 
 
 
-eps=0.1;
-eps2=1e-6;
+eps=1e-3;
+eps2=1e-8;
 
 MINT=((T_1+C1+50)-sqrt((T_1-C1-50)^2+eps))/2;
 Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
@@ -236,10 +236,10 @@ end
 
 
 if is_eutectic==1
-    eps2=1e-1;
+    eps2=1e-3;
     solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e5;
 else 
-    K=1e3;
+    K=2e3;
     cs_min=0;
     % eps=1e-4;
     Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
@@ -248,7 +248,7 @@ else
 
     SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
     Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
-    solidus=(Constrain4-cs_1)/1e4;
+    solidus=(Constrain4-cs_1)/1e5;
 end
 
 % Jac_solidus=jacobian(solidus, Variables);
@@ -271,7 +271,7 @@ if Has_volatile==1
     syms OLD_com2
     syms kf1 kf2 kf_stable1 kf_stable2
     % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
-    eps=1e-8;
+    eps=1e-10;
     
     % Smin=1e-6;
     % dS12=S_2-S_1;
@@ -325,7 +325,7 @@ end
 % melt saturation is a function of temperature and presusre. Pressure dependency part is a constant in the constraint
 % e.g. Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100-v2;
 syms cap_A cap_B
-eps=0.1;
+eps=1e-3;
 eps2=1e-8;
 % beta=1e4;
 if Has_volatile==1

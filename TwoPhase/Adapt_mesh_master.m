@@ -82,40 +82,40 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 % if i-deleted-1==161
                 %     aaa=1
                 % end
-%     Pressure=(nodez(end)-(node_new(i-deleted-1)+node_new(i-deleted))/2)*g*rho_mean/1e5+1; %in bar
-%     index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
-%     index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
-%                 index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
-%                 index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
-% 
-%             lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
-%             lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
-% 
-%             coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
-%             coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
-% 
-%             % unpack
-%             a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
-%             c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
-% 
-%             a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
-%             c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
-% 
-% 
-% 
-%                     ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
-%                     tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
-%                     C1= tl;
-%                     B1= ts-A1-tl;
-% eps=0.1;
-% eps2=1e-6;
-% 
-%                     MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
-%                     Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
-%                     SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
-%                     Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
+    Pressure=(nodez(end)-(node_new(i-deleted-1)+node_new(i-deleted))/2)*g*rho_mean/1e5+1; %in bar
+    index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
+    index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
+                index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
+                index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
+
+            lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
+            lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
+
+            coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
+            coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
+
+            % unpack
+            a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
+            c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
+
+            a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
+            c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
+
+
+
+                    ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
+                    tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
+                    C1= tl;
+                    B1= ts-A1-tl;
+eps=1e-3;
+eps2=1e-8;
+
+                    MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
+                    Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
+                    SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+                    Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
                     
-                    Cl(i-deleted-1)=(Cl(i-deleted-1)+Cl(i-deleted))/2;
+                    % Cl(i-deleted-1)=(Cl(i-deleted-1)+Cl(i-deleted))/2;
                     Cs(i-deleted-1)=(Cb_all-phi(i-deleted-1)*Cl(i-deleted-1))/(1-phi(i-deleted-1));
 
                 % end
@@ -138,8 +138,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                     % Lsaturation(i-deleted)=[];
                     % Ssaturation(i-deleted)=[];
                 end
-                Ts(i-deleted)=[];
-                Tl(i-deleted)=[];
+                % Ts(i-deleted)=[];
+                % Tl(i-deleted)=[];
 
                 % OG_Cb(i-deleted-1,:)=(OG_Cb(i-deleted-1,:)*dz(i-deleted-1)+OG_Cb(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
                 % OG_Cb(i-deleted,:)=0;                    
@@ -269,7 +269,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                     tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
                     C1= tl;
                     B1= ts-A1-tl;
-eps=0.1;
+eps=1e-3;
 eps2=1e-6;
 
                     MINT=((T_gap+C1+50)-sqrt((T_gap-C1-50)^2+eps))/2;
@@ -368,5 +368,5 @@ Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
 Cb2_all=sum(Cb2.*dz');
 disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
 
-Advance_time=0;
-Newton_solver3;
+% Advance_time=0;
+% Newton_solver3;

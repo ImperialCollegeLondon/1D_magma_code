@@ -1389,7 +1389,7 @@ Adaptive_step_time=10*Year;
 Last_adapted=0;
 
 Top0=0;
-max_adaptive_number=2;
+max_adaptive_number=1;
 to_adapt=1;
 
 min_change=3e-3;

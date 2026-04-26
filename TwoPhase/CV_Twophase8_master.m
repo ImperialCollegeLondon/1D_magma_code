@@ -534,7 +534,7 @@ while Time<End_time
             end
         end
 
-        if (Adaptive_mesh==1 && mod(counter,Adaptive_step_gap)==1 && Time-Last_adapted>Adaptive_step_time) || Just_intruded
+        if (Adaptive_mesh==1 && mod(counter,Adaptive_step_gap)==1 && Time-Last_adapted>Adaptive_step_time) && ~Just_intruded
             % disp(['Temp save'])
             % save('temp.mat')
             Adapt_mesh_master

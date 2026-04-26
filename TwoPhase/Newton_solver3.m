@@ -33,7 +33,7 @@ RHS=zeros(Dof,1);
 
 % OLD_com=phi_old(1:N).*Cl_old+(1-phi_old).*Cs_old;
 % OLD_ent=phi_old(1:N)*Lf+T_old*cp; 
-Max_Newton_iter=100;
+Max_Newton_iter=300;
 converged=false;
 
 % Initial guess
@@ -81,7 +81,7 @@ if Advance_time==1
     Time_intended=Time_intended+Time_gap;
 end
 while Time<Time_intended-Time_gap*1e-5
-    if dt_intended<1e-4*Year
+    if dt_intended<0.5e-5*Year
         dt_intended=1*Year;
     end
     if Advance_time==1
@@ -789,7 +789,7 @@ while Time<Time_intended-Time_gap*1e-5
         if ~isreal(X) || any(isnan(X((1:N)  +(N+1)*2+N)))
             dt_intended=dt_intended*0.5;
             dt=dt/2;
-            if dt<1e-4*Year
+            if dt<Min_dtY*Year
                 dt=1*Year;
             end
             X=X0;
@@ -822,7 +822,7 @@ while Time<Time_intended-Time_gap*1e-5
                 dt_intended=dt_intended*0.5;
                 dt=dt/2;
                 disp(['Decrease dt, dt=' num2str(dt/Year)])
-                if dt<1e-4*Year
+                if dt<Min_dtY*Year && ~Just_intruded
                     dt=1*Year;
                 end
                 Not_improve=0;

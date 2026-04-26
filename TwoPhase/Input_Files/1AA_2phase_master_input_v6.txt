@@ -286,7 +286,7 @@ Minimum_number_of_iterations_to_increasedt,dummy,
 ,Min_iter,25
 
 Initial_dt_in_years,dummy,
-,dt0Y,1e-3
+,dt0Y,1e-5
 
 Maximum_dt_in_years,dummy,
 ,Max_dtY,50
