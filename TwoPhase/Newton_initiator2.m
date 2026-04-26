@@ -162,9 +162,9 @@ rhs_ct = matlabFunction(trans_comp, 'Vars', ...
 syms cp Lf kt
 % old enthalpy
 syms OLD_ent
-trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/20/Lf;
-Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
+trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/1e2/Lf;
 
+% Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
 % Jac_ent=jacobian(trans_enthalpy, Variables);
 % Jac_ent=simplify(Jac_ent);
 % Jac_ent=matlabFunction(Jac_ent,'Vars',{[Variables; dzi_0; dzi_1; dzi_2; dt; cp; Lf; kt; OLD_ent]});
@@ -269,7 +269,7 @@ end
 if Has_volatile==1
     % old volatile bulk composition
     syms OLD_com2
-    syms kf1 kf2 kf_stable
+    syms kf1 kf2 kf_stable1 kf_stable2
     % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
     eps=1e-8;
     
@@ -302,7 +302,7 @@ if Has_volatile==1
 
 
     trans_comp2=(cb2_1-OLD_com2- (F_m - F_p)/dzi_1 * dt...
-        -2/dzi_1*(kf2*S12flux/(dzi_2+dzi_1)-kf1*S01flux/(dzi_1+dzi_0))*dt-kf_stable/dzi_1*((cb2_2-cb2_1)/(dzi_2+dzi_1)-(cb2_1-cb2_0)/(dzi_1+dzi_0))*dt)/1e3; %
+        -2/dzi_1*(kf2*S12flux/(dzi_2+dzi_1)-kf1*S01flux/(dzi_1+dzi_0))*dt-1/dzi_1*(kf_stable2*(cb2_2-cb2_1)/(dzi_2+dzi_1)-kf_stable1*(cb2_1-cb2_0)/(dzi_1+dzi_0))*dt)/1e3; %
     % trans_comp2=((cl2_1+cs2_1+S_1)-OLD_com2-(ufi*(cl2_0+cl2_1)/2-ufi2*(cl2_1+cl2_2)/2+umi_1*(cs2_0+cs2_1)/2-umi_2*(cs2_1+cs2_2)/2)/dzi_1*dt...
     %     -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
 
@@ -314,8 +314,8 @@ if Has_volatile==1
     trans_comp2=simplify(trans_comp2);
     Jac_ct2=jacobian(trans_comp2, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2]);
     Jac_ct2=simplify(Jac_ct2);
-    Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf1, kf2, OLD_com2, kf_stable});
-    rhs_ct2= matlabFunction(trans_comp2, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf1, kf2, OLD_com2, kf_stable});
+    Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf1, kf2, OLD_com2, kf_stable1,kf_stable2});
+    rhs_ct2= matlabFunction(trans_comp2, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf1, kf2, OLD_com2, kf_stable1,kf_stable2});
 else
     Jac_ct2=[];
     rhs_ct2=[];

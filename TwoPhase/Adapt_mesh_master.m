@@ -82,38 +82,38 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 % if i-deleted-1==161
                 %     aaa=1
                 % end
-    Pressure=(nodez(end)-(node_new(i-deleted-1)+node_new(i-deleted))/2)*g*rho_mean/1e5+1; %in bar
-    index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
-    index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
-                index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
-                index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
-
-            lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
-            lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
-
-            coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
-            coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
-
-            % unpack
-            a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
-            c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
-
-            a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
-            c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
-
-
-
-                    ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
-                    tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
-                    C1= tl;
-                    B1= ts-A1-tl;
-eps=1e-3;
-eps2=1e-8;
-
-                    MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
-                    Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
-                    SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
-                    Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
+%     Pressure=(nodez(end)-(node_new(i-deleted-1)+node_new(i-deleted))/2)*g*rho_mean/1e5+1; %in bar
+%     index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
+%     index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
+%                 index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
+%                 index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
+% 
+%             lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
+%             lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
+% 
+%             coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
+%             coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
+% 
+%             % unpack
+%             a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
+%             c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
+% 
+%             a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
+%             c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
+% 
+% 
+% 
+%                     ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
+%                     tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
+%                     C1= tl;
+%                     B1= ts-A1-tl;
+% eps=0.1;
+% eps2=1e-6;
+% 
+%                     MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
+%                     Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
+%                     SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+%                     Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
                     
                     Cl(i-deleted-1)=(Cl(i-deleted-1)+Cl(i-deleted))/2;
                     Cs(i-deleted-1)=(Cb_all-phi(i-deleted-1)*Cl(i-deleted-1))/(1-phi(i-deleted-1));
@@ -207,20 +207,77 @@ eps2=1e-8;
 
         for k=1:numel(to_refine)
             i = to_refine(k) + offset;
-            phi_new = [phi_new(1:i); phi_new(i:i+1); phi_new(i+1:end)];
-            T_new = [T_new(1:i); T_new(i:i+1); T_new(i+1:end)];
-            Cl_new = [Cl_new(1:i); Cl_new(i:i+1); Cl_new(i+1:end)];
-            Cs_new = [Cs_new(1:i); Cs_new(i:i+1); Cs_new(i+1:end)];
+
+            Cb_all=((phi_new(i).*Cl(i)    +(1-phi(i))    *Cs(i))  *dz(i)+...
+                  (phi_new(i+1).*Cl(i+1)  +(1-phi(i+1))  *Cs(i+1))*dz(i+1))/(dz(i)+dz(i+1));
+
+            Cb2_all=((phi_new(i).*Cl2(i)    +(1-phi(i))    *Cs2(i))  *dz(i)+...
+                  (phi_new(i+1).*Cl2(i+1)  +(1-phi(i+1))  *Cs2(i+1))*dz(i+1))/(dz(i)+dz(i+1));
+
+            H_all=((cp*T(i)+phi(i)*Lf)*dz(i)+(cp*T(i+1)+phi(i+1)*Lf)*dz(i+1))/(dz(i)+dz(i+1));
+
+            
+
+            phi_gap=sum(phi_new(i:i+1))/2;
+            phi_new = [phi_new(1:i); phi_gap; phi_new(i+1:end)];
+
+            T_gap=(H_all-phi_gap*Lf)/cp;
+            T_new = [T_new(1:i); T_gap; T_new(i+1:end)];
+
+%     Pressure=(sum(node_new(i-1:i+1))+nodez_new(i))/4*g*rho_mean/1e5+1; %in bar
+%     index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);    
+%     index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
+%                 index_cb2_nts=max(min(floor(Cb2_all/0.13/Par_v * N_Ts) + 1, N_Ts),1);
+%                 index_cb2_ntl=max(min(floor(Cb2_all/0.2/Par_v * N_Tl) + 1, N_Tl),1);
+% 
+%             lin_ts = sub2ind([N_Ts, N_Ts], index_pressure_nts, index_cb2_nts);
+%             lin_tl = sub2ind([N_Tl, N_Tl], index_pressure_ntl, index_cb2_ntl);
+% 
+%             coef_ts = Ts0_coefficient(lin_ts, :);   % (nI × 4)
+%             coef_tl = Tl0_coefficient(lin_tl, :);   % (nI × 4)
+% 
+%             % unpack
+%             a_ts = coef_ts(:,1); b_ts = coef_ts(:,2);
+%             c_ts = coef_ts(:,3); d_ts = coef_ts(:,4);
+% 
+%             a_tl = coef_tl(:,1); b_tl = coef_tl(:,2);
+%             c_tl = coef_tl(:,3); d_tl = coef_tl(:,4);
+% 
+% 
+% 
+%                     ts= a_ts*Pressure/8000+b_ts*Cb2_all/0.13/Par_v+c_ts*Pressure/8000*Cb2_all/0.13/Par_v+d_ts;
+%                     tl= a_tl*Pressure/40e3+b_tl*Cb2_all/0.2/Par_v +c_tl*Pressure/40e3*Cb2_all/0.2/Par_v +d_tl;
+%                     C1= tl;
+%                     B1= ts-A1-tl;
+% eps=0.1;
+% eps2=1e-6;
+% 
+%                     MINT=((T(i-deleted-1)+C1+50)-sqrt((T(i-deleted-1)-C1-50)^2+eps))/2;
+%                     Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
+%                     SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+%                     Cl(i-deleted-1)=(Cb_all+SMIN+sqrt((SMIN-Cb_all)^2+eps2))/2;
+% 
+%                     Cl(i-deleted-1)=(Cl(i-deleted-1)+Cl(i-deleted))/2;
+%                     Cs(i-deleted-1)=(Cb_all-phi(i-deleted-1)*Cl(i-deleted-1))/(1-phi(i-deleted-1));
+%+++++
+            Cl_gap=(Cl_new(i)+Cl_new(i+1))/2;
+            Cl_new = [Cl_new(1:i); Cl_gap; Cl_new(i+1:end)];
+            Cs_gap=(Cb_all-phi_gap*Cl_gap)/(1-phi_gap);
+            Cs_new = [Cs_new(1:i); Cs_gap; Cs_new(i+1:end)];
 
 
-            ul=[ul(1:i); ul(i+1); ul(i+1); ul(i+1:end) ];
-            us=[us(1:i); us(i+1); us(i+1); us(i+1:end) ];
+            ul=[ul(1:i); ul(i+1);  ul(i+1:end) ];
+            us=[us(1:i); us(i+1);  us(i+1:end) ];
             if Has_volatile==1
-                S_new = [S_new(1:i); S_new(i:i+1); S_new(i+1:end)];
-                Cl2_new = [Cl2_new(1:i); Cl2_new(i:i+1); Cl2_new(i+1:end)];
-                Cs2_new = [Cs2_new(1:i); Cs2_new(i:i+1); Cs2_new(i+1:end)];
+                S_gap=mean(S_new(i:i+1));
+                S_new = [S_new(1:i); S_gap; S_new(i+1:end)];
+
+                Cl2_gap=(Cb2_all-S_gap)/(phi_gap+(1-phi_gap)*Par_v);
+                Cl2_new = [Cl2_new(1:i); Cl2_gap; Cl2_new(i+1:end)];
+                Cs2_gap=Cl2_gap*Par_v;
+                Cs2_new = [Cs2_new(1:i); Cs2_gap; Cs2_new(i+1:end)];
             end
-            offset=offset+2;
+            offset=offset+1;
         end
 
 
@@ -233,8 +290,8 @@ eps2=1e-8;
             left_avg  = (node_new(i-1) + node_new(i)) / 2;
             right_avg = (node_new(i) + node_new(i+1)) / 2;
 
-            node_new = [node_new(1:i-1), left_avg, node_new(i), right_avg, node_new(i+1:end)];
-            shift = shift + 2;   
+            node_new = [node_new(1:i-1), left_avg, right_avg, node_new(i+1:end)];
+            shift = shift + 1;   
         end
 
         phi=phi_new;

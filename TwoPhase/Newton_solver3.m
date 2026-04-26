@@ -287,8 +287,8 @@ while Time<Time_intended-Time_gap*1e-5
         % cb=phi_1.*cl_1+(1-phi_1).*cs_1;
         % enhance=(cb>0.995)*1e2;
         scale=ones(N,1);
-        scale(Cb_old<2e-3)=1e4;
-        k_stable1=1e-10*(phi_1>1e-2).*scale(I);
+        scale(Cb_old<2e-3)=1e3;
+        k_stable1=1e-9*(phi_1>1e-2).*scale(I);
         k_stable2=[k_stable1(2:end);0];
 
         RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable1, k_stable2);
@@ -448,7 +448,9 @@ while Time<Time_intended-Time_gap*1e-5
         if Has_volatile ==1
             %% Volatile component transport assembly
             num_local=16;
-            k2_stable=kf*1e-3;%*(phi_1>1e-3)*0
+            k2_stable1=kf*1e-1*(cellz(I)'<11e3);%*(phi_1>1e-3)*0
+            k2_stable2=[k2_stable1(2:end); 0];
+
             if ~isempty(System_top)
                 kf1=kf*ones(N-2,1);
                 kf1(System_top:end)=0;
@@ -465,7 +467,7 @@ while Time<Time_intended-Time_gap*1e-5
             end
 
 
-            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable);
+            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable1, k2_stable2);
 
             cols_block = [ ...
                 I, I+1, ...
@@ -475,7 +477,7 @@ while Time<Time_intended-Time_gap*1e-5
                 I-1+(N+1)*2+N*5, I+(N+1)*2+N*5, I+1+(N+1)*2+N*5, ...
                 I-1+(N+1)*2+N*6, I+(N+1)*2+N*6, I+1+(N+1)*2+N*6];
             idx = entry_count : entry_count + num_local*(N-2) - 1;
-            J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable);
+            J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable1, k2_stable2);
             rows_block = repmat(I+(N+1)*2+N*4, 1, num_local);
             rows(idx) = rows_block(:);
             cols(idx) = cols_block(:);
@@ -684,8 +686,8 @@ while Time<Time_intended-Time_gap*1e-5
             cl_2=X(I+1+(N+1)*2+N*3);
 
             scale=ones(N,1);
-            scale(Cb_old<2e-3)=1e4;
-            k_stable1=1e-10*(phi_1>1e-2).*scale(I);
+            scale(Cb_old<2e-3)=1e3;
+            k_stable1=1e-9*(phi_1>1e-2).*scale(I);
             k_stable2=[k_stable1(2:end);0];
             RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable1, k_stable2);
             T_0=X(I-1+(N+1)*2+N);
@@ -747,7 +749,8 @@ while Time<Time_intended-Time_gap*1e-5
 
 
             if Has_volatile==1
-                k2_stable=kf*1e-3;%*(phi_1>1e-3)*0
+                k2_stable1=kf*1e-1*(cellz(I)'<11e3);%*(phi_1>1e-3)*0
+                k2_stable2=[k2_stable1(2:end); 0];
                 if ~isempty(System_top)
                     kf1=kf*ones(N-2,1);                
                     kf1(System_top:end)=0;
@@ -762,7 +765,7 @@ while Time<Time_intended-Time_gap*1e-5
                     kf2=zeros(N-2,1);
                 end
 
-                RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable);
+                RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable1, k2_stable2);
 
                 RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);
                 RHS(I+(N+1)*2+N*6)=rhs_lsat( T_1,       S_1,        cl2_1, dSdT(I)/100, b0_all(I));
