@@ -822,7 +822,7 @@ if Record_data2==1
         snapshots = struct('nodez',{},'us', {}, 'ul', {}, 'phi',{}, 'T',{},'Cs', {}, 'Cl',{},'S',{}, 'Cs2',{},'Cl2',{},'Tr',{},'Time',{});
     end
     chunkIdx=0;
-    Initial_record_period=20*Year;
+    Initial_record_period=10*Year;
     Record_period=Initial_record_period;    
 end
 
@@ -1140,7 +1140,7 @@ if Has_volatile==1
     N_Tl=N_Tl-1;
 
     V_crust=1.2;
-    V_sill=8;
+    V_sill=10;
     kf=1e-6;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1375,7 +1375,7 @@ if With_monitor==1
         end
     end    
     Plot_settings_master;
-    Update_frequency=20; %every X sec
+    Update_frequency=10; %every X sec
     Start_timer=tic;
     Monitor_frame=0;
 end
@@ -1392,7 +1392,7 @@ Top0=0;
 max_adaptive_number=2;
 to_adapt=1;
 
-min_change=1e-3;
+min_change=3e-3;
 max_change=3e-2;
 
 min_dx=3;   % minimal cell length

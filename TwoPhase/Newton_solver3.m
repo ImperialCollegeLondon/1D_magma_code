@@ -90,6 +90,19 @@ while Time<Time_intended-Time_gap*1e-5
         dt=0;
     end
     
+    System_top=find(X((1:N) + 2*(N+1))>1e-3,1,'last');    
+    if ~isempty(System_top)
+        temp=find(X((1:N) + (N+1)*2+N*4)>1e-3,1,'last');
+        if ~isempty(temp)
+            temp=max(temp,System_top);
+        else
+            temp=System_top;
+        end
+        System_top=find(cellz>cellz(temp)+max_dx/2,1,'first');
+        System_bottom=find(X((1:N) + 2*(N+1))>1e-2,1,'first');
+    else
+        System_bottom=[];
+    end
 
     Norm_pre=1e3;
     Not_improve=0;
@@ -112,7 +125,6 @@ while Time<Time_intended-Time_gap*1e-5
         index_cl_nrhol=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_rhol) + 1, N_rhol),1);
         if Has_volatile==1
             index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
-            % cb2=phi*cl2+(1-phi)*cs2+S;
             cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
             index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
             index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Tl) + 1, N_Tl),1);
@@ -276,11 +288,11 @@ while Time<Time_intended-Time_gap*1e-5
         % enhance=(cb>0.995)*1e2;
         scale=ones(N,1);
         scale(Cb_old<2e-3)=1e4;
-        k_stable=1e-10*(phi_1>1e-2).*scale(I);
-        
+        k_stable1=1e-10*(phi_1>1e-2).*scale(I);
+        k_stable2=[k_stable1(2:end);0];
 
-        RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable);
-        J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable);
+        RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable1, k_stable2);
+        J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable1, k_stable2);
 
         rows_block = repmat(I+(N+1)*2, 1, num_local);
         cols_block = [ ...
@@ -436,9 +448,24 @@ while Time<Time_intended-Time_gap*1e-5
         if Has_volatile ==1
             %% Volatile component transport assembly
             num_local=16;
-            k_stable2=kf*1e-4*(phi_1>1e-3);
-            k_effective=kf*(S_1>1e-5);
-            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  k_effective, Cb2_old(I), k_stable2);
+            k2_stable=kf*1e-3;%*(phi_1>1e-3)*0
+            if ~isempty(System_top)
+                kf1=kf*ones(N-2,1);
+                kf1(System_top:end)=0;
+                kf1(1:System_bottom)=0;
+                kf2=[kf1(2:end);0];
+
+                % kf2=kf*(cb2(I)>1e-4);
+                % kf2(System_top:end)=0;
+                % kf2(1:System_bottom)=0;
+                % kf1=[0; kf2(1:end-1)];
+            else
+                kf1=zeros(N-2,1);
+                kf2=zeros(N-2,1);
+            end
+
+
+            RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable);
 
             cols_block = [ ...
                 I, I+1, ...
@@ -448,7 +475,7 @@ while Time<Time_intended-Time_gap*1e-5
                 I-1+(N+1)*2+N*5, I+(N+1)*2+N*5, I+1+(N+1)*2+N*5, ...
                 I-1+(N+1)*2+N*6, I+(N+1)*2+N*6, I+1+(N+1)*2+N*6];
             idx = entry_count : entry_count + num_local*(N-2) - 1;
-            J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  k_effective, Cb2_old(I), k_stable2);
+            J=Jac_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable);
             rows_block = repmat(I+(N+1)*2+N*4, 1, num_local);
             rows(idx) = rows_block(:);
             cols(idx) = cols_block(:);
@@ -548,7 +575,6 @@ while Time<Time_intended-Time_gap*1e-5
             index_cl_nrhol=max(min(floor(X((1:N)+(N+1)*2+N*3) * N_rhol) + 1, N_rhol),1);
             if Has_volatile==1
                 index_cl2_nc=max(min(floor(X((1:N)+(N+1)*2+N*6) * N_C) + 1, N_C),1);
-                % cb2=phi*cl2+(1-phi)*cs2+S;
                 cb2=X((1:N)+(N+1)*2).*X((1:N)+(N+1)*2+N*6)+(1-X((1:N)+(N+1)*2)).*X((1:N)+(N+1)*2+N*5)+X((1:N)+(N+1)*2+N*4);
                 index_cb2_nts=max(min(floor(cb2/0.13/Par_v * N_Ts) + 1, N_Ts),1);
                 index_cb2_ntl=max(min(floor(cb2/0.2/Par_v * N_Ts) + 1, N_Ts),1);
@@ -659,8 +685,9 @@ while Time<Time_intended-Time_gap*1e-5
 
             scale=ones(N,1);
             scale(Cb_old<2e-3)=1e4;
-            k_stable=1e-10*(phi_1>1e-2).*scale(I);
-            RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable);
+            k_stable1=1e-10*(phi_1>1e-2).*scale(I);
+            k_stable2=[k_stable1(2:end);0];
+            RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable1, k_stable2);
             T_0=X(I-1+(N+1)*2+N);
             T_1=X(I  +(N+1)*2+N);
             T_2=X(I+1+(N+1)*2+N);
@@ -720,9 +747,22 @@ while Time<Time_intended-Time_gap*1e-5
 
 
             if Has_volatile==1
-                k_stable2=kf*1e-4*(phi_1>1e-3);
-                k_effective=kf*(S_1>1e-5);
-                RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  k_effective, Cb2_old(I), k_stable2);
+                k2_stable=kf*1e-3;%*(phi_1>1e-3)*0
+                if ~isempty(System_top)
+                    kf1=kf*ones(N-2,1);                
+                    kf1(System_top:end)=0;
+                    kf1(1:System_bottom)=0;
+                    kf2=[kf1(2:end);0];
+                    % kf2=kf*(cb2(I)>1e-4);
+                    % kf2(System_top:end)=0;
+                    % kf2(1:System_bottom)=0;
+                    % kf1=[0; kf2(1:end-1)];
+                else
+                    kf1=zeros(N-2,1);
+                    kf2=zeros(N-2,1);
+                end
+
+                RHS(I+(N+1)*2+N*4)=rhs_ct2(um_1, um_2, uf_1, uf_2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dz(i0)',dz(I)', dz(i2)', dt,  kf1, kf2, Cb2_old(I), k2_stable);
 
                 RHS(I+(N+1)*2+N*5)=rhs_ssat( T_1, cs_1, S_1, cs2_1, cl2_1, S_cap(1), S_cap(2), Par_v);
                 RHS(I+(N+1)*2+N*6)=rhs_lsat( T_1,       S_1,        cl2_1, dSdT(I)/100, b0_all(I));
@@ -742,7 +782,7 @@ while Time<Time_intended-Time_gap*1e-5
             end
             alpha = alpha * 0.5;
         end
-
+        
         if ~isreal(X) || any(isnan(X((1:N)  +(N+1)*2+N)))
             dt_intended=dt_intended*0.5;
             dt=dt/2;
@@ -789,7 +829,9 @@ while Time<Time_intended-Time_gap*1e-5
         X_pre=X;
     end
     Cb=X((1:N)+2*N+2).*X((1:N)+2*N+2+N*3)+(1-X((1:N)+2*N+2)).*X((1:N)+2*N+2+N*2);
-    if (iter>=Max_Newton_iter || dt<1e-8*Year  ) && Advance_time==1 %%|| min(Cb)<1e-3
+    Cb2=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
+
+    if (iter>=Max_Newton_iter || dt<1e-8*Year  ) && Advance_time==1 
         min_dx=min_dx/2;
         Adapt_mesh_master;
         Advance_time=1;
@@ -860,7 +902,7 @@ while Time<Time_intended-Time_gap*1e-5
     end
     if Time<Time_intended %update all old values
         Cb_old=Cb;
-        Cb2_old=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
+        Cb2_old=Cb2; %X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
         H_old=X((1:N)+2*N+2)*Lf+X((1:N)+2*N+2+N)*cp;
     end
 end
@@ -953,7 +995,6 @@ if Has_volatile==1
     Cs2_old=Cs2;
     Cl2_old=Cl2;
 end
-% Total_cb2=sum(Cb2.*cellz);
-% disp(['CB2 conservation:' num2str(Total_cb2/Total_cb20)])
+
 
 

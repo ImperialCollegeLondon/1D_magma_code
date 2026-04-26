@@ -53,7 +53,7 @@ for i=1:(Plot_size(1)*Plot_size(2))
                     ax_volatile=axes('Position',get(gca,'Position'),'XAxisLocation','top','Color','none','XColor','r','YColor','none');
                     hold on;
                     ylim(YLIMITS)
-                    xlim([0 0.15])
+                    xlim([0 0.1])
                     Handel_all{i}(2)=plot(ax_volatile,S,cellz/1000-Base_crust,'linewidth',1 ,'Parent',ax_volatile,'color','r');
                     xlabel('Volatile fraction(-)','fontsize',Font_Size,'color','r')
                 end

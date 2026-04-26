@@ -125,7 +125,7 @@ N_vis,dummy,
 ,N_vis,1e4
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
-,MU_type,1
+,MU_type,0
 
 Mush_bulk_visc_min_FLAG_No=0_Yes=1,dummy,
 ,mu_min_FLAG,0
@@ -163,7 +163,7 @@ Reference_shear_visc(at phi=0),dummy,
 ,ref_shear,1e17
 
 Reference_shear_visc(at phi=0.5),dummy,
-,ref_shear2,1e15
+,ref_shear2,1e13
 
 Bulk_To_Shear_ratio,dummy,
 ,BS_ratio,0.6
@@ -205,13 +205,13 @@ Only_record_contribution_if_MF_decreasing,dummy,
 
 *****************Defining_sill_length_and_injection_parameters*****************,dummy,
 Base_of_crust_km,dummy,
-,Base_crust,40
+,Base_crust,35
 
 Top_of_crust_km,dummy,
 ,Top_crust,0
 
 Injection_depth_km,dummy,
-,Injection_depth,30
+,Injection_depth,25
 
 Density_emplacement_Flag_DensityEmplacement_GT_0,dummy,
 ,DensF,0
@@ -241,7 +241,7 @@ Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
 Sill_injected_every_N_Kyr,dummy,
-,injection_rate,1
+,injection_rate,2
 
 Total_number_of_sills_intruded,dummy,
 ,Tot_SillN,400
@@ -289,7 +289,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,5
+,Max_dtY,50
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5
