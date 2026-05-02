@@ -90,8 +90,16 @@ rhs_mom= matlabFunction(momentum, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_
 
 
 %% Continuity equation
-continuity=umi_1*(1-phi_1/2-phi_0/2)+ufi*(phi_1/2+phi_0/2);
+eps=1e-6;
+Cap=0.02;
+Cap2=0.98;
+constraint_mean_por=(phi_1+phi_0)/2;
+% constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
+% constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;
+continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*1e5;  %Need to be enlarged
 % Variables=;
+
+continuity=simplify(continuity);
 Jac_con=jacobian(continuity, [umi_1, ufi, phi_0, phi_1]);
 Jac_con=simplify(Jac_con);
 
@@ -217,7 +225,7 @@ Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps2))/2;
 
 
 
-liquidus=(Constrain5-cl_1)/1e5;
+liquidus=(Constrain5-cl_1)/1e4;
 
 % Jac_liquidus=jacobian(liquidus, Variables);
 % % Jac_liquidus=simplify(Jac_liquidus);
@@ -237,7 +245,7 @@ end
 
 if is_eutectic==1
     eps2=1e-3;
-    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e5;
+    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e6;
 else 
     K=2e3;
     cs_min=0;
@@ -248,7 +256,7 @@ else
 
     SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
     Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
-    solidus=(Constrain4-cs_1)/1e5;
+    solidus=(Constrain4-cs_1)/1e4;
 end
 
 % Jac_solidus=jacobian(solidus, Variables);

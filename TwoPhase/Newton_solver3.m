@@ -81,27 +81,29 @@ if Advance_time==1
     Time_intended=Time_intended+Time_gap;
 end
 while Time<Time_intended-Time_gap*1e-5
-    if dt_intended<0.5e-5*Year
-        dt_intended=1*Year;
-    end
+    % if dt_intended<0.5e-5*Year
+    %     dt_intended=1*Year;
+    % end
     if Advance_time==1
         dt=min(dt_intended, Time_intended-Time);
     else
         dt=0;
     end
     
-    System_top=find(X((1:N) + 2*(N+1))>1e-3,1,'last');    
-    if ~isempty(System_top)
-        temp=find(X((1:N) + (N+1)*2+N*4)>1e-3,1,'last');
-        if ~isempty(temp)
-            temp=max(temp,System_top);
+    if Has_volatile==1
+        System_top=find(X((1:N) + 2*(N+1))>1e-3,1,'last');    
+        if ~isempty(System_top)
+            temp=find(X((1:N) + (N+1)*2+N*4)>1e-3,1,'last');
+            if ~isempty(temp)
+                temp=max(temp,System_top);
+            else
+                temp=System_top;
+            end
+            System_top=find(cellz>cellz(temp)+max_dx/2,1,'first');
+            System_bottom=find(X((1:N) + 2*(N+1))>1e-2,1,'first');
         else
-            temp=System_top;
+            System_bottom=[];
         end
-        System_top=find(cellz>cellz(temp)+max_dx/2,1,'first');
-        System_bottom=find(X((1:N) + 2*(N+1))>1e-2,1,'first');
-    else
-        System_bottom=[];
     end
 
     Norm_pre=1e3;
@@ -822,9 +824,9 @@ while Time<Time_intended-Time_gap*1e-5
                 dt_intended=dt_intended*0.5;
                 dt=dt/2;
                 disp(['Decrease dt, dt=' num2str(dt/Year)])
-                if dt<Min_dtY*Year && ~Just_intruded
-                    dt=1*Year;
-                end
+                % if dt<Min_dtY*Year && ~Just_intruded
+                %     dt=1*Year;
+                % end
                 Not_improve=0;
                 Norm_pre=1e3;
             end
@@ -832,55 +834,59 @@ while Time<Time_intended-Time_gap*1e-5
         X_pre=X;
     end
     Cb=X((1:N)+2*N+2).*X((1:N)+2*N+2+N*3)+(1-X((1:N)+2*N+2)).*X((1:N)+2*N+2+N*2);
-    Cb2=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
-
-    if (iter>=Max_Newton_iter || dt<1e-8*Year  ) && Advance_time==1 
-        min_dx=min_dx/2;
-        Adapt_mesh_master;
-        Advance_time=1;
-        min_dx=min_dx*2;
-        if Has_volatile==0
-            Dof=(N+1)*2+N*4;
-            nnz=10*(N+1)+4*(N+1)+13*N+8*N+8*N*2;
-        else
-            Dof=(N+1)*2+N*7;
-            nnz=12*(N+1)+4*(N+1)+13*N+8*N*2+8*N*2+14*N*2;
-        end
-
-        rows=zeros(nnz,1);
-        cols=zeros(nnz,1);
-        vals=zeros(nnz,1);
-
-        RHS=zeros(Dof,1);
-        if Has_volatile==0
-            % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old];
-            X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N)];
-        else
-            % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
-            X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
-        end
-
-        X_pre=X;             
-
-        if Has_volatile==1
-            %preprocessing pressure index data
-            Pressure=(nodez(end)-cellz)*g*rho_mean/1e5+1; %in bar
-            Pressure=Pressure';
-            index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);
-            index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
-
-            Cb2_old=phi_old(1:N).*Cl2_old+(1-phi_old(1:N)).*Cs2_old+S_old;
-
-            PT=[-4e-4,-5e-4,-6e-4,-13e-4, -15.5e-4,-17e-4,-16e-4,-5e-4, 0, 26e-4,5e-3, 5e-3];  % coefficient from (ref) for the temperature dependency of water saturation (Holtz et al,?)
-            PTx=[0,   0.12    0.2  0.3    0.5       1       2       3   4  5,    11, 20]; %in kbar
-            dSdT = interp1(PTx, PT, Pressure/1000, 'linear', 'extrap');
-
-            P3=Pressure/10; %Pressure in Mpa
-            b0_all=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-8*dSdT;
-        end
-        dt_intended=dt0Y*Year;
-        continue
+    if Has_volatile==1
+        Cb2=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
     end
+
+    % if (iter>=Max_Newton_iter || dt<1e-8*Year  ) && Advance_time==1 
+    %     min_dx=min_dx/2;
+    %     % max_adaptive_number=5;
+    %     Adapt_mesh_master;
+    %     % max_adaptive_number=1;
+    %     Advance_time=1;
+    %     min_dx=min_dx*2;
+    %     if Has_volatile==0
+    %         Dof=(N+1)*2+N*4;
+    %         nnz=10*(N+1)+4*(N+1)+13*N+8*N+8*N*2;
+    %     else
+    %         Dof=(N+1)*2+N*7;
+    %         nnz=12*(N+1)+4*(N+1)+13*N+8*N*2+8*N*2+14*N*2;
+    %     end
+    % 
+    %     rows=zeros(nnz,1);
+    %     cols=zeros(nnz,1);
+    %     vals=zeros(nnz,1);
+    % 
+    %     RHS=zeros(Dof,1);
+    %     if Has_volatile==0
+    %         % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old];
+    %         X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N)];
+    %     else
+    %         % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
+    %         X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
+    %     end
+    % 
+    %     X_pre=X;             
+    % 
+    %     if Has_volatile==1
+    %         %preprocessing pressure index data
+    %         Pressure=(nodez(end)-cellz)*g*rho_mean/1e5+1; %in bar
+    %         Pressure=Pressure';
+    %         index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);
+    %         index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
+    % 
+    %         Cb2_old=phi_old(1:N).*Cl2_old+(1-phi_old(1:N)).*Cs2_old+S_old;
+    % 
+    %         PT=[-4e-4,-5e-4,-6e-4,-13e-4, -15.5e-4,-17e-4,-16e-4,-5e-4, 0, 26e-4,5e-3, 5e-3];  % coefficient from (ref) for the temperature dependency of water saturation (Holtz et al,?)
+    %         PTx=[0,   0.12    0.2  0.3    0.5       1       2       3   4  5,    11, 20]; %in kbar
+    %         dSdT = interp1(PTx, PT, Pressure/1000, 'linear', 'extrap');
+    % 
+    %         P3=Pressure/10; %Pressure in Mpa
+    %         b0_all=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-8*dSdT;
+    %     end
+    %     dt_intended=dt0Y*Year;
+    %     continue
+    % end
     if iter>=Max_Newton_iter
        error('Newton iteration fails')
     end    
@@ -888,24 +894,24 @@ while Time<Time_intended-Time_gap*1e-5
         break
     end
     Time=Time+dt;
-    if dt>1e-6*Year
-        if iter<=5
-            if dt<0.01*Max_dt
-                dt=min(dt*1.3, Max_dt);
-            elseif dt<0.05*Max_dt
-                dt=min(dt*1.2, Max_dt);
-            else
-                dt=min(dt*1.1, Max_dt);
-            end
-            dt_intended=max(dt,dt_intended);
-        elseif iter>=10
-            dt=min(dt*0.9, Max_dt);
-            dt_intended=max(dt,dt_intended);
+    if iter<=6
+        if dt<0.01*Max_dt
+            dt=min(dt*1.3, Max_dt);
+        elseif dt<0.05*Max_dt
+            dt=min(dt*1.2, Max_dt);
+        else
+            dt=min(dt*1.1, Max_dt);
         end
+        dt_intended=max(dt,dt_intended);
+    elseif iter>=10
+        dt=min(dt*0.9, Max_dt);
+        dt_intended=min(dt,dt_intended);
     end
     if Time<Time_intended %update all old values
         Cb_old=Cb;
-        Cb2_old=Cb2; %X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
+        if Has_volatile==1
+            Cb2_old=Cb2; %X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
+        end
         H_old=X((1:N)+2*N+2)*Lf+X((1:N)+2*N+2+N)*cp;      
     end
 end

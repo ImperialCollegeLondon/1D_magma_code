@@ -240,7 +240,9 @@ else
     sill_intrusion_master
     
     Cb_all0=sum(Cb.*dz');
-    Cb2_all0=sum(Cb2.*dz');
+    if Has_volatile==1
+        Cb2_all0=sum(Cb2.*dz');
+    end
     % Update sillcount
     SillCount=1;
 
@@ -518,7 +520,9 @@ while Time<End_time
             sill_intrusion_master;
 
             Cb_all0=sum(Cb.*dz');
-            Cb2_all0=sum(Cb2.*dz');
+            if Has_volatile==1
+                Cb2_all0=sum(Cb2.*dz');
+            end
             %Update sill count
             SillCount=SillCount+1;
         end
@@ -563,8 +567,12 @@ while Time<End_time
         Newton_solver3;
         
         Cb_all=sum(Cb.*dz');
-        Cb2_all=sum(Cb2.*dz');
-        disp(['conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
+        if Has_volatile==1
+            Cb2_all=sum(Cb2.*dz');       
+            disp(['conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
+        else
+            disp(['conservation:' num2str(Cb_all/Cb_all0)])
+        end
     else
         phi_old=phi;
         u_all_old=u_all;
@@ -1180,10 +1188,11 @@ while Time<End_time
     end
 
     if With_monitor==1
-        if toc>Monitor_frame*Update_frequency
+        % if toc>Monitor_frame*Update_frequency
             Update_plot_master
+            drawnow
             Monitor_frame=Monitor_frame+1;
-        end
+        % end
     end
 
 

@@ -205,13 +205,13 @@ Only_record_contribution_if_MF_decreasing,dummy,
 
 *****************Defining_sill_length_and_injection_parameters*****************,dummy,
 Base_of_crust_km,dummy,
-,Base_crust,35
+,Base_crust,20
 
 Top_of_crust_km,dummy,
 ,Top_crust,0
 
 Injection_depth_km,dummy,
-,Injection_depth,25
+,Injection_depth,15
 
 Density_emplacement_Flag_DensityEmplacement_GT_0,dummy,
 ,DensF,0
@@ -232,10 +232,10 @@ Random_injection_length_above_and_low_metres,dummy,
 ,Rand_inject,200
 
 Length_of_sill_metres,dummy,
-,Sill_length,50
+,Sill_length,150
 
 Fine_meshed_region_ratio_compared_to_sillregion,dummy,
-,fine_ratio,8.33
+,fine_ratio,6
 
 Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
@@ -286,13 +286,13 @@ Minimum_number_of_iterations_to_increasedt,dummy,
 ,Min_iter,25
 
 Initial_dt_in_years,dummy,
-,dt0Y,1e-5
+,dt0Y,1e-4
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,50
+,Max_dtY,5
 
 Minimum_dt_in_years,dummy,
-,Min_dtY,1e-5
+,Min_dtY,1e-3
 
 Courant_Number,dummy,
 ,Courant, 0.45

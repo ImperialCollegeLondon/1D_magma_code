@@ -462,16 +462,23 @@ end
 
 
 %phi_range=phi_range(end:-1:1);
+Font=35;
 f3 = figure(3);
-clf;
+clf; set(gcf,'Color','w')
 set(gca,'TickDir','out');
-semilogy(phi_range,mu_all)
+semilogy(phi_range,mu_all,'linewidth',2)
 hold on
+box off
+set(gca,'fontsize',Font)
+xlabel('Melt fraction (-)', 'FontSize',Font)
+ylabel('Solid viscosity (Pa s)', 'FontSize',Font)
+line([0.2 0.2], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
+line([0.6 0.6], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
 % semilogy(phi_range,mu_m)
 % semilogy(phi_range,xi_m, 'x-')
 
 ylim([min(mu_all)/2 max(mu_all)])
-legend({'Sum','Shear','Bulk',})
+% legend({'Sum','Shear','Bulk',})
 % saveas(f3,'Shear_bulk_viscosity','svg')
 
 %%
@@ -508,7 +515,6 @@ min_show_range=Show_z(2)-Show_z(1);
 
 
 %% define the meshing and mesh adaptivity
-Adaptive_mesh=0;     % set to one to turn one the adaptive meshing.
 
 part1=linspace(0,LengthB,max(round(min_N/10),5));
 part2=linspace(0,2*Sill_length*fine_ratio,min_N);
@@ -813,7 +819,7 @@ min_res=0;max_res=1;
 
 
 %A compact reusable data ouput
-Record_data2=1;
+Record_data2=0;
 if Record_data2==1
     saveEvery  = 100; %steps contained in each data file 
     if Has_volatile==0
@@ -1228,14 +1234,13 @@ else
             injection_T= liq_k2 - (liq_a2/(injection_Cb-liq_b1));
         end
     elseif (SSPD==1||HHJPet==1)
-        injection_T = A1*injection_Cl.^2 + B1*injection_Cl + C1;
+        injection_T = A1*injection_Cl.^2 + B1*injection_Cl + C1+50;
     end
 end
 
 injection_H= Lf.*injection_phi+cp.*injection_T; %injection enthalpy
 
 
-% phi([1 N])=0;
 disp('All tables generated')
 
 
@@ -1375,14 +1380,14 @@ if With_monitor==1
         end
     end    
     Plot_settings_master;
-    Update_frequency=10; %every X sec
+    Update_frequency=0.1; %every X sec
     Start_timer=tic;
     Monitor_frame=0;
 end
 Adaptive_show_range=1;
 
 %% Mesh adaptivity
-Adaptive_mesh=1; %
+Adaptive_mesh=0; %
 Adaptive_step_gap=2;
 Adaptive_step_time=10*Year;
 
@@ -1392,7 +1397,7 @@ Top0=0;
 max_adaptive_number=1;
 to_adapt=1;
 
-min_change=3e-3;
+min_change=2e-3;
 max_change=4e-2;
 
 min_dx=1;   % minimal cell length
