@@ -86,6 +86,7 @@ while Time<Time_intended-Time_gap*1e-5
     % end
     if Advance_time==1
         dt=min(dt_intended, Time_intended-Time);
+        dt=min(dt,Max_dtY*Year);
     else
         dt=0;
     end
@@ -290,7 +291,7 @@ while Time<Time_intended-Time_gap*1e-5
         % enhance=(cb>0.995)*1e2;
         scale=ones(N,1);
         scale(Cb_old<2e-3)=1e3;
-        k_stable1=1e-9*(phi_1>1e-2).*scale(I);
+        k_stable1=k_stable_value*(phi_1>1e-2).*scale(I);
         k_stable2=[k_stable1(2:end);0];
 
         RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable1, k_stable2);
@@ -543,18 +544,18 @@ while Time<Time_intended-Time_gap*1e-5
 
         du = Matrix_A \ (-RHS);
         if ~isreal(du) || any(isnan(du))
-            % dt_intended=dt_intended*0.5;
-            % dt=dt/2;
+            dt_intended=dt_intended*0.5;
+            dt=dt/2;
             % if dt<1e-4*Year
             %     dt=1*Year;
             % end
-            % X=X0;
-            % Not_improve=0;
-            % Norm_pre=1e3;
-            % disp(['Decrease dt, dt=' num2str(dt/Year)])
-            % continue
-            iter=Max_Newton_iter;
-            break
+            X=X0;
+            Not_improve=0;
+            Norm_pre=1e3;
+            disp(['Decrease dt, dt=' num2str(dt/Year)])
+            continue
+            % iter=Max_Newton_iter;
+            % break
         end
         % Force constant values on boundary
         du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
@@ -689,7 +690,7 @@ while Time<Time_intended-Time_gap*1e-5
 
             scale=ones(N,1);
             scale(Cb_old<2e-3)=1e3;
-            k_stable1=1e-9*(phi_1>1e-2).*scale(I);
+            k_stable1=k_stable_value*(phi_1>1e-2).*scale(I);
             k_stable2=[k_stable1(2:end);0];
             RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable1, k_stable2);
             T_0=X(I-1+(N+1)*2+N);

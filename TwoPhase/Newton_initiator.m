@@ -64,18 +64,19 @@ end
 syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
-eps=1e-12;
-momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
+eps=1e-3;
+eps_phi1=1e-2;
+momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi1)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
 
 
 
-if Has_volatile==2
-    Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1; cl2_0; cl2_1];
-else
-    Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1];
-end
+% if Has_volatile==2
+%     Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1; cl2_0; cl2_1];
+% else
+%     Variables=[umi_0; umi_1; umi_2; ufi; phi_0; phi_1; cs_0; cs_1; cl_0; cl_1];
+% end
 
 % parameters=[a0; b0; a1; b1; a2; b2; c2; d2; e2; f2; g2; h2; a3; b3; a4; b4; a5; b5; c5; d5; a6; b6; c6; d6;  dzi_0; dzi_1; g; mum_0];  
 % Jac_mom=jacobian(momentum, Variables);
@@ -90,8 +91,16 @@ rhs_mom= matlabFunction(momentum, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_
 
 
 %% Continuity equation
-continuity=umi_1*(1-phi_1/2-phi_0/2)+ufi*(phi_1/2+phi_0/2);
+eps=1e-6;
+Cap=0.02;
+Cap2=0.98;
+constraint_mean_por=(phi_1+phi_0)/2;
+% constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
+% constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;
+continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*1e5;  %Need to be enlarged
 % Variables=;
+
+continuity=simplify(continuity);
 Jac_con=jacobian(continuity, [umi_1, ufi, phi_0, phi_1]);
 Jac_con=simplify(Jac_con);
 
@@ -102,33 +111,69 @@ rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
 %% Major component transport equation
 syms dt
 % old bulk composition
-syms OLD_com
-% min_cb=1e-3;
-% min_cb_strength=1e-3;
-% Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; cs_0; cs_1; cs_2; cl_0; cl_1; cl_2];
-k_stable=1e-7;
+syms OLD_com k_stable1 k_stable2
+
 cb_0=phi_0*cl_0+(1-phi_0)*cs_0;
 cb_1=phi_1*cl_1+(1-phi_1)*cs_1;
 cb_2=phi_2*cl_2+(1-phi_2)*cs_2;
-trans_comp=cb_1-OLD_com-(ufi*(phi_0*cl_0+phi_1*cl_1)/2-ufi2*(phi_1*cl_1+phi_2*cl_2)/2+umi_1*((1-phi_0)/2*cs_0+(1-phi_1)/2*cs_1)-umi_2*((1-phi_1)/2*cs_1+(1-phi_2)/2*cs_2))/dzi_1*dt...
-    ; %-1/(1+exp(K*(cb_1^2-5e-2^2)))*k_stable*2/dzi_1*((cb_2-cb_1)/(dzi_2+dzi_1)-(cb_1-cb_0)/(dzi_1+dzi_0))*dt
 
-% Jac_ct=jacobian(trans_comp, Variables);
-% Jac_ct= matlabFunction(Jac_ct, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
-% rhs_ct= matlabFunction(trans_comp, 'Vars', {[Variables; dt; dzi_1; OLD_com]});
-trans_comp=simplify(trans_comp);
+
+
+%----------------------------------------
+% RAW FLUXES (as in your code)
+% %----------------------------------------
+% F_m = ...
+%     ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
+%     umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+% 
+% F_p = ...
+%     ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
+%     umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
+
+
+F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
+F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
+
+K_cut=800;
+alpha_p=1./(1+exp(K_cut*(-cb_1+1e-2)));
+alpha_m=1./(1+exp(K_cut*(-cb_0+1e-2)));
+%----------------------------------------
+% APPLY CONTROL ONLY TO OUTGOING PART
+%----------------------------------------
+F_m_ctrl =  F_m ;
+F_p_ctrl =  F_p ;
+
+%----------------------------------------
+% TRANSPORT EQUATION (MODIFIED)
+%----------------------------------------
+% trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt;
+trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt;
+trans_comp = simplify(trans_comp);
+
+
 Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
-Jac_ct=simplify(Jac_ct);
-Jac_ct= matlabFunction(Jac_ct, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_1, OLD_com});
-rhs_ct= matlabFunction(trans_comp, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2, dt, dzi_1, OLD_com});
+Jac_ct = simplify(Jac_ct);
 
+Jac_ct = matlabFunction(Jac_ct, 'Vars', ...
+   {umi_1, umi_2, ufi, ufi2, ...
+    phi_0, phi_1, phi_2, ...
+    cs_0, cs_1, cs_2, ...
+    cl_0, cl_1, cl_2, ... %cb_1    
+    dt, dzi_0, dzi_1, dzi_2, OLD_com});
+
+rhs_ct = matlabFunction(trans_comp, 'Vars', ...
+   {umi_1, umi_2, ufi, ufi2, ...
+    phi_0, phi_1, phi_2, ...
+    cs_0, cs_1, cs_2, ...
+    cl_0, cl_1, cl_2, ... %alpha_m, alpha_p, ...
+    dt, dzi_0, dzi_1, dzi_2, OLD_com});
 %% Enthalpy transport equation
 syms cp Lf kt
 % old enthalpy
 syms OLD_ent
-trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/20/Lf;
-Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
+trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/1e2/Lf;
 
+% Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
 % Jac_ent=jacobian(trans_enthalpy, Variables);
 % Jac_ent=simplify(Jac_ent);
 % Jac_ent=matlabFunction(Jac_ent,'Vars',{[Variables; dzi_0; dzi_1; dzi_2; dt; cp; Lf; kt; OLD_ent]});
@@ -143,8 +188,8 @@ rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2,
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
 % T=func(cl)*(Tl-Ts)+Ts
 syms A1 n_order D1
-eps=1e-12;
-K=1e3;
+
+
 
 if Has_volatile==1
     % when volatile is present Tl and Ts become functions of bulk water content (thus cb2=cl2*phi+(1-phi)*cs2)
@@ -166,12 +211,13 @@ Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 
 
 
-
+eps=1e-3;
+eps2=1e-8;
 
 MINT=((T_1+C1+50)-sqrt((T_1-C1-50)^2+eps))/2;
 Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
-SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps))/2;
-Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps))/2;
+SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
+Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps2))/2;
 
 % MINT=-1/K*log(exp(-K*T_1/1000)+exp(-K*(C1+50)/1000))*1000;
 % Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
@@ -198,17 +244,19 @@ else
 end
 
 
-cs_min=0;
 if is_eutectic==1
-    eps2=1e-1;
-    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e4;
+    eps2=1e-3;
+    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e6;
 else 
+    % K=2e3;
+    % cs_min=0;
+    eps=1e-4;
     Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
-    % SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
-    % Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
+    SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
+    Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
 
-    SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
-    Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
+    % SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
+    % Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
     solidus=(Constrain4-cs_1)/1e4;
 end
 
@@ -230,13 +278,40 @@ end
 if Has_volatile==1
     % old volatile bulk composition
     syms OLD_com2
-    syms kf
+    syms kf1 kf2 kf_stable1 kf_stable2
     % Variables=[umi_1; umi_2; ufi; ufi2; phi_0; phi_1; phi_2; S_0; S_1; S_2; cs2_0; cs2_1; cs2_2; cl2_0; cl2_1; cl2_2];
-    eps=1e-12;
+    eps=1e-10;
+    
+    % Smin=1e-6;
+    % dS12=S_2-S_1;
+    % eps12=(1e-2*dS12^2+Smin)^2;
+    % dS01=S_1-S_0;
+    % eps01=(1e-2*dS01^2+Smin)^2;
+    
     S12flux=0.5*((S_2-S_1)-sqrt((S_2-S_1)^2+eps));
-    S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));
-    trans_comp2=((phi_1*cl2_1+(1-phi_1)*cs2_1+S_1)-OLD_com2-(ufi*(phi_0*cl2_0+phi_1*cl2_1)/2-ufi2*(phi_1*cl2_1+phi_2*cl2_2)/2+umi_1*((1-phi_0)/2*cs2_0+(1-phi_1)/2*cs2_1)-umi_2*((1-phi_1)/2*cs2_1+(1-phi_2)/2*cs2_2))/dzi_1*dt...
-        -kf*2/dzi_1*(S12flux/(dzi_2+dzi_1)-S01flux/(dzi_1+dzi_0))*dt)/20;
+    S01flux=0.5*((S_1-S_0)-sqrt((S_1-S_0)^2+eps));    
+    
+    cb2_0=phi_0*cl2_0+(1-phi_0)*cs2_0+S_0;
+    cb2_1=phi_1*cl2_1+(1-phi_1)*cs2_1+S_1;
+    cb2_2=phi_2*cl2_2+(1-phi_2)*cs2_2+S_2;
+
+    %
+    % F_m = ...
+    %     ufi*(phi_0*cl2_0 + phi_1*cl2_1)/2 + ...
+    %     umi_1*((1-phi_0)/2*cs2_0 + (1-phi_1)/2*cs2_1);
+    % 
+    % F_p = ...
+    %     ufi2*(phi_1*cl2_1 + phi_2*cl2_2)/2 + ...
+    %     umi_2*((1-phi_1)/2*cs2_1 + (1-phi_2)/2*cs2_2);
+    
+    
+    F_m=ufi*phi_0*cl2_0+umi_1*(1-phi_1)*cs2_1;
+    F_p=ufi2*phi_1*cl2_1+umi_2*(1-phi_2)*cs2_2;
+    
+
+
+    trans_comp2=(cb2_1-OLD_com2- (F_m - F_p)/dzi_1 * dt...
+        -2/dzi_1*(kf2*S12flux/(dzi_2+dzi_1)-kf1*S01flux/(dzi_1+dzi_0))*dt-1/dzi_1*(kf_stable2*(cb2_2-cb2_1)/(dzi_2+dzi_1)-kf_stable1*(cb2_1-cb2_0)/(dzi_1+dzi_0))*dt)/1e3; %
     % trans_comp2=((cl2_1+cs2_1+S_1)-OLD_com2-(ufi*(cl2_0+cl2_1)/2-ufi2*(cl2_1+cl2_2)/2+umi_1*(cs2_0+cs2_1)/2-umi_2*(cs2_1+cs2_2)/2)/dzi_1*dt...
     %     -kf*2/dzi_1*((S_2-S_1)/(dzi_2+dzi_1)-(S_1-S_0)/(dzi_1+dzi_0))*dt)/20;
 
@@ -245,11 +320,11 @@ if Has_volatile==1
     % Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {[Variables; dzi_0; dzi_1; dzi_2; dt; kf; OLD_com2]});
     % rhs_ct2= matlabFunction(trans_comp2, 'Vars', {[Variables; dzi_0; dzi_1; dzi_2; dt; kf; OLD_com2]});
 
-    
+    trans_comp2=simplify(trans_comp2);
     Jac_ct2=jacobian(trans_comp2, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2]);
     Jac_ct2=simplify(Jac_ct2);
-    Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf, OLD_com2});
-    rhs_ct2= matlabFunction(trans_comp2, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf, OLD_com2});
+    Jac_ct2= matlabFunction(Jac_ct2, 'Vars',     {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf1, kf2, OLD_com2, kf_stable1,kf_stable2});
+    rhs_ct2= matlabFunction(trans_comp2, 'Vars', {umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, S_0, S_1, S_2, cs2_0, cs2_1, cs2_2, cl2_0, cl2_1, cl2_2, dzi_0, dzi_1, dzi_2, dt, kf1, kf2, OLD_com2, kf_stable1,kf_stable2});
 else
     Jac_ct2=[];
     rhs_ct2=[];
@@ -259,7 +334,8 @@ end
 % melt saturation is a function of temperature and presusre. Pressure dependency part is a constant in the constraint
 % e.g. Sat=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100+(T-800)*dSdT/100-v2;
 syms cap_A cap_B
-eps=1e-12;
+eps=1e-3;
+eps2=1e-8;
 % beta=1e4;
 if Has_volatile==1
     % cl2_1_cor=(cl2_1+sqrt(cl2_1^2+eps))/2;
@@ -270,7 +346,7 @@ if Has_volatile==1
     
 
     % condition=(Satl+S_1-(sqrt(Satl-S_1)^2+eps))/1e4;
-    condition=(Satl+S_1-sqrt((Satl-S_1)^2+eps))/1e4;
+    condition=(Satl+S_1-sqrt((Satl-S_1)^2+eps2))/1e4;
 
     % Variables=[phi_1; T_1; cs_1; S_1; cs2_1; cl2_1];
     % Jac_lsat=jacobian(condition, Variables);
@@ -298,45 +374,6 @@ else
     rhs_ssat=[];
 end
 
-%% Melt and solid saturation, and volatile partitioning constraints
-% Constraints:
-% 1: S(H(phi)(Satl-Cl2)+(1-H(phi))(Sats-Cs2))=0
-% 2: phi*(1-phi)*(Sats-Cs2)(Cs2-D1*Cl2)=0;
-% 2a:  phi*(1-phi)*(min(Sats,D1*Cl2)-Cs2)=0;
-% syms cap_A cap_B
-% 
-% tao=1e-6;
-% if Has_volatile
-%     Variables=[phi_1; T_1; cs_1; cl_1; S_1; cs2_1; cl2_1];
-% 
-%     eps=1e-15;
-%     Sats=cap_A*cs_1+cap_B*(1-cs_1)-cs2_1/(1-phi_1+eps);
-%     T_capped=(T_1+500+sqrt((T_1-500)^2+eps))/2;
-%     Satl=a0*T_capped+b0-cl2_1/(phi_1+eps);
-% 
-%     Par_l=cl2_1/(phi_1+eps)*D1;
-%     Par=cs2_1/(1-phi_1+eps)-((cap_A*cs_1+cap_B*(1-cs_1))+Par_l-sqrt(((cap_A*cs_1+cap_B*(1-cs_1))-Par_l+eps)^2))/2;
-% 
-%     R=(phi_1/(phi_1+eps)*Satl+(1-phi_1/(phi_1+eps))*Sats);
-%     constraint=sqrt(S_1^2+R^2+eps)-(S_1+R);
-%     Jac_lsat=jacobian(constraint, Variables);
-%     Jac_lsat=simplify(Jac_lsat);
-%     Jac_lsat= matlabFunction(Jac_lsat, 'Vars', {[Variables; a0; b0; cap_A; cap_B; D1]});
-%     rhs_lsat= matlabFunction(constraint, 'Vars', {[Variables; a0; b0; cap_A; cap_B; D1]});
-% 
-% 
-%     constraint=-tao*log(exp(-phi_1^2/tao)+exp(-(1-phi_1)^2/tao)+exp(-Par^2/tao));
-%     Jac_ssat=jacobian(constraint, Variables);
-%     Jac_ssat=simplify(Jac_ssat);
-%     Jac_ssat= matlabFunction(Jac_ssat, 'Vars', {[Variables; a0; b0; cap_A; cap_B; D1]});
-%     rhs_ssat= matlabFunction(constraint, 'Vars', {[Variables; a0; b0; cap_A; cap_B; D1]});
-% else
-%         Jac_lsat=[];
-%         rhs_lsat=[];
-%         Jac_ssat=[];
-%         rhs_ssat=[];
-% end
-%%
 
 
 save('Jacobians_for_Newton.mat', 'Jac_mom', 'rhs_mom', 'Jac_con', 'rhs_con', 'Jac_ct', 'rhs_ct', 'Jac_ent', 'rhs_ent', 'Jac_solidus', 'rhs_solidus', 'Jac_liquidus', 'rhs_liquidus', 'Jac_ct2', 'rhs_ct2', 'Jac_ssat','rhs_ssat','Jac_lsat','rhs_lsat');

@@ -1,5 +1,5 @@
 Var1,Var2,Var3
-Description_use_4_spaces,dummy,
+Description_use_4_spaces,dummy,sill_length
 ,Input_name,Input_No
 
 Use_parallel,dummy,
@@ -232,7 +232,7 @@ Random_injection_length_above_and_low_metres,dummy,
 ,Rand_inject,200
 
 Length_of_sill_metres,dummy,
-,Sill_length,150
+,Sill_length,100
 
 Fine_meshed_region_ratio_compared_to_sillregion,dummy,
 ,fine_ratio,6
@@ -241,10 +241,10 @@ Set_to_1_to_turn_on_injection,dummy,
 ,Sill_injection,1
 
 Sill_injected_every_N_Kyr,dummy,
-,injection_rate,2
+,injection_rate,0.2
 
 Total_number_of_sills_intruded,dummy,
-,Tot_SillN,400
+,Tot_SillN,3
 
 Composition_of_sills_Sio2,dummy,
 ,Comp_sill,50
@@ -286,10 +286,10 @@ Minimum_number_of_iterations_to_increasedt,dummy,
 ,Min_iter,25
 
 Initial_dt_in_years,dummy,
-,dt0Y,1e-4
+,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,5
+,Max_dtY,2
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-3

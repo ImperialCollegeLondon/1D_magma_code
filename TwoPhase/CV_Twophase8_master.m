@@ -238,6 +238,7 @@ else
     SillCm=injection_Cs;
     
     sill_intrusion_master
+    Update_plot_master;
     
     Cb_all0=sum(Cb.*dz');
     if Has_volatile==1
@@ -518,6 +519,7 @@ while Time<End_time
 
 
             sill_intrusion_master;
+            Update_plot_master;
 
             Cb_all0=sum(Cb.*dz');
             if Has_volatile==1
@@ -1190,7 +1192,6 @@ while Time<End_time
     if With_monitor==1
         % if toc>Monitor_frame*Update_frequency
             Update_plot_master
-            drawnow
             Monitor_frame=Monitor_frame+1;
         % end
     end

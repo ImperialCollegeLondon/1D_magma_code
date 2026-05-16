@@ -208,6 +208,7 @@ if SSPD==1 || HHJPet==1
 end
 
 Year=3600*24*365.25;
+k_stable_value=1e-10;
 %%
 % Thermal data
 if HHJPet==1
@@ -1380,6 +1381,7 @@ if With_monitor==1
         end
     end    
     Plot_settings_master;
+    drawnow
     Update_frequency=0.1; %every X sec
     Start_timer=tic;
     Monitor_frame=0;
@@ -1417,3 +1419,6 @@ function ref_all = compute_F(phi_range, epsilon, phistar, gamma, B_vis, BS_ratio
     ref_xi=ref_mu./max(0.0,phi_range)./(1-phi_range)*BS_ratio;
     ref_all=4/3*ref_mu+ref_xi;
 end
+
+%%
+

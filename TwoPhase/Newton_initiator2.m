@@ -65,7 +65,8 @@ syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
 eps=1e-3;
-momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
+eps_phi1=1e-2;
+momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi1)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
 
@@ -247,15 +248,15 @@ if is_eutectic==1
     eps2=1e-3;
     solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e6;
 else 
-    K=2e3;
-    cs_min=0;
-    % eps=1e-4;
+    % K=2e3;
+    % cs_min=0;
+    eps=1e-4;
     Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
-    % SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
-    % Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
+    SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
+    Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;
 
-    SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
-    Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
+    % SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
+    % Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
     solidus=(Constrain4-cs_1)/1e4;
 end
 
