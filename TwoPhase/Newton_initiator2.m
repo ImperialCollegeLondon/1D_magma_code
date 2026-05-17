@@ -1,6 +1,6 @@
 %% A general generator for Jacobians used in the 1D magma model
 %% HH 2026-03-13
-function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator...
+function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat, Jac_ct_central , rhs_ct_central]=Newton_initiator...
     (Has_volatile, is_eutectic)
 % system valriables contain:
 % solid and melt velocities: us, uf
@@ -91,20 +91,22 @@ rhs_mom= matlabFunction(momentum, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_
 
 
 %% Continuity equation
+syms con_scaling
 eps=1e-6;
 
 constraint_mean_por=(phi_1+phi_0)/2;
+
 % constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
 % constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;
-continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*1e5;  %Need to be enlarged
+continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*con_scaling;  %Need to be enlarged
 % Variables=;
 
 continuity=simplify(continuity);
 Jac_con=jacobian(continuity, [umi_1, ufi, phi_0, phi_1]);
 Jac_con=simplify(Jac_con);
 
-Jac_con= matlabFunction(Jac_con, 'Vars', {umi_1, ufi, phi_0, phi_1});
-rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
+Jac_con= matlabFunction(Jac_con, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling});
+rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling});
 
 
 %% Major component transport equation
@@ -121,17 +123,17 @@ cb_2=phi_2*cl_2+(1-phi_2)*cs_2;
 %----------------------------------------
 % RAW FLUXES (as in your code)
 % %----------------------------------------
-% F_m = ...
-%     ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
-%     umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
-% 
-% F_p = ...
-%     ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
-%     umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
+F_m = ...
+    ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
+    umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+
+F_p = ...
+    ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
+    umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
 
 
-F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
-F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
+% F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
+% F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
 
 K_cut=800;
 alpha_p=1./(1+exp(K_cut*(-cb_1+1e-2)));
@@ -153,7 +155,43 @@ trans_comp = simplify(trans_comp);
 Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
 Jac_ct = simplify(Jac_ct);
 
-Jac_ct = matlabFunction(Jac_ct, 'Vars', ...
+Jac_ct_central = matlabFunction(Jac_ct, 'Vars', ...
+   {umi_1, umi_2, ufi, ufi2, ...
+    phi_0, phi_1, phi_2, ...
+    cs_0, cs_1, cs_2, ...
+    cl_0, cl_1, cl_2, ... %cb_1    
+    dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable1, k_stable2});
+
+rhs_ct_central = matlabFunction(trans_comp, 'Vars', ...
+   {umi_1, umi_2, ufi, ufi2, ...
+    phi_0, phi_1, phi_2, ...
+    cs_0, cs_1, cs_2, ...
+    cl_0, cl_1, cl_2, ... %alpha_m, alpha_p, ...
+    dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable1, k_stable2});
+
+
+%%%%%%%%%%%%%%
+F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
+F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
+
+%----------------------------------------
+% APPLY CONTROL ONLY TO OUTGOING PART
+%----------------------------------------
+F_m_ctrl =  F_m ;
+F_p_ctrl =  F_p ;
+
+%----------------------------------------
+% TRANSPORT EQUATION (MODIFIED)
+%----------------------------------------
+% trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt;
+trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt-2/dzi_1*(k_stable2*(cb_2-cb_1)/(dzi_2+dzi_1)-k_stable1*(cb_1-cb_0)/(dzi_1+dzi_0))*dt;
+trans_comp = simplify(trans_comp);
+
+
+Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
+Jac_ct = simplify(Jac_ct);
+
+Jac_ct= matlabFunction(Jac_ct, 'Vars', ...
    {umi_1, umi_2, ufi, ufi2, ...
     phi_0, phi_1, phi_2, ...
     cs_0, cs_1, cs_2, ...
@@ -166,11 +204,14 @@ rhs_ct = matlabFunction(trans_comp, 'Vars', ...
     cs_0, cs_1, cs_2, ...
     cl_0, cl_1, cl_2, ... %alpha_m, alpha_p, ...
     dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable1, k_stable2});
+
+
+
 %% Enthalpy transport equation
 syms cp Lf kt
 % old enthalpy
-syms OLD_ent
-trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/1e2/Lf;
+syms OLD_ent H_scaling
+trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/Lf*H_scaling;
 
 % Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
 % Jac_ent=jacobian(trans_enthalpy, Variables);
@@ -180,8 +221,8 @@ trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/
 
 Jac_ent=jacobian(trans_enthalpy, [ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2]);
 Jac_ent=simplify(Jac_ent);
-Jac_ent=matlabFunction(Jac_ent,'Vars',{ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent});
-rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent});
+Jac_ent=matlabFunction(Jac_ent,'Vars',{ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent, H_scaling});
+rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent, H_scaling});
 %% solidus and liquidus
 % solidus and liquidus should be defined in temrs of normalized temperature T'=(T-Ts)/(Tl-Ts) where Tl and Ts is fixed when no volatile is present
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
@@ -244,7 +285,7 @@ end
 
 
 if is_eutectic==1
-    eps2=1e-3;
+    eps2=1e-0;
     solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e6;
 else 
     % K=2e3;

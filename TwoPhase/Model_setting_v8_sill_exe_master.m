@@ -11,7 +11,7 @@ fclose('all'); % close all files
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=1;
+Has_volatile=0;
 
 
 [r,~] = size(Inputs);
@@ -20,6 +20,7 @@ Number=Inputs.Var3;
 for i=1:r
     assignin('base',names(i),Number(i))
 end
+Precision0=Precision;
 
 if HHJPet==1
     Inputs= readtable('Input_Files/1AA_2phase_HHJPet_master.txt');
@@ -67,7 +68,7 @@ if HHJPet==1
 
 elseif SSPD==1
     Inputs= readtable('Input_Files/1AA_2phase_SSPD_master.txt');
-    is_eutectic=0;
+    is_eutectic=1;
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -483,7 +484,7 @@ ylim([min(mu_all)/2 max(mu_all)])
 % legend({'Sum','Shear','Bulk',})
 % saveas(f3,'Shear_bulk_viscosity','svg')
 
-%%
+%% Newton parameters initialization
 if Use_Newton
     scaling_factor=1;
 else
@@ -492,10 +493,15 @@ end
 g=g/scaling_factor;
 
 if Has_volatile==1
-    k_stable_value=1e-10;
+    k_stable_value0=1e-10;
+    k_stable_value=k_stable_value0;
+    H_scaling=1e-2;
 else
-    k_stable_value=5e-10;
+    k_stable_value0=5e-10;
+    k_stable_value=k_stable_value0;
+    H_scaling=1e-2;
 end
+con_scaling=1e5;
 %% Defining the sill length and the injection parameters
 
 
@@ -514,7 +520,7 @@ min_show_range=Show_z(2)-Show_z(1);
 
 %% define the meshing and mesh adaptivity
 
-part1=linspace(0,LengthB,max(round(min_N/10),5));
+part1=linspace(0,LengthB,max(round(min_N/15),5));
 part2=linspace(0,2*Sill_length*fine_ratio,min_N);
 part3=0:part1(end)-part1(end-1):LengthT-2*Sill_length*fine_ratio;%max(round(min_N/8),5));
 nodez=[part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end)];
@@ -961,6 +967,7 @@ if Use_Newton==1
     
     % mum_0=max(Ref_Bulk_MN,max(max(C_values)));
     mum_0=Ref_Bulk_MN;
+    % mum_0=sqrt(Ref_Bulk_MN);
     % Density coefficients
     N_rhos=10;
     N_rhol=100;
@@ -1144,7 +1151,7 @@ if Has_volatile==1
     N_Tl=N_Tl-1;
 
     V_crust=1.2;
-    V_sill=5;
+    V_sill=8;
     kf=1e-6;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1293,7 +1300,7 @@ conservation2=1;
 if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator2(Has_volatile, is_eutectic);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat,  Jac_ct_central , rhs_ct_central]=Newton_initiator2(Has_volatile, is_eutectic);
     
     disp(['All Jacobians generated/loaded']);
 
@@ -1402,7 +1409,7 @@ to_adapt=1;
 min_change=2e-3;
 max_change=4e-2;
 
-min_dx=1;   % minimal cell length
+min_dx=0.5;   % minimal cell length
 max_dx=80; % maximum cell length
 min_N=500;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells

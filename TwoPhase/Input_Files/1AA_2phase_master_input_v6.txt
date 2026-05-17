@@ -264,7 +264,7 @@ Geotherm_of_crust,dummy,
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
-,min_N,1000
+,min_N,800
 
 maximum_number_of_cells,dummy,
 ,max_N,3000
