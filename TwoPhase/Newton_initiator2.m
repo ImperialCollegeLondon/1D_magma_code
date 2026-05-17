@@ -65,8 +65,8 @@ syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
 eps=1e-3;
-eps_phi1=1e-2;
-momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi1)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
+eps_phi01=5e-2;
+momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi01)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi01)*mus_0)*2/(dzi_0+dzi_1) *0.5*(phi_0+phi_1+eps_phi01)...
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
 
@@ -92,8 +92,7 @@ rhs_mom= matlabFunction(momentum, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_
 
 %% Continuity equation
 eps=1e-6;
-Cap=0.02;
-Cap2=0.98;
+
 constraint_mean_por=(phi_1+phi_0)/2;
 % constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
 % constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;

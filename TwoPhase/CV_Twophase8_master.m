@@ -569,11 +569,10 @@ while Time<End_time
         Newton_solver3;
         
         Cb_all=sum(Cb.*dz');
+        conservation1=Cb_all/Cb_all0;
         if Has_volatile==1
-            Cb2_all=sum(Cb2.*dz');       
-            disp(['conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
-        else
-            disp(['conservation:' num2str(Cb_all/Cb_all0)])
+            Cb2_all=sum(Cb2.*dz');    
+            conservation2=Cb2_all/Cb2_all0;
         end
     else
         phi_old=phi;

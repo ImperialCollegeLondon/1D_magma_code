@@ -535,7 +535,8 @@ while Time<Time_intended-Time_gap*1e-5
         %%
         norm_R = max(abs(RHS));
         if norm_R < Precision
-            fprintf('Converged in %d iterations\n', iter);
+            % fprintf('Converged in %d iterations\n', iter);
+            prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1,conservation2);
             converged = true;
             break;
         end
@@ -552,7 +553,7 @@ while Time<Time_intended-Time_gap*1e-5
             X=X0;
             Not_improve=0;
             Norm_pre=1e3;
-            disp(['Decrease dt, dt=' num2str(dt/Year)])
+            % disp(['Decrease dt, dt=' num2str(dt/Year)])
             continue
             % iter=Max_Newton_iter;
             % break
@@ -798,11 +799,24 @@ while Time<Time_intended-Time_gap*1e-5
             X=X0;
             Not_improve=0;
             Norm_pre=1e3;
-            disp(['Decrease dt, dt=' num2str(dt/Year)])
+            % disp(['Decrease dt, dt=' num2str(dt/Year)])
             continue
         end
         if temp_norm < Precision
-            fprintf('Converged in %d iterations\n', iter);
+            % fprintf('Converged in %d iterations\n', iter);
+            % frac=(Time-Time_intended+Time_gap)/Time_gap;
+            % nfill = round(frac*40);
+            % bar = [repmat('=',1,nfill),repmat(' ',1,nbar-nfill)];
+            % str = sprintf([ ...
+            %     'Time: %10.4e   Output step: %6d\n' ...
+            %     'dt:   %10.4e   Newton iter:  %6d\n' ...
+            %     '[%s] %6.2f %%'], ...
+            %     Time/Year, Time_gap/Year, dt/Year, iter, bar, 100*frac);
+            % fprintf(repmat('\b',1,length(prevStr)));
+            % fprintf('%s', str);
+            % prevStr = str;
+            prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1, conservation2);
+
             converged = true;
             break;
         end
@@ -824,7 +838,7 @@ while Time<Time_intended-Time_gap*1e-5
                 X=X0;
                 dt_intended=dt_intended*0.5;
                 dt=dt/2;
-                disp(['Decrease dt, dt=' num2str(dt/Year)])
+                % disp(['Decrease dt, dt=' num2str(dt/Year)])
                 % if dt<Min_dtY*Year && ~Just_intruded
                 %     dt=1*Year;
                 % end
@@ -1008,3 +1022,17 @@ end
 
 
 
+function prevStr=Display_monitor(Time,Time_intended, Time_gap, dt, iter, prevStr, conservation1, conservation2)
+    frac=(Time-Time_intended+Time_gap)/Time_gap;
+    nfill = round(frac*40);
+    bar = [repmat('=',1,nfill),repmat(' ',1,40-nfill)];
+    str = sprintf([ ...
+        'Time: %10.4f   Output time step: %6d\n' ...
+        'dt:   %10.5f   Newton iter:  %6d\n' ...
+        '[%s] %6.2f %%\n'...
+        'Conservation: %3.5f  %3.5f'], ...
+        Time, Time_gap, dt, iter, bar, 100*frac,conservation1,conservation2);
+    fprintf(repmat('\b',1,length(prevStr)));
+    fprintf('%s', str);
+    prevStr = str;
+end

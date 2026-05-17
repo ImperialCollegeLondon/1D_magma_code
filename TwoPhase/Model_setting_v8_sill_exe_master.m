@@ -13,6 +13,7 @@ Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
 Has_volatile=1;
 
+
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -208,7 +209,7 @@ if SSPD==1 || HHJPet==1
 end
 
 Year=3600*24*365.25;
-k_stable_value=1e-10;
+
 %%
 % Thermal data
 if HHJPet==1
@@ -490,15 +491,11 @@ else
 end
 g=g/scaling_factor;
 
-
-
-%C_transport_method=1; % 1. conservative method  2. non-conservative but more stable
-
-%To_check_convergence=0; % set to 1 to enable convergence testing
-%Start_check=5;    % first step to start the checking
-
-%Contribution_cut=1;  %Only record contribution if melft fraction is less than this number 
-%Only_record_decrease=0;%Only record contribution if melt fraction is decreasing
+if Has_volatile==1
+    k_stable_value=1e-10;
+else
+    k_stable_value=5e-10;
+end
 %% Defining the sill length and the injection parameters
 
 
@@ -1147,7 +1144,7 @@ if Has_volatile==1
     N_Tl=N_Tl-1;
 
     V_crust=1.2;
-    V_sill=8;
+    V_sill=5;
     kf=1e-6;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1286,7 +1283,10 @@ C_values=zeros(N,1);  % the coupling term coefficient
 kt=kt0*ones(N,1);
 kc=kc0*ones(N,1);
 
-
+% Command window display initialization
+prevStr = '';
+conservation1=1;
+conservation2=1;
 %%
 
 
@@ -1420,5 +1420,4 @@ function ref_all = compute_F(phi_range, epsilon, phistar, gamma, B_vis, BS_ratio
     ref_all=4/3*ref_mu+ref_xi;
 end
 
-%%
 
