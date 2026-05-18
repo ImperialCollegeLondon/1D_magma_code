@@ -725,7 +725,11 @@ while Time<End_time
                 if dt==Min_dt
                     fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
                 end
-
+            end
+            if Record_data==1
+                if Time+dt>Record_time(Record_index)
+                    dt=Record_time(Record_index)-Time;
+                end
             end
        %% Enthalpy and components transport
             H_nonlinear=H;
@@ -1022,7 +1026,7 @@ while Time<End_time
 
          if (length(Record_time)>=Record_index)
 
-         if (Time)>=Record_time(Record_index)-dt 
+         if (Time)>=Record_time(Record_index)
              % if (Time)<Record_time(Record_index)+dt
 
                 Record_index=Record_index+1;

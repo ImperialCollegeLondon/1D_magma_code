@@ -15,7 +15,7 @@ Use_Newton, dummy,
 ,Use_Newton,0
 
 CALCULATION_PRECISION,dummy,
-,Precision,1e-6
+,Precision,1e-4
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
 ,Max_iter,200
@@ -298,7 +298,7 @@ Courant_Number,dummy,
 ,Courant, 0.45
 
 End_time_of_model_in_years,dummy,
-,End_timeY,20
+,End_timeY,50
 
 Output_Rate_of_data_plots_in_years,dummy,
 ,Out_time,1
