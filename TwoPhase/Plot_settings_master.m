@@ -395,5 +395,6 @@ TITLE=text(Background,0.4,0.06, "Time="+ num2str(Time/Year/1000) +'ka   '+ "N\_n
 %end
 
 if Has_volatile==1
+    drawnow
     set(ax_volatile,'Position',get(get(Handel_all{1}(1),'Parent'),'position'))
 end

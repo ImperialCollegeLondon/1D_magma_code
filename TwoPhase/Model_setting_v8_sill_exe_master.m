@@ -11,7 +11,7 @@ fclose('all'); % close all files
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=0;
+Has_volatile=1;
 
 
 [r,~] = size(Inputs);

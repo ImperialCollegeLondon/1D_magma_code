@@ -125,7 +125,7 @@ N_vis,dummy,
 ,N_vis,1e4
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
-,MU_type,0
+,MU_type,1
 
 Mush_bulk_visc_min_FLAG_No=0_Yes=1,dummy,
 ,mu_min_FLAG,0
