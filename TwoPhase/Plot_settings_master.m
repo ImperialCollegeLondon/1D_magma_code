@@ -21,12 +21,13 @@ UM_0=K0/10^((mu_f1+mu_f2)/2)*(1-PHI0)*(rhom_1-rhof_2)*g*scaling_factor;   %dimen
 S_or_Cb=1;  %1 for showing SiO2
 
 figure(13)
-clf; set(gcf,'color','w','position',[10,10,1650,1200]);
+clf; set(gcf,'color','w'); %,'position',[10,10,1650,1200]
 % title(['Compaction Length=',num2str(Compaction_length)])
 % Plot_configure=reshape(Plot_configure',[1,Plot_size(1)*Plot_size(2)]);
 
 for i=1:(Plot_size(1)*Plot_size(2))
     A_handel=subplot(Plot_size(1),Plot_size(2),i);hold on
+    % A_handel=tiledlayout(Plot_size(1),Plot_size(2));hold on
     if i==1 
 %         Handel_T=text(0.65,0.72*Show_z(2)+0.28*Show_z(1), "T="+num2str(Time/Year),'fontsize',Font_Size-3);%
 %         aaa=title(["Time=" num2str(Time/Year) 'y'],'fontsize',Font_Size-3);
@@ -393,4 +394,6 @@ TITLE=text(Background,0.4,0.06, "Time="+ num2str(Time/Year/1000) +'ka   '+ "N\_n
 %writeVideo(Video_handel,Current_frame);
 %end
 
-
+if Has_volatile==1
+    set(ax_volatile,'Position',get(get(Handel_all{1}(1),'Parent'),'position'))
+end

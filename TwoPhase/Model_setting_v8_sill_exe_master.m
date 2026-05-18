@@ -811,7 +811,7 @@ rho_mean=2700;
 %% Data output
 
 
-Record_data=1; % set to 1 to save the simulation data
+Record_data=0; % set to 1 to save the simulation data
 Step_counts=0;
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;

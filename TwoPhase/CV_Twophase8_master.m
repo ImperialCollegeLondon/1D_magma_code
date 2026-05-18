@@ -17,6 +17,7 @@
 clear;
 clc
 warning('off')
+set(groot,'DefaultFigureWindowStyle','docked')
 
 % CAB - calling the m-file which contains the settings for the run.
 Model_setting_v8_sill_exe_master; 

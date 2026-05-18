@@ -12,10 +12,10 @@ Res_type_cb+enth=0_phi=1,dummy,
 ,res_type,0
 
 Use_Newton, dummy,
-,Use_Newton,0
+,Use_Newton,1
 
 CALCULATION_PRECISION,dummy,
-,Precision,1e-4
+,Precision,1e-8
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
 ,Max_iter,200
@@ -244,7 +244,7 @@ Sill_injected_every_N_Kyr,dummy,
 ,injection_rate,0.2
 
 Total_number_of_sills_intruded,dummy,
-,Tot_SillN,1
+,Tot_SillN,3
 
 Composition_of_sills_Sio2,dummy,
 ,Comp_sill,50
@@ -289,7 +289,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,1
+,Max_dtY,2
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-3
@@ -298,7 +298,7 @@ Courant_Number,dummy,
 ,Courant, 0.45
 
 End_time_of_model_in_years,dummy,
-,End_timeY,50
+,End_timeY,1e6
 
 Output_Rate_of_data_plots_in_years,dummy,
 ,Out_time,1

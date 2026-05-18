@@ -553,7 +553,7 @@ while Time<Time_intended-Time_gap*1e-5
                 end
             else
                 con_scaling=con_scaling/10;
-                con_scaling=max(con_scaling,1);
+                con_scaling=max(con_scaling,1e3);
                 k_stable_value=k_stable_value*10;
                 k_stable_value=min(k_stable_value,1e-9);
                 H_scaling=H_scaling/10;
