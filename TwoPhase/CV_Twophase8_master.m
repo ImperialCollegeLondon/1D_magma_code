@@ -1023,7 +1023,7 @@ while Time<End_time
          if (length(Record_time)>=Record_index)
 
          if (Time)>=Record_time(Record_index)-dt 
-             if (Time)<Record_time(Record_index)+dt
+             % if (Time)<Record_time(Record_index)+dt
 
                 Record_index=Record_index+1;
                 vv=['Output ',num2str(Time/Year/1000), ' ka'];
@@ -1169,7 +1169,7 @@ while Time<End_time
                     fprintf(File_breaks, '%10.5f \t %10.5f \t %10.5f \t %10.5f \n', Time/Year/1000, break_percent, break_counter, counter);
 
                     output_counter=output_counter+1;
-            end
+            % end
         end
         end
 

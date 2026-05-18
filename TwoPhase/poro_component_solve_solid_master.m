@@ -17,8 +17,8 @@ function [phi,T, cl, cs, iter,Tl_local,Ts_local]=poro_component_solve_solid_mast
     
     Ts_max=C1;
     Ts_min=A1+B1+C1;
-    % Ts_local=(alpha*(1-cb)^n_PD+(1-alpha)*(1-cb^(1/n_PD)))*(Ts_max-Ts_min)+Ts_min; %local solidus    
-    Ts_local=Ts_max-(Ts_max-Ts_min)*cb^(1/n_PD);
+    Ts_local=(alpha*(1-cb)^n_PD+(1-alpha)*(1-cb^(1/n_PD)))*(Ts_max-Ts_min)+Ts_min; %local solidus    
+    % Ts_local=Ts_max-(Ts_max-Ts_min)*cb^(1/n_PD);
     Tl_local=A1*cb^2+B1*cb+C1; %local liquidus
     
     ETl=Tl_local*cp+Lf;

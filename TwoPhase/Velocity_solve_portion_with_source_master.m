@@ -38,7 +38,7 @@ function [U_new, Portion]=Velocity_solve_portion_with_source_master(phi,u_all_ol
     
     %     APHI=(mu_m*4/3+zeta_m(power,zeta0,phi0,phi(1:N),Precision)).*phi(N+1:2*N);
 %     APHI=zeta_m(power,mu_m,phi(1:N),Precision).*phi(N+1:2*N);
-    APHI=mu_m.*phi(N+1:2*N);
+    APHI=mu_m'.*phi(N+1:2*N);
     for i=1:length(Nonzero)
 %           Flux1=  APHI(Nonzero(i)-1)/dz(Nonzero(i)-1)*2/(dz(Nonzero(i)-1)+dz(Nonzero(i)));
 %           Flux2=  APHI(Nonzero(i))/dz(Nonzero(i))*2/(dz(Nonzero(i)-1)+dz(Nonzero(i)));                 

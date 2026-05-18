@@ -68,7 +68,7 @@ if HHJPet==1
 
 elseif SSPD==1
     Inputs= readtable('Input_Files/1AA_2phase_SSPD_master.txt');
-    is_eutectic=1;
+    is_eutectic=0;
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
@@ -811,7 +811,7 @@ rho_mean=2700;
 %% Data output
 
 
-Record_data=0; % set to 1 to save the simulation data
+Record_data=1; % set to 1 to save the simulation data
 Step_counts=0;
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;
