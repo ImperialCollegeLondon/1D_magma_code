@@ -125,7 +125,7 @@ N_vis,dummy,
 ,N_vis,1e4
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
-,MU_type,1
+,MU_type,0
 
 Mush_bulk_visc_min_FLAG_No=0_Yes=1,dummy,
 ,mu_min_FLAG,0
@@ -141,7 +141,7 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,1e13
+,Ref_Bulk_MN,1e12
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,
@@ -244,7 +244,7 @@ Sill_injected_every_N_Kyr,dummy,
 ,injection_rate,0.2
 
 Total_number_of_sills_intruded,dummy,
-,Tot_SillN,3
+,Tot_SillN,1
 
 Composition_of_sills_Sio2,dummy,
 ,Comp_sill,50
@@ -264,7 +264,7 @@ Geotherm_of_crust,dummy,
 
 *****************Define_spatial_mesh*****************,dummy,
 minimum_number_of_cells,dummy,
-,min_N,800
+,min_N,1200
 
 maximum_number_of_cells,dummy,
 ,max_N,3000
@@ -289,19 +289,19 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,2
+,Max_dtY,0.5
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-3
 
 Courant_Number,dummy,
-,Courant, 0.45
+,Courant, 0.1
 
 End_time_of_model_in_years,dummy,
 ,End_timeY,1e6
 
 Output_Rate_of_data_plots_in_years,dummy,
-,Out_time,1
+,Out_time,5
 
 Y_limits_crust_bottom,dummy,
 ,crust_bottom,-6.65

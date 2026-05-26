@@ -70,6 +70,9 @@ end
 
 
 %% 
+Kfreeze = 3;  
+bad_count = zeros(N+1,1);
+new_frozen=[];
 
 Time_old=Time;
 if Record_data2==1
@@ -206,8 +209,11 @@ while Time<Time_intended-Time_gap*1e-5
             Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
             Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
         end
+       
+        mum_0_local=(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2))./(dz(2:end)+dz(1+end-1))'.^2*2;
+
         % physical constants
-        Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0*ones(nI,1)];
+        Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
         RHS(I)=rhs_mom(Vars(:,1),Vars(:,2),Vars(:,3),Vars(:,4),Vars(:,5),Vars(:,6),Vars(:,7),Vars(:,8),Vars(:,9),Vars(:,10),...
             Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5),Param(:,6),Param(:,7),Param(:,8),Param(:,9),Param(:,10),...
             Param(:,11),Param(:,12),Param(:,13),Param(:,14),Param(:,15),Param(:,16),Param(:,17),Param(:,18),Param(:,19),Param(:,20),...
@@ -538,22 +544,24 @@ while Time<Time_intended-Time_gap*1e-5
             entry_count=entry_count+2;
         end
         %%
+        RHS(new_frozen)=0;
         norm_R = max(abs(RHS));
         if norm_R < Precision
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e4,1e5);
             if iter<10 && (dt>Min_dt || Advance_time==0)
-                con_scaling=con_scaling*2;
-                con_scaling=min(1e6,con_scaling);
+                % con_scaling=con_scaling*2;
+                % con_scaling=min(1e6,con_scaling);
                 k_stable_value=k_stable_value*0.9;
                 k_stable_value=max(k_stable_value,k_stable_value0);
                 H_scaling=H_scaling*2;
-                H_scaling=min(1,H_scaling);
+                H_scaling=min(1e-2,H_scaling);
                 if Has_volatile==1
                     Precision=Precision/2;
                     Precision=max(Precision,Precision0);
                 end
             else
-                con_scaling=con_scaling/10;
-                con_scaling=max(con_scaling,1e3);
+                % con_scaling=con_scaling/10;
+                % con_scaling=max(con_scaling,1e3);
                 k_stable_value=k_stable_value*10;
                 k_stable_value=min(k_stable_value,1e-9);
                 H_scaling=H_scaling/10;
@@ -565,11 +573,24 @@ while Time<Time_intended-Time_gap*1e-5
             end
             prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1,conservation2);
             converged = true;
+            bad_count = zeros(N+1,1);
+            new_frozen=[];
             break;
         end
 
-        Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
+        bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
 
+        bad_count=bad_count + ismember(1:N+1, bad_nodes)';
+        bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
+        new_frozen = find(bad_count >= Kfreeze);
+
+        Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
+        
+        for k=1:length(new_frozen)
+            Matrix_A(new_frozen(k),:)=0;
+            Matrix_A(new_frozen(k),new_frozen(k))=1;            
+        end
+        RHS(new_frozen)=0;
         du = Matrix_A \ (-RHS);
         if ~isreal(du) || any(isnan(du))
             dt_intended=dt_intended*0.5;
@@ -589,7 +610,7 @@ while Time<Time_intended-Time_gap*1e-5
         du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
 
         alpha = 1.0;
-        for LS = 1:8
+        for LS = 1:4
             X = X_pre + alpha * du;
             % force 1>phi>0
             X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),-0.99e-2);
@@ -687,8 +708,10 @@ while Time<Time_intended-Time_gap*1e-5
                 Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
                 Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
             end
+            mum_0_local=(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2))./(dz(2:end)+dz(1+end-1))'.^2*2;
+
             % physical constants
-            Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0*ones(nI,1)];
+            Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
             RHS(I)=rhs_mom(Vars(:,1),Vars(:,2),Vars(:,3),Vars(:,4),Vars(:,5),Vars(:,6),Vars(:,7),Vars(:,8),Vars(:,9),Vars(:,10),...
                 Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5),Param(:,6),Param(:,7),Param(:,8),Param(:,9),Param(:,10),...
                 Param(:,11),Param(:,12),Param(:,13),Param(:,14),Param(:,15),Param(:,16),Param(:,17),Param(:,18),Param(:,19),Param(:,20),...
@@ -834,9 +857,10 @@ while Time<Time_intended-Time_gap*1e-5
             continue
         end
         if temp_norm < Precision
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e4,1e5);
             if iter<10 && (dt>Min_dt || Advance_time==0)
-                con_scaling=con_scaling*2;
-                con_scaling=min(1e6,con_scaling);
+                % con_scaling=con_scaling*2;
+                % con_scaling=min(1e6,con_scaling);
                 k_stable_value=k_stable_value*0.9;
                 k_stable_value=max(k_stable_value,k_stable_value0);
                 H_scaling=H_scaling*2;
@@ -846,8 +870,8 @@ while Time<Time_intended-Time_gap*1e-5
                     Precision=max(Precision,Precision0);
                 end
             else
-                con_scaling=con_scaling/10;
-                con_scaling=max(con_scaling,1);
+                % con_scaling=con_scaling/10;
+                % con_scaling=max(con_scaling,1e3);
                 k_stable_value=k_stable_value*10;
                 k_stable_value=min(k_stable_value,1e-9);
                 H_scaling=H_scaling/10;
@@ -860,6 +884,8 @@ while Time<Time_intended-Time_gap*1e-5
             prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1, conservation2);
 
             converged = true;
+            bad_count = zeros(N+1,1);
+            new_frozen=[];
             break;
         end
 
@@ -892,14 +918,21 @@ while Time<Time_intended-Time_gap*1e-5
         Cb2=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
     end
 
-    
-    if iter>=Max_Newton_iter
-       error('Newton iteration fails')
-    end    
-    if Advance_time==0
-        break
+    if iter>=Max_iter
+        error('Newton iteration fails')
     end
     Time=Time+dt;
+    if Advance_time==0
+        break
+    elseif dt<=Min_dt*1e-1
+        if Time-Last_adapted>Adaptive_step_time
+            Adapt_mesh_master    
+            Last_adapted=Time;
+            dt_intend=Min_dt;
+        end
+    end
+
+    
     if iter<=6
         if dt<0.01*Max_dt
             dt=min(dt*1.3, Max_dt);
@@ -912,6 +945,7 @@ while Time<Time_intended-Time_gap*1e-5
     elseif iter>=10
         dt=min(dt*0.9, Max_dt);
         dt_intended=min(dt,dt_intended);
+        dt_intended=max(Min_dt*1e-3,dt_intended);
     end
     if Time<Time_intended %update all old values
         Cb_old=Cb;
@@ -1026,4 +1060,25 @@ function prevStr=Display_monitor(Time,Time_intended, Time_gap, dt, iter, prevStr
     fprintf(repmat('\b',1,length(prevStr)));
     fprintf('%s', str);
     prevStr = str;
+end
+% 
+function bad_nodes=detect_trouble_nodes(RHS,N, tol)
+    rnode=RHS(1:N+1);
+    % Rc=RHS(N+2:2*N+2);
+    % Rt=RHS(2*N+2+(1:N));
+    % rnode=sqrt(Rm.^2+Rc.^2+Rt.^2);
+
+    % rmed = median(abs(Rm));
+    active = abs(rnode) > tol;    
+    if max(active)<1
+        bad_nodes=[];
+        return;
+    end
+    r_active=RHS(active);
+    r_sorted = sort(r_active);
+    bulk = r_sorted(1:max(1, round(0.9*length(r_sorted))));
+    r_bulk_max = max(bulk);
+
+    alpha = 1e3;
+    bad_nodes = find(active & rnode > alpha * r_bulk_max);
 end

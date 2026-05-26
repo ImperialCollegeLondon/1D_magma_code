@@ -11,7 +11,7 @@ fclose('all'); % close all files
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=1;
+Has_volatile=0;
 
 
 [r,~] = size(Inputs);
@@ -497,7 +497,7 @@ if Has_volatile==1
     k_stable_value=k_stable_value0;
     H_scaling=1e-2;
 else
-    k_stable_value0=5e-10;
+    k_stable_value0=1e-13;
     k_stable_value=k_stable_value0;
     H_scaling=1e-2;
 end
@@ -811,7 +811,7 @@ rho_mean=2700;
 %% Data output
 
 
-Record_data=0; % set to 1 to save the simulation data
+Record_data=1; % set to 1 to save the simulation data
 Step_counts=0;
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;
@@ -1332,9 +1332,7 @@ if Use_Newton==1
     nC = size(C_coef_all,3);
     C_coef_all=reshape(C_coef_all, [], nC);
     
-    Advance_time=0;
-    Time_intended=1*Year;
-    Newton_solver3;
+
 end
 
 %% Set up the monitor
@@ -1398,7 +1396,7 @@ Adaptive_show_range=1;
 %% Mesh adaptivity
 Adaptive_mesh=0; %
 Adaptive_step_gap=2;
-Adaptive_step_time=10*Year;
+Adaptive_step_time=5*Year;
 
 Last_adapted=0;
 
@@ -1417,7 +1415,9 @@ max_N=8000; % maximum number of allowed cells
 min_dx0=min_dx;
 
 
-
+Advance_time=0;
+Time_intended=1*Year;
+Newton_solver3;
 function ref_all = compute_F(phi_range, epsilon, phistar, gamma, B_vis, BS_ratio)
     sigma=13-gamma;  
     F = (1 - epsilon) * erf(sqrt(pi)/2/(1 - epsilon) ...

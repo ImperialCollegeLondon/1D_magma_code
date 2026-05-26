@@ -65,7 +65,7 @@ syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
 eps=1e-3;
-eps_phi01=5e-2;
+eps_phi01=3e-2;
 momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi01)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi01)*mus_0)*2/(dzi_0+dzi_1) *0.5*(phi_0+phi_1+eps_phi01)...
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
@@ -99,6 +99,7 @@ constraint_mean_por=(phi_1+phi_0)/2;
 % constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
 % constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;
 continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*con_scaling;  %Need to be enlarged
+% continuity=(umi_1*(1-phi_1)+ufi*phi_0)*con_scaling;  %Need to be enlarged
 % Variables=;
 
 continuity=simplify(continuity);
