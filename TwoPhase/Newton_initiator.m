@@ -65,8 +65,8 @@ syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
 eps=1e-3;
-eps_phi1=1e-2;
-momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi1)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi1)*mus_0)*2/(dzi_0+dzi_1) *2*phi_0*phi_1/(phi_0+phi_1+eps)...
+eps_phi01=3e-2;
+momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi01)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi01)*mus_0)*2/(dzi_0+dzi_1) *0.5*(phi_0+phi_1+eps_phi01)...
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
 
@@ -91,22 +91,24 @@ rhs_mom= matlabFunction(momentum, 'Vars', {umi_0, umi_1, umi_2, ufi, phi_0, phi_
 
 
 %% Continuity equation
+syms con_scaling
+syms flux_r0 flux_r1
 eps=1e-6;
-Cap=0.02;
-Cap2=0.98;
+
 constraint_mean_por=(phi_1+phi_0)/2;
-% constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
-% constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;
-continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*1e5;  %Need to be enlarged
-% Variables=;
+
+
+continuity0=umi_1*(1-phi_1)+ufi*phi_0; 
+continuity1=umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por;
+continuity=(continuity0+(continuity1-continuity0)*flux_r0)*con_scaling;
+
 
 continuity=simplify(continuity);
 Jac_con=jacobian(continuity, [umi_1, ufi, phi_0, phi_1]);
 Jac_con=simplify(Jac_con);
 
-Jac_con= matlabFunction(Jac_con, 'Vars', {umi_1, ufi, phi_0, phi_1});
-rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1});
-
+Jac_con= matlabFunction(Jac_con, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling, flux_r0});
+rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling, flux_r0});
 
 %% Major component transport equation
 syms dt
@@ -122,56 +124,54 @@ cb_2=phi_2*cl_2+(1-phi_2)*cs_2;
 %----------------------------------------
 % RAW FLUXES (as in your code)
 % %----------------------------------------
-% F_m = ...
-%     ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
-%     umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
-% 
-% F_p = ...
-%     ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
-%     umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
+%%%%%%%%%%%%%%
+F_m0=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
+F_p0=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
 
 
-F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
-F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
 
-K_cut=800;
-alpha_p=1./(1+exp(K_cut*(-cb_1+1e-2)));
-alpha_m=1./(1+exp(K_cut*(-cb_0+1e-2)));
-%----------------------------------------
-% APPLY CONTROL ONLY TO OUTGOING PART
-%----------------------------------------
-F_m_ctrl =  F_m ;
-F_p_ctrl =  F_p ;
+F_m1 = ...
+    ufi*(phi_0*cl_0 + phi_1*cl_1)/2 + ...
+    umi_1*((1-phi_0)/2*cs_0 + (1-phi_1)/2*cs_1);
+
+F_p1 = ...
+    ufi2*(phi_1*cl_1 + phi_2*cl_2)/2 + ...
+    umi_2*((1-phi_1)/2*cs_1 + (1-phi_2)/2*cs_2);
 
 %----------------------------------------
 % TRANSPORT EQUATION (MODIFIED)
 %----------------------------------------
-% trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt;
-trans_comp = cb_1 - OLD_com - (F_m_ctrl - F_p_ctrl)/dzi_1 * dt;
+trans_comp = cb_1 - OLD_com - (F_m0+flux_r0*(F_m1-F_m0) - F_p0-flux_r1*(F_p1-F_p0))/dzi_1 * dt-2/dzi_1*(k_stable2*(cb_2-cb_1)/(dzi_2+dzi_1)-k_stable1*(cb_1-cb_0)/(dzi_1+dzi_0))*dt;
 trans_comp = simplify(trans_comp);
 
 
 Jac_ct=jacobian(trans_comp, [umi_1, umi_2, ufi, ufi2, phi_0, phi_1, phi_2, cs_0, cs_1, cs_2, cl_0, cl_1, cl_2]);
 Jac_ct = simplify(Jac_ct);
 
-Jac_ct = matlabFunction(Jac_ct, 'Vars', ...
+
+
+
+Jac_ct= matlabFunction(Jac_ct, 'Vars', ...
    {umi_1, umi_2, ufi, ufi2, ...
     phi_0, phi_1, phi_2, ...
     cs_0, cs_1, cs_2, ...
     cl_0, cl_1, cl_2, ... %cb_1    
-    dt, dzi_0, dzi_1, dzi_2, OLD_com});
+    dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable1, k_stable2, flux_r0, flux_r1});
 
 rhs_ct = matlabFunction(trans_comp, 'Vars', ...
    {umi_1, umi_2, ufi, ufi2, ...
     phi_0, phi_1, phi_2, ...
     cs_0, cs_1, cs_2, ...
     cl_0, cl_1, cl_2, ... %alpha_m, alpha_p, ...
-    dt, dzi_0, dzi_1, dzi_2, OLD_com});
+    dt, dzi_0, dzi_1, dzi_2, OLD_com, k_stable1, k_stable2, flux_r0, flux_r1});
+
+
+
 %% Enthalpy transport equation
 syms cp Lf kt
 % old enthalpy
-syms OLD_ent
-trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/1e2/Lf;
+syms OLD_ent H_scaling
+trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/2*ufi2)/dzi_1*dt-kt*2/dzi_1*((T_2-T_1)/(dzi_2+dzi_1)-(T_1-T_0)/(dzi_1+dzi_0))*dt)/Lf*H_scaling;
 
 % Variables=[ufi; ufi2; phi_0; phi_1; phi_2; T_0; T_1; T_2];
 % Jac_ent=jacobian(trans_enthalpy, Variables);
@@ -181,8 +181,8 @@ trans_enthalpy=((cp*T_1+Lf*phi_1)-OLD_ent-Lf*((phi_0+phi_1)/2*ufi-(phi_1+phi_2)/
 
 Jac_ent=jacobian(trans_enthalpy, [ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2]);
 Jac_ent=simplify(Jac_ent);
-Jac_ent=matlabFunction(Jac_ent,'Vars',{ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent});
-rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent});
+Jac_ent=matlabFunction(Jac_ent,'Vars',{ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent, H_scaling});
+rhs_ent= matlabFunction(trans_enthalpy, 'Vars', {ufi, ufi2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dzi_0, dzi_1, dzi_2, dt, cp, Lf, kt, OLD_ent, H_scaling});
 %% solidus and liquidus
 % solidus and liquidus should be defined in temrs of normalized temperature T'=(T-Ts)/(Tl-Ts) where Tl and Ts is fixed when no volatile is present
 % as system parameter which can becomes a variable if volatile component is included in the system, a typical liquidus:
@@ -245,7 +245,7 @@ end
 
 
 if is_eutectic==1
-    eps2=1e-3;
+    eps2=1e-0;
     solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e6;
 else 
     % K=2e3;

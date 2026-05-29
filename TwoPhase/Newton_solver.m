@@ -71,6 +71,10 @@ end
 
 %% 
 
+Kfreeze = 3;  
+bad_count = zeros(N+1,1);
+new_frozen=[];
+
 Time_old=Time;
 if Record_data2==1
     Time_gap=Record_period;
@@ -86,6 +90,7 @@ while Time<Time_intended-Time_gap*1e-5
     % end
     if Advance_time==1
         dt=min(dt_intended, Time_intended-Time);
+        dt=min(dt,Max_dtY*Year);
     else
         dt=0;
     end
@@ -205,8 +210,11 @@ while Time<Time_intended-Time_gap*1e-5
             Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
             Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
         end
+       
+        % mum_0_local=sqrt((mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2)))./(dz(2:end)+dz(1+end-1))'.^2*2;
+        mum_0_local=min(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2))*ones(nI,1);
         % physical constants
-        Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0*ones(nI,1)];
+        Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
         RHS(I)=rhs_mom(Vars(:,1),Vars(:,2),Vars(:,3),Vars(:,4),Vars(:,5),Vars(:,6),Vars(:,7),Vars(:,8),Vars(:,9),Vars(:,10),...
             Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5),Param(:,6),Param(:,7),Param(:,8),Param(:,9),Param(:,10),...
             Param(:,11),Param(:,12),Param(:,13),Param(:,14),Param(:,15),Param(:,16),Param(:,17),Param(:,18),Param(:,19),Param(:,20),...
@@ -245,10 +253,15 @@ while Time<Time_intended-Time_gap*1e-5
         %% Continuity assembly
         num_local=4;
         % umi_1,ufi,phi0,phi1
+        
 
-        RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0, phi_1);
+        r=(X((2:N-1) + 2*(N+1))-X((1:N-2) + 2*(N+1)))./(X((3:N) + 2*(N+1))-X((2:N-1) + 2*(N+1))+1e-15);
+        flux_limiter=(r+abs(r))./(1+abs(r))/2*0+1;
 
-        J = Jac_con(um_1, uf_1, phi_0, phi_1);
+        RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0, phi_1, con_scaling,[flux_limiter;1]);
+        J = Jac_con(um_1, uf_1, phi_0, phi_1, con_scaling, [flux_limiter;1]);
+
+        
         rows_block = repmat(I + N + 1, 1, num_local);   % (N-1) × 4
         cols_block = [ ...
             I, ...
@@ -288,10 +301,14 @@ while Time<Time_intended-Time_gap*1e-5
 
         % cb=phi_1.*cl_1+(1-phi_1).*cs_1;
         % enhance=(cb>0.995)*1e2;
+        scale=ones(N,1);
+        scale(Cb_old<2e-3)=1e3;
+        k_stable1=k_stable_value*(phi_1>1e-2).*scale(I);
+        k_stable2=[k_stable1(2:end);0];
+        
+        RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable1, k_stable2, [1; flux_limiter(1:end-1)],flux_limiter);
+        J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable1, k_stable2, [1; flux_limiter(1:end-1)],flux_limiter);
 
-
-        RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I));
-        J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I));
 
         rows_block = repmat(I+(N+1)*2, 1, num_local);
         cols_block = [ ...
@@ -321,9 +338,9 @@ while Time<Time_intended-Time_gap*1e-5
         T_0=X(I-1+(N+1)*2+N);
         T_1=X(I  +(N+1)*2+N);
         T_2=X(I+1+(N+1)*2+N);
-        RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I));
+        RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I),H_scaling);
 
-        J = Jac_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I));
+        J = Jac_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I),H_scaling);
         rows_block = repmat(I+(N+1)*2+N, 1, num_local);
         cols_block = [ ...
             I+(N+1), I+1+(N+1), ...
@@ -529,15 +546,53 @@ while Time<Time_intended-Time_gap*1e-5
             entry_count=entry_count+2;
         end
         %%
+        % RHS(new_frozen)=0;
         norm_R = max(abs(RHS));
         if norm_R < Precision
-            fprintf('Converged in %d iterations\n', iter);
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e3,1e5);
+            % if iter<10 && (dt>Min_dt || Advance_time==0)
+            %     % con_scaling=con_scaling*2;
+            %     % con_scaling=min(1e6,con_scaling);
+            %     k_stable_value=k_stable_value*0.9;
+            %     k_stable_value=max(k_stable_value,k_stable_value0);
+            %     H_scaling=H_scaling*2;
+            %     H_scaling=min(1e-2,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision/2;
+            %         Precision=max(Precision,Precision0);
+            %     end
+            % else
+            %     % con_scaling=con_scaling/10;
+            %     % con_scaling=max(con_scaling,1e3);
+            %     k_stable_value=k_stable_value*10;
+            %     k_stable_value=min(k_stable_value,1e-9);
+            %     H_scaling=H_scaling/10;
+            %     H_scaling=max(1e-4,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision*5;
+            %         Precision=min(Precision,Precision0*100);
+            %     end
+            % end
+            prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1,conservation2);
             converged = true;
+            bad_count = zeros(N+1,1);
+            new_frozen=[];
             break;
         end
 
-        Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
+        % bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
+        % 
+        % bad_count=bad_count + ismember(1:N+1, bad_nodes)';
+        % bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
+        % new_frozen = find(bad_count >= Kfreeze);
 
+        Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
+        
+        % for k=1:length(new_frozen)
+        %     Matrix_A(new_frozen(k),:)=0;
+        %     Matrix_A(new_frozen(k),new_frozen(k))=1;            
+        % end
+        % RHS(new_frozen)=0;
         du = Matrix_A \ (-RHS);
         if ~isreal(du) || any(isnan(du))
             dt_intended=dt_intended*0.5;
@@ -548,7 +603,7 @@ while Time<Time_intended-Time_gap*1e-5
             X=X0;
             Not_improve=0;
             Norm_pre=1e3;
-            disp(['Decrease dt, dt=' num2str(dt/Year)])
+            % disp(['Decrease dt, dt=' num2str(dt/Year)])
             continue
             % iter=Max_Newton_iter;
             % break
@@ -557,7 +612,7 @@ while Time<Time_intended-Time_gap*1e-5
         du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
 
         alpha = 1.0;
-        for LS = 1:8
+        for LS = 1:4
             X = X_pre + alpha * du;
             % force 1>phi>0
             X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),-0.99e-2);
@@ -565,6 +620,8 @@ while Time<Time_intended-Time_gap*1e-5
 
             % force 1350>T
             % X(2*(N+1)+N+1:2*(N+1)+N*2)=min(X(2*(N+1)+N+1:2*(N+1)+N*2),1350);
+            r=(X((2:N-1) + 2*(N+1))-X((1:N-2) + 2*(N+1)))./(X((3:N) + 2*(N+1))-X((2:N-1) + 2*(N+1))+1e-15);
+            flux_limiter=(r+abs(r))./(1+abs(r))/2*0+1;
 
             RHS(:)=0;
             index_phi_nmus=max(min(floor(X((1:N)+(N+1)*2) * N_mus) + 1, N_mus),1);
@@ -655,14 +712,18 @@ while Time<Time_intended-Time_gap*1e-5
                 Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
                 Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
             end
+            % mum_0_local=sqrt((mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2)))./(dz(2:end)+dz(1+end-1))'.^2*2;
+            mum_0_local=min(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2))*ones(nI,1);
+
             % physical constants
-            Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0*ones(nI,1)];
+            Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
             RHS(I)=rhs_mom(Vars(:,1),Vars(:,2),Vars(:,3),Vars(:,4),Vars(:,5),Vars(:,6),Vars(:,7),Vars(:,8),Vars(:,9),Vars(:,10),...
                 Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5),Param(:,6),Param(:,7),Param(:,8),Param(:,9),Param(:,10),...
                 Param(:,11),Param(:,12),Param(:,13),Param(:,14),Param(:,15),Param(:,16),Param(:,17),Param(:,18),Param(:,19),Param(:,20),...
                 Param(:,21),Param(:,22),Param(:,23),Param(:,24),Param(:,25),Param(:,26),Param(:,27),Param(:,28));
+            
+            RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0,phi_1, con_scaling,[flux_limiter; 1]);
 
-            RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0,phi_1);
 
 
             %
@@ -684,12 +745,16 @@ while Time<Time_intended-Time_gap*1e-5
             cl_1=X(I  +(N+1)*2+N*3);
             cl_2=X(I+1+(N+1)*2+N*3);
 
+            scale=ones(N,1);
+            scale(Cb_old<2e-3)=1e3;
+            k_stable1=k_stable_value*(phi_1>1e-2).*scale(I);
+            k_stable2=[k_stable1(2:end);0];
+            RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable1, k_stable2,[1; flux_limiter(1:end-1)],flux_limiter);
 
-            RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I));
             T_0=X(I-1+(N+1)*2+N);
             T_1=X(I  +(N+1)*2+N);
             T_2=X(I+1+(N+1)*2+N);
-            RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I));
+            RHS(I+(N+1)*2+N)=rhs_ent(uf_1, uf_2, phi_0, phi_1, phi_2, T_0, T_1, T_2, dz(i0)', dz(I)', dz(i2)', dt, cp, Lf, kt0, H_old(I), H_scaling);
 
             %
             if Has_volatile==1
@@ -791,12 +856,40 @@ while Time<Time_intended-Time_gap*1e-5
             X=X0;
             Not_improve=0;
             Norm_pre=1e3;
-            disp(['Decrease dt, dt=' num2str(dt/Year)])
+            % disp(['Decrease dt, dt=' num2str(dt/Year)])
             continue
         end
         if temp_norm < Precision
-            fprintf('Converged in %d iterations\n', iter);
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e3,1e5);
+            % if iter<10 && (dt>Min_dt || Advance_time==0)
+            %     % con_scaling=con_scaling*2;
+            %     % con_scaling=min(1e6,con_scaling);
+            %     k_stable_value=k_stable_value*0.9;
+            %     k_stable_value=max(k_stable_value,k_stable_value0);
+            %     H_scaling=H_scaling*2;
+            %     H_scaling=min(1,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision/2;
+            %         Precision=max(Precision,Precision0);
+            %     end
+            % else
+            %     % con_scaling=con_scaling/10;
+            %     % con_scaling=max(con_scaling,1e3);
+            %     k_stable_value=k_stable_value*10;
+            %     k_stable_value=min(k_stable_value,1e-9);
+            %     H_scaling=H_scaling/10;
+            %     H_scaling=max(1e-4,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision*5;
+            %         Precision=min(Precision,Precision0*100);
+            %     end
+            % end
+
+            prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1, conservation2);
+
             converged = true;
+            bad_count = zeros(N+1,1);
+            new_frozen=[];
             break;
         end
 
@@ -817,10 +910,7 @@ while Time<Time_intended-Time_gap*1e-5
                 X=X0;
                 dt_intended=dt_intended*0.5;
                 dt=dt/2;
-                disp(['Decrease dt, dt=' num2str(dt/Year)])
-                % if dt<Min_dtY*Year && ~Just_intruded
-                %     dt=1*Year;
-                % end
+
                 Not_improve=0;
                 Norm_pre=1e3;
             end
@@ -832,63 +922,22 @@ while Time<Time_intended-Time_gap*1e-5
         Cb2=X((1:N)+2*N+2+N*6).*X((1:N)+2*N+2)+X((1:N)+2*N+2+N*5).*(1-X((1:N)+2*N+2))+X((1:N)+2*N+2+N*4);
     end
 
-    % if (iter>=Max_Newton_iter || dt<1e-8*Year  ) && Advance_time==1 
-    %     min_dx=min_dx/2;
-    %     % max_adaptive_number=5;
-    %     Adapt_mesh_master;
-    %     % max_adaptive_number=1;
-    %     Advance_time=1;
-    %     min_dx=min_dx*2;
-    %     if Has_volatile==0
-    %         Dof=(N+1)*2+N*4;
-    %         nnz=10*(N+1)+4*(N+1)+13*N+8*N+8*N*2;
-    %     else
-    %         Dof=(N+1)*2+N*7;
-    %         nnz=12*(N+1)+4*(N+1)+13*N+8*N*2+8*N*2+14*N*2;
-    %     end
-    % 
-    %     rows=zeros(nnz,1);
-    %     cols=zeros(nnz,1);
-    %     vals=zeros(nnz,1);
-    % 
-    %     RHS=zeros(Dof,1);
-    %     if Has_volatile==0
-    %         % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old];
-    %         X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N)];
-    %     else
-    %         % X=[um_old; uf_old; phi_old; T_old; Cs_old; Cl_old; S_old; Cs2_old; Cl2_old];
-    %         X=[u_all_old(N+2:2*N+2); u_all_old(1:N+1); phi_old(1:N); T_old; C_all_old(N+1:2*N); C_all_old(1:N); S_old; Cs2_old; Cl2_old];
-    %     end
-    % 
-    %     X_pre=X;             
-    % 
-    %     if Has_volatile==1
-    %         %preprocessing pressure index data
-    %         Pressure=(nodez(end)-cellz)*g*rho_mean/1e5+1; %in bar
-    %         Pressure=Pressure';
-    %         index_pressure_nts=max(min(floor(Pressure/8000*N_Ts)+1,N_Ts),1);
-    %         index_pressure_ntl=max(min(floor(Pressure/40e3* N_Tl) + 1, N_Tl),1);
-    % 
-    %         Cb2_old=phi_old(1:N).*Cl2_old+(1-phi_old(1:N)).*Cs2_old+S_old;
-    % 
-    %         PT=[-4e-4,-5e-4,-6e-4,-13e-4, -15.5e-4,-17e-4,-16e-4,-5e-4, 0, 26e-4,5e-3, 5e-3];  % coefficient from (ref) for the temperature dependency of water saturation (Holtz et al,?)
-    %         PTx=[0,   0.12    0.2  0.3    0.5       1       2       3   4  5,    11, 20]; %in kbar
-    %         dSdT = interp1(PTx, PT, Pressure/1000, 'linear', 'extrap');
-    % 
-    %         P3=Pressure/10; %Pressure in Mpa
-    %         b0_all=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5)/100-8*dSdT;
-    %     end
-    %     dt_intended=dt0Y*Year;
-    %     continue
-    % end
-    if iter>=Max_Newton_iter
-       error('Newton iteration fails')
-    end    
-    if Advance_time==0
-        break
+    if iter>=Max_iter
+        error('Newton iteration fails')
     end
     Time=Time+dt;
-    if iter<=6
+    if Advance_time==0
+        break
+    elseif dt<=Min_dt*1e-1
+        if Time-Last_adapted>Adaptive_step_time
+            Adapt_mesh_master    
+            Last_adapted=Time;
+            dt_intend=Min_dt;
+        end
+    end
+
+    
+    if iter<=9
         if dt<0.01*Max_dt
             dt=min(dt*1.3, Max_dt);
         elseif dt<0.05*Max_dt
@@ -900,6 +949,7 @@ while Time<Time_intended-Time_gap*1e-5
     elseif iter>=10
         dt=min(dt*0.9, Max_dt);
         dt_intended=min(dt,dt_intended);
+        dt_intended=max(Min_dt*1e-3,dt_intended);
     end
     if Time<Time_intended %update all old values
         Cb_old=Cb;
@@ -1001,3 +1051,38 @@ end
 
 
 
+function prevStr=Display_monitor(Time,Time_intended, Time_gap, dt, iter, prevStr, conservation1, conservation2)
+    frac=(Time-Time_intended+Time_gap)/Time_gap;
+    nfill = round(frac*40);
+    bar = [repmat('=',1,nfill),repmat(' ',1,40-nfill)];
+    str = sprintf([ ...
+        'Time: %10.4f   Output time step: %6.1f\n' ...
+        'dt:   %10.5f   Newton iter:  %6d\n' ...
+        '[%s] %6.2f %%\n'...
+        'Conservation: %3.8f  %3.8f'], ...
+        Time, Time_gap, dt, iter, bar, 100*frac,conservation1,conservation2);
+    fprintf(repmat('\b',1,length(prevStr)));
+    fprintf('%s', str);
+    prevStr = str;
+end
+% 
+function bad_nodes=detect_trouble_nodes(RHS,N, tol)
+    rnode=RHS(1:N+1);
+    % Rc=RHS(N+2:2*N+2);
+    % Rt=RHS(2*N+2+(1:N));
+    % rnode=sqrt(Rm.^2+Rc.^2+Rt.^2);
+
+    % rmed = median(abs(Rm));
+    active = abs(rnode) > tol;    
+    if max(active)<1
+        bad_nodes=[];
+        return;
+    end
+    r_active=RHS(active);
+    r_sorted = sort(r_active);
+    bulk = r_sorted(1:max(1, round(0.9*length(r_sorted))));
+    r_bulk_max = max(bulk);
+
+    alpha = 1e3;
+    bad_nodes = find(active & rnode > alpha * r_bulk_max);
+end

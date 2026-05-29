@@ -70,7 +70,7 @@ end
 
 
 %% 
-Use_central=1; % 1 for central, 0 for upwinding
+Use_central=0; % 1 for central, 0 for upwinding
 
 Kfreeze = 3;  
 bad_count = zeros(N+1,1);

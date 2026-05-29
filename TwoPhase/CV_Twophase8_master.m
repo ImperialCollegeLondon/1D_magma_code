@@ -569,7 +569,7 @@ while Time<End_time
     if Use_Newton==1
 
         Advance_time=1;
-        Newton_solver3;
+        Newton_solver;
         
         Cb_all=sum(Cb.*dz');
         conservation1=Cb_all/Cb_all0;

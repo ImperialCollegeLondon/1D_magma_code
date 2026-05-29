@@ -7,11 +7,11 @@ Step = 0;
 % -------------------------------------------------
 % Load initial data
 % -------------------------------------------------
-% Cases={'Newton_eu_12.5','Nonlinear_eu_12.5',};
-% Labels={'Newton','Nonlinear'};
-
-Cases={'Newton_eu_C17-13','Nonlinear_eu_C17-13',};
+Cases={'Newton_eu_13.5','Nonlinear_eu_13.5',};
 Labels={'Newton','Nonlinear'};
+
+% Cases={'Newton_eu_C17-13','Nonlinear_eu_C17-13',};
+% Labels={'Newton','Nonlinear'};
 Range = [0 68];
 
 % Cases={'Non_linear_muM_13_20y_-4','Non_linear_muM_13_20y','Newton_muM_13_20y'};
