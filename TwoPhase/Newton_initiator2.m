@@ -1,6 +1,6 @@
 %% A general generator for Jacobians used in the 1D magma model
 %% HH 2026-03-13
-function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat, Jac_ct_central , rhs_ct_central]=Newton_initiator...
+function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat, Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator...
     (Has_volatile, is_eutectic)
 % system valriables contain:
 % solid and melt velocities: us, uf
@@ -98,8 +98,8 @@ constraint_mean_por=(phi_1+phi_0)/2;
 
 % constraint_mean_por=(constraint_mean_por+Cap-sqrt((constraint_mean_por-Cap)^2+eps))/2;
 % constraint_mean_por=(constraint_mean_por-Cap2-sqrt((constraint_mean_por-Cap2)^2+eps))/2;
-continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*con_scaling;  %Need to be enlarged
-% continuity=(umi_1*(1-phi_1)+ufi*phi_0)*con_scaling;  %Need to be enlarged
+% continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*con_scaling;  %Need to be enlarged
+continuity=(umi_1*(1-phi_1)+ufi*phi_0)*con_scaling;  %Need to be enlarged
 % Variables=;
 
 continuity=simplify(continuity);
@@ -109,7 +109,14 @@ Jac_con=simplify(Jac_con);
 Jac_con= matlabFunction(Jac_con, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling});
 rhs_con= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling});
 
+%
+continuity=(umi_1*(1-constraint_mean_por)+ufi*constraint_mean_por)*con_scaling;
+continuity=simplify(continuity);
+Jac_con_central=jacobian(continuity, [umi_1, ufi, phi_0, phi_1]);
+Jac_con_central=simplify(Jac_con_central);
 
+Jac_con_central= matlabFunction(Jac_con_central, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling});
+rhs_con_central= matlabFunction(continuity, 'Vars', {umi_1, ufi, phi_0, phi_1, con_scaling});
 %% Major component transport equation
 syms dt
 % old bulk composition
@@ -136,9 +143,9 @@ F_p = ...
 % F_m=ufi*phi_0*cl_0+umi_1*(1-phi_1)*cs_1;
 % F_p=ufi2*phi_1*cl_1+umi_2*(1-phi_2)*cs_2;
 
-K_cut=800;
-alpha_p=1./(1+exp(K_cut*(-cb_1+1e-2)));
-alpha_m=1./(1+exp(K_cut*(-cb_0+1e-2)));
+% K_cut=800;
+% alpha_p=1./(1+exp(K_cut*(-cb_1+1e-2)));
+% alpha_m=1./(1+exp(K_cut*(-cb_0+1e-2)));
 %----------------------------------------
 % APPLY CONTROL ONLY TO OUTGOING PART
 %----------------------------------------

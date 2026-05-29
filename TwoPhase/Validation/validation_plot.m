@@ -7,9 +7,12 @@ Step = 0;
 % -------------------------------------------------
 % Load initial data
 % -------------------------------------------------
-% Cases={'Non_2','N_mu2_13_2'};
-% Labels={'Nonlinear','Newton'};
-% Range = [0 5];
+% Cases={'Newton_eu_12.5','Nonlinear_eu_12.5',};
+% Labels={'Newton','Nonlinear'};
+
+Cases={'Newton_eu_C17-13','Nonlinear_eu_C17-13',};
+Labels={'Newton','Nonlinear'};
+Range = [0 68];
 
 % Cases={'Non_linear_muM_13_20y_-4','Non_linear_muM_13_20y','Newton_muM_13_20y'};
 % Labels={'Nonlinear-4','Nonlinear-6','Newton'};
@@ -20,9 +23,9 @@ Step = 0;
 % Range = [0 70];
 % dy=5;
 
-Cases={'Non_linear_muC_eu','Non_linear_muC_eu_fine','Non_linear_muC_eu_fine2','Newton_muC_eu_stable0','Newton_muC_eu_fine'};
-Labels={'Nonlinear-6','Nonlinear-8','Nonlinear-9-Cu0.1','Newton','Newton dt0.2'};
-Range = [0 68];
+% Cases={'Non_linear_muC_eu','Non_linear_muC_eu_fine','Non_linear_muC_eu_fine2','Newton_muC_eu_stable0','Newton_muC_eu_fine'};
+% Labels={'Nonlinear-6','Nonlinear-8','Nonlinear-9-Cu0.1','Newton','Newton dt0.2'};
+% Range = [0 68];
 dy=5;
 
 y_range=[48 60];

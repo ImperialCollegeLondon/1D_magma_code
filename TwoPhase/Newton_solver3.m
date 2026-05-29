@@ -70,6 +70,8 @@ end
 
 
 %% 
+Use_central=1; % 1 for central, 0 for upwinding
+
 Kfreeze = 3;  
 bad_count = zeros(N+1,1);
 new_frozen=[];
@@ -210,8 +212,8 @@ while Time<Time_intended-Time_gap*1e-5
             Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
         end
        
-        mum_0_local=(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2))./(dz(2:end)+dz(1+end-1))'.^2*2;
-
+        % mum_0_local=sqrt((mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2)))./(dz(2:end)+dz(1+end-1))'.^2*2;
+        mum_0_local=min(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2))*ones(nI,1);
         % physical constants
         Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
         RHS(I)=rhs_mom(Vars(:,1),Vars(:,2),Vars(:,3),Vars(:,4),Vars(:,5),Vars(:,6),Vars(:,7),Vars(:,8),Vars(:,9),Vars(:,10),...
@@ -252,10 +254,15 @@ while Time<Time_intended-Time_gap*1e-5
         %% Continuity assembly
         num_local=4;
         % umi_1,ufi,phi0,phi1
-
-        RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0, phi_1, con_scaling);
-
-        J = Jac_con(um_1, uf_1, phi_0, phi_1, con_scaling);
+        
+        if Use_central==0
+            RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0, phi_1, con_scaling);
+            J = Jac_con(um_1, uf_1, phi_0, phi_1, con_scaling);
+        else
+            RHS(I+N+1)=rhs_con_central(um_1,uf_1,phi_0, phi_1, con_scaling);
+            J = Jac_con_central(um_1, uf_1, phi_0, phi_1, con_scaling);
+        end
+        
         rows_block = repmat(I + N + 1, 1, num_local);   % (N-1) × 4
         cols_block = [ ...
             I, ...
@@ -300,7 +307,7 @@ while Time<Time_intended-Time_gap*1e-5
         k_stable1=k_stable_value*(phi_1>1e-2).*scale(I);
         k_stable2=[k_stable1(2:end);0];
         
-        if dt>Min_dt*10
+        if Use_central==0
             RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2,dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I), k_stable1, k_stable2);
             J = Jac_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)', Cb_old(I), k_stable1, k_stable2);
         else
@@ -544,33 +551,38 @@ while Time<Time_intended-Time_gap*1e-5
             entry_count=entry_count+2;
         end
         %%
-        RHS(new_frozen)=0;
+        % RHS(new_frozen)=0;
         norm_R = max(abs(RHS));
         if norm_R < Precision
-            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e4,1e5);
-            if iter<10 && (dt>Min_dt || Advance_time==0)
-                % con_scaling=con_scaling*2;
-                % con_scaling=min(1e6,con_scaling);
-                k_stable_value=k_stable_value*0.9;
-                k_stable_value=max(k_stable_value,k_stable_value0);
-                H_scaling=H_scaling*2;
-                H_scaling=min(1e-2,H_scaling);
-                if Has_volatile==1
-                    Precision=Precision/2;
-                    Precision=max(Precision,Precision0);
-                end
-            else
-                % con_scaling=con_scaling/10;
-                % con_scaling=max(con_scaling,1e3);
-                k_stable_value=k_stable_value*10;
-                k_stable_value=min(k_stable_value,1e-9);
-                H_scaling=H_scaling/10;
-                H_scaling=max(1e-4,H_scaling);
-                if Has_volatile==1
-                    Precision=Precision*5;
-                    Precision=min(Precision,Precision0*100);
-                end
-            end
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e3,1e5);
+            % if iter<10 && (dt>Min_dt || Advance_time==0)
+            %     % con_scaling=con_scaling*2;
+            %     % con_scaling=min(1e6,con_scaling);
+            %     k_stable_value=k_stable_value*0.9;
+            %     k_stable_value=max(k_stable_value,k_stable_value0);
+            %     H_scaling=H_scaling*2;
+            %     H_scaling=min(1e-2,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision/2;
+            %         Precision=max(Precision,Precision0);
+            %     end
+            % else
+            %     % con_scaling=con_scaling/10;
+            %     % con_scaling=max(con_scaling,1e3);
+            %     k_stable_value=k_stable_value*10;
+            %     k_stable_value=min(k_stable_value,1e-9);
+            %     H_scaling=H_scaling/10;
+            %     H_scaling=max(1e-4,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision*5;
+            %         Precision=min(Precision,Precision0*100);
+            %     end
+            % end
+            % if dt<Min_dt
+            %     Use_central=0;
+            % else
+            %     Use_central=1;
+            % end
             prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1,conservation2);
             converged = true;
             bad_count = zeros(N+1,1);
@@ -578,19 +590,19 @@ while Time<Time_intended-Time_gap*1e-5
             break;
         end
 
-        bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
-
-        bad_count=bad_count + ismember(1:N+1, bad_nodes)';
-        bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
-        new_frozen = find(bad_count >= Kfreeze);
+        % bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
+        % 
+        % bad_count=bad_count + ismember(1:N+1, bad_nodes)';
+        % bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
+        % new_frozen = find(bad_count >= Kfreeze);
 
         Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
         
-        for k=1:length(new_frozen)
-            Matrix_A(new_frozen(k),:)=0;
-            Matrix_A(new_frozen(k),new_frozen(k))=1;            
-        end
-        RHS(new_frozen)=0;
+        % for k=1:length(new_frozen)
+        %     Matrix_A(new_frozen(k),:)=0;
+        %     Matrix_A(new_frozen(k),new_frozen(k))=1;            
+        % end
+        % RHS(new_frozen)=0;
         du = Matrix_A \ (-RHS);
         if ~isreal(du) || any(isnan(du))
             dt_intended=dt_intended*0.5;
@@ -708,7 +720,8 @@ while Time<Time_intended-Time_gap*1e-5
                 Param(:,17:18) = rhol_coef_all(index_cl_nrhol(i0), :);
                 Param(:,21:22) = rhol_coef_all(index_cl_nrhol(i1), :);
             end
-            mum_0_local=(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2))./(dz(2:end)+dz(1+end-1))'.^2*2;
+            % mum_0_local=sqrt((mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2)))./(dz(2:end)+dz(1+end-1))'.^2*2;
+            mum_0_local=min(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2))*ones(nI,1);
 
             % physical constants
             Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
@@ -716,8 +729,12 @@ while Time<Time_intended-Time_gap*1e-5
                 Param(:,1),Param(:,2),Param(:,3),Param(:,4),Param(:,5),Param(:,6),Param(:,7),Param(:,8),Param(:,9),Param(:,10),...
                 Param(:,11),Param(:,12),Param(:,13),Param(:,14),Param(:,15),Param(:,16),Param(:,17),Param(:,18),Param(:,19),Param(:,20),...
                 Param(:,21),Param(:,22),Param(:,23),Param(:,24),Param(:,25),Param(:,26),Param(:,27),Param(:,28));
-
-            RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0,phi_1, con_scaling);
+            
+            if Use_central==0
+                RHS(I+N+1)=rhs_con(um_1,uf_1,phi_0,phi_1, con_scaling);
+            else
+                RHS(I+N+1)=rhs_con_central(um_1,uf_1,phi_0,phi_1, con_scaling);
+            end
 
 
             %
@@ -743,7 +760,7 @@ while Time<Time_intended-Time_gap*1e-5
             scale(Cb_old<2e-3)=1e3;
             k_stable1=k_stable_value*(phi_1>1e-2).*scale(I);
             k_stable2=[k_stable1(2:end);0];
-            if dt>Min_dt*10
+            if Use_central==0
                 RHS(I+(N+1)*2)=rhs_ct(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable1, k_stable2);
             else
                 RHS(I+(N+1)*2)=rhs_ct_central(um_1,um_2, uf_1, uf_2, phi_0, phi_1, phi_2, cs_0,cs_1,cs_2, cl_0,cl_1,cl_2, dt, dz(i0)', dz(I)', dz(i2)',Cb_old(I),k_stable1, k_stable2);
@@ -857,30 +874,35 @@ while Time<Time_intended-Time_gap*1e-5
             continue
         end
         if temp_norm < Precision
-            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e4,1e5);
-            if iter<10 && (dt>Min_dt || Advance_time==0)
-                % con_scaling=con_scaling*2;
-                % con_scaling=min(1e6,con_scaling);
-                k_stable_value=k_stable_value*0.9;
-                k_stable_value=max(k_stable_value,k_stable_value0);
-                H_scaling=H_scaling*2;
-                H_scaling=min(1,H_scaling);
-                if Has_volatile==1
-                    Precision=Precision/2;
-                    Precision=max(Precision,Precision0);
-                end
-            else
-                % con_scaling=con_scaling/10;
-                % con_scaling=max(con_scaling,1e3);
-                k_stable_value=k_stable_value*10;
-                k_stable_value=min(k_stable_value,1e-9);
-                H_scaling=H_scaling/10;
-                H_scaling=max(1e-4,H_scaling);
-                if Has_volatile==1
-                    Precision=Precision*5;
-                    Precision=min(Precision,Precision0*100);
-                end
-            end
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e3,1e5);
+            % if iter<10 && (dt>Min_dt || Advance_time==0)
+            %     % con_scaling=con_scaling*2;
+            %     % con_scaling=min(1e6,con_scaling);
+            %     k_stable_value=k_stable_value*0.9;
+            %     k_stable_value=max(k_stable_value,k_stable_value0);
+            %     H_scaling=H_scaling*2;
+            %     H_scaling=min(1,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision/2;
+            %         Precision=max(Precision,Precision0);
+            %     end
+            % else
+            %     % con_scaling=con_scaling/10;
+            %     % con_scaling=max(con_scaling,1e3);
+            %     k_stable_value=k_stable_value*10;
+            %     k_stable_value=min(k_stable_value,1e-9);
+            %     H_scaling=H_scaling/10;
+            %     H_scaling=max(1e-4,H_scaling);
+            %     if Has_volatile==1
+            %         Precision=Precision*5;
+            %         Precision=min(Precision,Precision0*100);
+            %     end
+            % end
+            % if dt<Min_dt
+            %     Use_central=0;
+            % else
+            %     Use_central=1;
+            % end
             prevStr=Display_monitor(Time/Year,Time_intended/Year, Time_gap/Year, dt/Year, iter, prevStr,conservation1, conservation2);
 
             converged = true;
@@ -933,7 +955,7 @@ while Time<Time_intended-Time_gap*1e-5
     end
 
     
-    if iter<=6
+    if iter<=9
         if dt<0.01*Max_dt
             dt=min(dt*1.3, Max_dt);
         elseif dt<0.05*Max_dt
@@ -1052,7 +1074,7 @@ function prevStr=Display_monitor(Time,Time_intended, Time_gap, dt, iter, prevStr
     nfill = round(frac*40);
     bar = [repmat('=',1,nfill),repmat(' ',1,40-nfill)];
     str = sprintf([ ...
-        'Time: %10.4f   Output time step: %6d\n' ...
+        'Time: %10.4f   Output time step: %6.1f\n' ...
         'dt:   %10.5f   Newton iter:  %6d\n' ...
         '[%s] %6.2f %%\n'...
         'Conservation: %3.8f  %3.8f'], ...

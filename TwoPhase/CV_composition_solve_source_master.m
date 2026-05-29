@@ -64,8 +64,10 @@ function Cphi=CV_composition_solve_source_master(C_all,phi,phi_old,Cphi_old,u_al
     Cphi_all(:,1)=CV_transport_scaled_v2_master(dz,Cphi_old(1:N),One_field, One_field,   uf,kc,       dt, -source(:,1),BC_type_loc,BC_value_loc1);
     Cphi_all(:,2)=CV_transport_scaled_v2_master(dz,Cphi_old(N+1:2*N),One_field,One_field,um,kc*kc_m2f,dt, -source(:,2),BC_type_loc,BC_value_loc2);
     % CAB - source 3,4
-    Cphi_all(:,3)=CV_transport_scaled_v2_master(dz,phi_old(1:N)-Cphi_old(1:N),One_field, One_field,       uf,kc,       dt,-source(:,3),BC_type_loc,BC_value_loc1);
-    Cphi_all(:,4)=CV_transport_scaled_v2_master(dz,phi_old(N+1:2*N)-Cphi_old(N+1:2*N),One_field,One_field,um,kc*kc_m2f,dt,-source(:,4),BC_type_loc,BC_value_loc2);
+    if Method==2
+        Cphi_all(:,3)=CV_transport_scaled_v2_master(dz,phi_old(1:N)-Cphi_old(1:N),One_field, One_field,       uf,kc,       dt,-source(:,3),BC_type_loc,BC_value_loc1);
+        Cphi_all(:,4)=CV_transport_scaled_v2_master(dz,phi_old(N+1:2*N)-Cphi_old(N+1:2*N),One_field,One_field,um,kc*kc_m2f,dt,-source(:,4),BC_type_loc,BC_value_loc2);
+    end
 
 switch Method
     case 1

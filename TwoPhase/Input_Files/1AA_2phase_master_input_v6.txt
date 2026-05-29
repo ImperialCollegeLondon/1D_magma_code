@@ -3,7 +3,7 @@ Description_use_4_spaces,dummy,sill_length
 ,Input_name,Input_No
 
 Use_parallel,dummy,
-,Use_parallel,0
+,Use_parallel,1
 
 No_cores_in_parallel,dummy,
 ,Num_core_use,8
@@ -31,10 +31,10 @@ GRAVITY,dummy,
 
 *****************Phase_Diagram_Parameters*****************,dummy,
 Hu_et_al_2022_Phase_Diagram_=1,dummy,
-,HHJPet,0
+,HHJPet,1
 
 Solid_Solution_Solidus_Phase_Diagram_=1,dummy,
-,SSPD,1
+,SSPD,0
 
 Layered_intrusion_Phase_Diagram_=1,dummy, 
 ,FourMPD,0
@@ -141,7 +141,7 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,1e12
+,Ref_Bulk_MN,5e12
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,

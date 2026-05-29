@@ -497,7 +497,7 @@ if Has_volatile==1
     k_stable_value=k_stable_value0;
     H_scaling=1e-2;
 else
-    k_stable_value0=1e-13;
+    k_stable_value0=1e-13*0;
     k_stable_value=k_stable_value0;
     H_scaling=1e-2;
 end
@@ -1300,7 +1300,7 @@ conservation2=1;
 if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat,  Jac_ct_central , rhs_ct_central]=Newton_initiator2(Has_volatile, is_eutectic);
+    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat,  Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator2(Has_volatile, is_eutectic);
     
     disp(['All Jacobians generated/loaded']);
 
@@ -1417,7 +1417,9 @@ min_dx0=min_dx;
 
 Advance_time=0;
 Time_intended=1*Year;
-Newton_solver3;
+if Use_Newton==1
+    Newton_solver3;
+end
 function ref_all = compute_F(phi_range, epsilon, phistar, gamma, B_vis, BS_ratio)
     sigma=13-gamma;  
     F = (1 - epsilon) * erf(sqrt(pi)/2/(1 - epsilon) ...

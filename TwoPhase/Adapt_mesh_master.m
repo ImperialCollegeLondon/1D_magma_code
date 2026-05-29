@@ -378,6 +378,8 @@ if Has_volatile==1
     disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
 end
 
-Advance_time=0;
-Newton_solver3;
-Advance_time=1;
+if Use_Newton==1
+    Advance_time=0;
+    Newton_solver3;
+    Advance_time=1;
+end

@@ -240,6 +240,7 @@ else
     
     sill_intrusion_master
     Update_plot_master;
+    Adapt_mesh_master;
     
     Cb_all0=sum(Cb.*dz');
     if Has_volatile==1
@@ -521,6 +522,7 @@ while Time<End_time
 
             sill_intrusion_master;
             Update_plot_master;
+            Adapt_mesh_master
 
             Cb_all0=sum(Cb.*dz');
             if Has_volatile==1
@@ -742,7 +744,7 @@ while Time<End_time
             % Solve for composition
             Cb_nonlinear=Cb;
 
-            Cphi_all=CV_composition_solve_source_master(C_all,phi,phi_old,Cphi_all_old, u_all,dz,dt,kc,BC_C_type, BC_C_value,C_transport_method,C_source);
+            Cphi_all=CV_composition_solve_source_master(C_all,phi,phi_old,Cphi_all_old, u_all,dz,dt,kc*0,BC_C_type, BC_C_value,C_transport_method,C_source);
             % Update bulk composition
             Cb=Cphi_all(N+1:2*N)+Cphi_all(1:N);
       %% Update melt fraction and composition due to phase_diagram
@@ -779,7 +781,7 @@ while Time<End_time
 
                 if N<50 || Use_parallel==0
                     for i=1:N
-                        [phi(i), T(i), C_all(i), C_all(i+N),TYPE(i), Tl(i), Ts(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
+                        [phi(i), T(i), C_all(i), C_all(i+N),TYPE(i), Tl_local(i), Ts_loal(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
                     end
                 else
                    if isempty(gcp('nocreate'))
@@ -789,7 +791,7 @@ while Time<End_time
                    parfor i=1:N
                        warning('off', 'all');
                        %set(0,'DefaultFigureVisible','off')
-                       [phi(i), T(i), C_all(i), C_all_dummy(i),TYPE(i), Tl(i), Ts(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
+                       [phi(i), T(i), C_all(i), C_all_dummy(i),TYPE(i), Tl_local(i), Ts_loal(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
                    end
 
 
@@ -1053,7 +1055,7 @@ while Time<End_time
                                 'Cb SiO2','Cs SiO2', 'Cl SiO2 ', 'Dens', 'H_MF', 'C_MF', 'R_MF','H_MF_t','C_MF_t', 'R_MF_t', 'C_CB', 'R_CB', 'C_CB_t', 'R_CB_t');
                         
                             for i=1:1:N
-                                fprintf(File_Out, '%10.3f \t %10.4f \t %3e \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f  \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f  \t %10.4f  \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \n', ...
+                                fprintf(File_Out, '%10.6f \t %10.4f \t %3e \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f  \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f  \t %10.4f  \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \n', ...
                                     [cellz(i)/1000-Base_crust; phi(i); H(i); ...
                                     T(i); Ts(i); Tl(i); Cb(i);  (Cb(i))*(SiO2_range(2)-SiO2_range(1))+SiO2_range(1); (C_all(N+i))*(SiO2_range(2)-SiO2_range(1))+SiO2_range(1) ...
                                     ; (C_all(i))*(SiO2_range(2)-SiO2_range(1))+SiO2_range(1); rho_b(i); ...
