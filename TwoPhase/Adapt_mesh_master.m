@@ -380,6 +380,6 @@ end
 
 if Use_Newton==1
     Advance_time=0;
-    Newton_solver;
+    Newton_solver3;
     Advance_time=1;
 end

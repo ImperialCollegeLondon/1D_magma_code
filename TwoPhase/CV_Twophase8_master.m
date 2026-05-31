@@ -21,6 +21,7 @@ set(groot,'DefaultFigureWindowStyle','docked')
 
 % CAB - calling the m-file which contains the settings for the run.
 Model_setting_v8_sill_exe_master; 
+% Model_setting_v8_validation; 
 
 Inputs= readtable('Input_Files/1AA_2Phase_code_RESTART.txt');
 [r,~] = size(Inputs);
@@ -569,7 +570,7 @@ while Time<End_time
     if Use_Newton==1
 
         Advance_time=1;
-        Newton_solver;
+        Newton_solver3;
         
         Cb_all=sum(Cb.*dz');
         conservation1=Cb_all/Cb_all0;
