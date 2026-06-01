@@ -31,10 +31,10 @@ GRAVITY,dummy,
 
 *****************Phase_Diagram_Parameters*****************,dummy,
 Hu_et_al_2022_Phase_Diagram_=1,dummy,
-,HHJPet,1
+,HHJPet,0
 
 Solid_Solution_Solidus_Phase_Diagram_=1,dummy,
-,SSPD,0
+,SSPD,1
 
 Layered_intrusion_Phase_Diagram_=1,dummy, 
 ,FourMPD,0
@@ -45,8 +45,6 @@ PHASE_DIAGRAM_TOLERANCE,dummy,
 Phase_diagram_step_size,dummy,
 ,step_size,0.35
 
-n,dummy, 
-,n_order,15
 
 **DIFFERENT_DEEP_SOLIDUS**,dummy,
 Different_solidus_in_deep_crust_=1,dummy,
@@ -141,7 +139,7 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,5e12
+,Ref_Bulk_MN,1e13
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,
@@ -289,7 +287,7 @@ Initial_dt_in_years,dummy,
 ,dt0Y,1e-3
 
 Maximum_dt_in_years,dummy,
-,Max_dtY,0.5
+,Max_dtY,1
 
 Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-3

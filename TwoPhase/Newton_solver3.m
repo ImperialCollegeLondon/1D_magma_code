@@ -70,7 +70,11 @@ end
 
 
 %% 
-Use_central=0; % 1 for central, 0 for upwinding
+if SSPD==1
+    Use_central=1; % 1 for central, 0 for upwinding
+else
+    Use_central=0;
+end
 
 Kfreeze = 3;  
 bad_count = zeros(N+1,1);
@@ -554,7 +558,7 @@ while Time<Time_intended-Time_gap*1e-5
         % RHS(new_frozen)=0;
         norm_R = max(abs(RHS));
         if norm_R < Precision
-            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e3,1e5);
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e2,1e5);
             % if iter<10 && (dt>Min_dt || Advance_time==0)
             %     % con_scaling=con_scaling*2;
             %     % con_scaling=min(1e6,con_scaling);
@@ -590,11 +594,11 @@ while Time<Time_intended-Time_gap*1e-5
             break;
         end
 
-        % bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
-        % 
-        % bad_count=bad_count + ismember(1:N+1, bad_nodes)';
-        % bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
-        % new_frozen = find(bad_count >= Kfreeze);
+        bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
+
+        bad_count=bad_count + ismember(1:N+1, bad_nodes)';
+        bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
+        new_frozen = find(bad_count >= Kfreeze);
 
         Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
         
@@ -622,7 +626,7 @@ while Time<Time_intended-Time_gap*1e-5
         du([[1 N]+(N+1)*2 [1 N]+(N+1)*2+N [1 N]+(N+1)*2+N*2 [1 N]+(N+1)*2+N*3])=0;
 
         alpha = 1.0;
-        for LS = 1:4
+        for LS = 1:6
             X = X_pre + alpha * du;
             % force 1>phi>0
             X(2*(N+1)+1:2*(N+1)+N)=max(X(2*(N+1)+1:2*(N+1)+N),-0.99e-2);
@@ -874,7 +878,7 @@ while Time<Time_intended-Time_gap*1e-5
             continue
         end
         if temp_norm < Precision
-            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e3,1e5);
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e2,1e5);
             % if iter<10 && (dt>Min_dt || Advance_time==0)
             %     % con_scaling=con_scaling*2;
             %     % con_scaling=min(1e6,con_scaling);

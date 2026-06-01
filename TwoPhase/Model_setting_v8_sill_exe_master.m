@@ -32,6 +32,7 @@ if HHJPet==1
     end
     
     is_eutectic=1;
+    n_order=0;
     % set values to zero that are used in sill_intrusion and solid_state
     % but not related to the chosen phase diagram 
     ol=0;
@@ -76,8 +77,10 @@ elseif SSPD==1
         assignin('base',names(i),Number(i))
     end
     
+    n_order=n_PD;
     if mod(n_order,2)==0 % make sure n_order is an odd number
         n_order=n_order-1;
+        n_PD=n_order;
     end
     % set values to zero that are used in sill_intrusion and solid_state
     % but not related to the chosen phase diagram 
@@ -811,7 +814,7 @@ rho_mean=2700;
 %% Data output
 
 
-Record_data=1; % set to 1 to save the simulation data
+Record_data=0; % set to 1 to save the simulation data
 Step_counts=0;
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;
@@ -1151,7 +1154,7 @@ if Has_volatile==1
     N_Tl=N_Tl-1;
 
     V_crust=1.2;
-    V_sill=8;
+    V_sill=5;
     kf=1e-6;
 
     S_cap=[0.015 0.04];  %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
@@ -1224,7 +1227,7 @@ end
 if Has_volatile==1
     if FourMPD==1
         if injection_Cb>=liq_P2_C %injection temperature
-            injection_T= liq_k1-(liq_a1/(injection_Cb-liq_b1));
+            injection_T= liq_k1-(liq_a1/(injection_Cb-liq_b1));injection_Cb
         else
             injection_T= liq_k2 - (liq_a2/(injection_Cb-liq_b1));
         end
@@ -1239,8 +1242,12 @@ else
             injection_T= liq_k2 - (liq_a2/(injection_Cb-liq_b1));
         end
     elseif (SSPD==1||HHJPet==1)
-        injection_T = A1*injection_Cl.^2 + B1*injection_Cl + C1+50;
+        injection_T = A1*injection_Cl.^2 + B1*injection_Cl + C1+50;        
     end
+end
+if SSPD==1
+    temp=min(injection_T,Tl0(1));
+    injection_Cs=((Tl0(1)-temp)/(Tl0(1)-Ts0(1)))^n_order;
 end
 
 injection_H= Lf.*injection_phi+cp.*injection_T; %injection enthalpy
@@ -1260,7 +1267,7 @@ for i=1:N
     if HHJPet==1
         [~,~,Cl(i), Cs(i),~]=poro_component_solve_JPET_master(Cb(i), H(i),A1, B1, C1, A2, B2, C2, ae, Lf, cp,Precision_PD);
     end
-
+    
     if SSPD==1
         [~,~,Cl(i), Cs(i),~] = poro_component_solve_solid_master(Cb(i), H(i), A1, Ts0(i)-A1-Tl0(i), Tl0(i), alpha, n_PD ,Lf, cp, Precision_PD,step_size);
     end

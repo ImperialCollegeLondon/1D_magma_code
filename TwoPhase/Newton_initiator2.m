@@ -262,7 +262,7 @@ Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 eps=1e-3;
 eps2=1e-8;
 
-MINT=((T_1+C1+50)-sqrt((T_1-C1-50)^2+eps))/2;
+MINT=((T_1+C1)-sqrt((T_1-C1)^2+eps))/2;
 Cond5=(-B1-sqrt(B1^2-4*A1*(C1-MINT)))/2/A1;
 SMIN=(Cond5+1-sqrt((Cond5-1)^2+eps2))/2;
 Constrain5=(Cb+SMIN+sqrt((SMIN-Cb)^2+eps2))/2;
@@ -294,11 +294,11 @@ end
 
 if is_eutectic==1
     eps2=1e-0;
-    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e6;
+    solidus=(Cb/2*(1-tanh((T_1-Ts)/eps2))-cs_1)/1e4;
 else 
     % K=2e3;
     % cs_min=0;
-    eps=1e-4;
+    eps=1e-8;
     Cond4=((Tl-T_1)/(Tl-Ts))^n_order;
     SMIN1=(Cb+Cond4-sqrt((Cb-Cond4)^2+eps))/2;
     Constrain4=(SMIN1+sqrt(SMIN1^2+eps))/2;

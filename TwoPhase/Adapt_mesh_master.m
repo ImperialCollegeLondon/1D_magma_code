@@ -375,7 +375,7 @@ Cb_all=sum(Cb.*dz');
 if Has_volatile==1
     Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
     Cb2_all=sum(Cb2.*dz');
-    disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
+    % disp(['Adapt conservation:' num2str(Cb_all/Cb_all0), '  ', num2str(Cb2_all/Cb2_all0)])
 end
 
 if Use_Newton==1
