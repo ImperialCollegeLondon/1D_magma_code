@@ -1,6 +1,6 @@
 %% A general generator for Jacobians used in the 1D magma model
 %% HH 2026-03-13
-function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat, Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator...
+function [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat, Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator2...
     (Has_volatile, is_eutectic)
 % system valriables contain:
 % solid and melt velocities: us, uf
