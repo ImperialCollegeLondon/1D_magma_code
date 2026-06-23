@@ -174,13 +174,34 @@ xlabel('Depth (km)', 'FontSize', Font_size)
 ylabel('Temperature (^\circ C)', 'FontSize', Font_size)
 
 %%
+nodez_save=nodez;
+load('test1.mat')
+
 figure(10)
-clf
+clf; hold on
+set(gcf,'color','w');
+plot(nodez,X(N+2:2*N+2),'b');
+plot(nodez_save,u_all(N+2:2*N+2),'--','Color','b')
 
-% plot(nodez,X(N+2:2*N+2));
+plot(nodez,X(1:N+1),'r');
+plot(nodez_save,u_all(1:N+1),'--','Color','r')
+
+
+xlabel('Distance (m)','FontSize',20)
+ylabel('Velocities (m/s)','FontSize',20)
+xlim([9500 12500])
+% subplot(2,1,1)
+% plot(X(N+2:2*N+2));
 % hold on
-% plot(nodez,X(1:N+1));
+% plot(X(1:N+1));
 
+
+% subplot(2,1,2)
+% plot(X((1:N)  +(N+1)*2))
+%%
+figure(10)
+clf; hold on
+set(gcf,'color','w');
 subplot(2,1,1)
 plot(X(N+2:2*N+2));
 hold on
@@ -189,9 +210,8 @@ plot(X(1:N+1));
 
 subplot(2,1,2)
 plot(X((1:N)  +(N+1)*2))
-
 %%
-i=737;
+i=379;
 Cb=phi_1.*cl_1+(1-phi_1).*cs_1;
     eps=1e-8;
     Cond4=((Tl0(1)-T_1(i))/(Tl0(1)-Ts0(1)))^n_order;
@@ -201,3 +221,30 @@ Cb=phi_1.*cl_1+(1-phi_1).*cs_1;
     % SMIN1=-1/K*log(exp(-K*Cb)+exp(-K*Cond4));
     % Constrain4=1/K*log(exp(K*SMIN1)+exp(K*cs_min));
     solidus=(Constrain4-cs_1(i))/1e4
+
+
+%%
+i=379;
+
+phi=[X((1:N)+2*N+2); 1-X((1:N)+2*N+2)];
+T=X((1:N)+2*N+2+N);
+Cs=X((1:N)+2*N+2+N*2);
+Cl=X((1:N)+2*N+2+N*3);
+
+Cb=Cl.*phi(1:N)+(1-phi(1:N)).*Cs;
+% Cb=Cs;
+eps=1e-3;
+eps2=1e-8;
+
+Cond4=((Tl0(1)-T(i))/(Tl0(1)-Ts0(1)))^n_order;
+SMIN1=(Cb(i)+Cond4-sqrt((Cb(i)-Cond4)^2+eps))/2;
+Constrain4=(SMIN1+sqrt(SMIN1^2+eps2))/2;
+solidus=(Constrain4-Cs(i))/1e4
+
+%%
+a0=Ts0(1);
+b0=Tl0(1);
+a1=0;
+b1=0;
+AAA=cs_1.*(-1.0e-4)+(cl_1.*phi_1)./4.0e+4+sqrt(((cl_1.*phi_1)./2.0+((T_1-b0)./(a0-b0)).^n_order./2.0-(cs_1.*(phi_1-1.0))./2.0-sqrt((-cl_1.*phi_1+((T_1-b0)./(a0-b0)).^n_order+cs_1.*(phi_1-1.0)).^2+1.0./1.0e+3)./2.0).^2+1.0./1.0e+3)./2.0e+4+((T_1-b0)./(a0-b0)).^n_order./4.0e+4-(cs_1.*(phi_1-1.0))./4.0e+4-sqrt((-cl_1.*phi_1+((T_1-b0)./(a0-b0)).^n_order+cs_1.*(phi_1-1.0)).^2+1.0./1.0e+3)./4.0e+4;
+AAA(378)

@@ -220,7 +220,7 @@ if HHJPet==1
 end
 
 
-kt0=kt0s/DensSill; %3/2850;                %Thermal difusivity of the sill
+kt0=kt0s/DensSill*1e3; %3/2850;                %Thermal difusivity of the sill
 kt_background=kt0b/DensSill; %3/2850;      %Thermal difusivity of the surrounding 
 
 
@@ -462,7 +462,7 @@ elseif MU_type==1
     xi_m=ref_xi*ref_shear/ref_all(end);
     mu_all=mu_all(end:-1:1);
 else % uniform viscosity
-    mu_all=1e14*ones(1,N_vis);
+    mu_all=1e12*ones(1,N_vis);
 end
 
 
@@ -484,7 +484,7 @@ line([0.6 0.6], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
 % semilogy(phi_range,mu_m)
 % semilogy(phi_range,xi_m, 'x-')
 
-ylim([min(mu_all)/2 max(mu_all)])
+ylim([min(mu_all)/2-1e-5 max(mu_all)+1e5])
 % legend({'Sum','Shear','Bulk',})
 % saveas(f3,'Shear_bulk_viscosity','svg')
 
@@ -1257,7 +1257,7 @@ disp('All tables generated')
 injection_T=850;
 injection_Cl=(-B1-sqrt(B1^2-4*A1*(C1-injection_T)))/2/A1;
 injection_Cs=((C1-injection_T)/(-A1-B1))^n_order;
-injection_phi=0.5;
+% injection_phi=0.5;
 injection_Cb=injection_Cl*injection_phi+injection_Cs*(1-injection_phi);
 
 T(:)=injection_T;

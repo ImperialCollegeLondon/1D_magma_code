@@ -379,8 +379,8 @@ for i=1:(Plot_size(1)*Plot_size(2))
             switch j
                 case 1
                     Handel_all{i}(1)=plot(phi(1:N),Ytick1,'linewidth',Linewidth);
-                    Handel_all{i}(2)=plot(0,(cellz(phi_top)-nodez(end))/1000, 'kx', 'MarkerSize', 12);
-                    Handel_all{i}(3)=plot(0,(cellz(phi_base)-nodez(end))/1000, 'kx', 'MarkerSize', 12);
+                    Handel_all{i}(2)=plot(0,(cellz(phi_top(end))-nodez(end))/1000, 'kx', 'MarkerSize', 12);
+                    Handel_all{i}(3)=plot(0,(cellz(phi_base(end))-nodez(end))/1000, 'kx', 'MarkerSize', 12);
                    % Handel_all{i}(4)=plot(1,(cellz(Hphi_top)-nodez(end))/1000, 'k+', 'MarkerSize', 12);
                    % Handel_all{i}(5)=plot(1,(cellz(Hphi_base)-nodez(end))/1000, 'k+', 'MarkerSize', 12);
 

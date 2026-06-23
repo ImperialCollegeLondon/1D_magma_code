@@ -64,9 +64,12 @@ end
 syms g mum_0
 drhog=(rhos_0+rhos_1-rhol_0-rhol_1)/2*g;
 
-eps=1e-3;
-eps_phi01=3e-2;
-momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi01)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi01)*mus_0)*2/(dzi_0+dzi_1) *0.5*(phi_0+phi_1+eps_phi01)...
+eps=1e-15;
+eps2=1e-5;
+eps_phi01=3e-2*0;
+% soft_max_phi=(phi_0+phi_1+sqrt((phi_0-phi_1)^2+eps))/2;
+
+momentum=(-((umi_2-umi_1)/dzi_1*(1-phi_1+eps_phi01)*mus_1-(umi_1-umi_0)/dzi_0*(1-phi_0+eps_phi01)*mus_0)*2/(dzi_0+dzi_1) *0.5*(phi_0+phi_1+eps)...... %*2*phi_0*phi_1/(phi_0+phi_1+eps)... %
     +phi_0*phi_1/(phi_0+phi_1+eps)*(2-phi_1-phi_0)*drhog-Coupling*(ufi-umi_1))/mum_0;
 
 
@@ -255,6 +258,10 @@ end
 C1= Tl;
 B1= Ts-A1-Tl;
 % Parameters=[a0;b0;a1;b1; D1];
+% eps=1e-12;
+% phi_fix=(phi_1+sqrt(phi_1^2+eps))/2;
+% Cb=phi_fix*cl_1+(1-phi_fix)*cs_1;
+
 Cb=phi_1*cl_1+(1-phi_1)*cs_1;
 
 

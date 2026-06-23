@@ -48,6 +48,7 @@ if isempty(ind)
     ind=length(11);
 end
 
+ind=max(ind,1);
 dSdT=(PT(ind)*(P-PTx(ind-1))+PT(ind-1)*(PTx(ind)-P))/(PTx(ind)-PTx(ind-1));
 
 % [~,~, Solid_saturation]=Cal_liquidus(19,P2,Data_point2,Data_y2);
@@ -221,7 +222,7 @@ while (Found~=1)
                     end
                 end
                 
-            case 5 %s1l0
+            case 6 %s1l0
                 Input=[M/2,N/2,V/2,M/2,N/2,V/2, 0, Tl_local*0.8+Ts_local*0.2, cap_A, M,N,V,H,cp,Lf,P3,cap_A,cap_B, Sys_constant(1,:), K, Sys_constant(6,2), Sys_constant(6,1),  Tl, Ts, dSdT];
                 [Output,sub_iter]=subsolve(Constant_index{2}, Input, Jacobians{2}, Rhs{2}, tol, Steps, Max_iter, 1);
 
@@ -259,7 +260,7 @@ while (Found~=1)
                     break
                 end
 
-            case 6 %s1l1
+            case 5 %s1l1
                 Input=[M/2,N/2,V/3,M/2,N/2,V/3,V/3,Tl_local*0.2+Ts_local*0.8, cap_A, M,N,V,H,cp,Lf,P3,cap_A,cap_B,Sys_constant(1,:), K, Sys_constant(6,2), Sys_constant(6,1), Tl, Ts, dSdT];
                 [Output,sub_iter]=subsolve(Constant_index{4}, Input, Jacobians{4}, Rhs{4}, tol, Steps0, Max_iter, 1);
                 if sub_iter<Max_iter && any(Output~=0)
@@ -350,7 +351,7 @@ if Conservation_type==1
     end
 else
     rho(1:3)=rho_mean;
-    phi=(m1+n1+v1+v3)/(M+N+V);
+    phi=(m1+n1+v1)/(M+N+V); %for now treat volatile also as treat element (phase)
     S=v3/max(m1+n1+v1+v3,1e-5);
 end
 

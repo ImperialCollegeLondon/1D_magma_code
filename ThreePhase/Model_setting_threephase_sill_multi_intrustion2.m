@@ -9,14 +9,14 @@ warning('off')
 % mode 3: all off
 Fix_H2O=0; 
 
-Model_name="D0.2 c1.2 s5 SiO48-60 MDI mu 0.78-17 muf 0 2 4 7 P10F2 WK3-6 S50 EC";
+Model_name="D0.2 c1.2 s5 SiO48-60 MDI mu 0.78-17 muf 0 2 4 7 P2F2";
 
 
 
 
 Use_parrallel=1;  %try to use parrallel
 if Use_parrallel==1
-   Num_core_use=8;  %% set the number of cores to use!
+   Num_core_use=5;  %% set the number of cores to use!
 end
 
 
@@ -32,12 +32,12 @@ Conservation_type=2; % 1 for mass conservation, 2 for volume conservation
 Transport_method=2;  % 1 transport all component with scaling  2 Transport component A and V only without scaling
 Velocity_solver_type=2; % 1: Three phase solver, 2: Two phase solver
 
-Dynamic_scaling=1e8; % To improve the condition number of velocity solver LHS matrix
+Dynamic_scaling=1e7; % To improve the condition number of velocity solver LHS matrix
 g=9.81/Dynamic_scaling;
 
-Precision=1e-8;
+Precision=1e-2;
 % Precision2=Precision/1e2;
-Max_iter=100;
+Max_iter=2;
 min_iter=1;
 
 Enhanced_convergence=0;  %
@@ -181,7 +181,7 @@ cp0=[1100 1100 1100];   %Heat capacity of [component A, B, water]
 kt0=[2.5, 1.5]/rho_mean;      %Thermal difusivity for component A B
 
 kc0=mean(kt0)*1e-7;
-kc20=mean(kt0)*1e-7*50;
+kc20=mean(kt0)*1e-7*1;
 
 % kc0=1e-12;        %Chemical diffusivity for SiO2
 % kc20=1e-10;        %Chemical diffusivity for H2O
@@ -221,7 +221,7 @@ chemical_solver_loader;
 % from 8000 bar to 0 bar, water 13% to 0 %
 %           13  12  11  10    9     8     7    6     5    4    3    2   1     0
 Data_point=[80, 83, 86, 91, 100,  115,  135, 164,  196, 230, 267, 307, 355, 401;... %70
-             0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;...   %102
+             0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;... %102
              0,  0, 84,87.5,95.5,108.5,126, 151.5, 180, 211, 243, 280, 329, 375;... %134
              0,  0, 0,   86, 93, 105,  121, 144,   170, 199, 230, 266, 316, 362;... %166
              0,  0, 0,    0,90.5,100,  115, 136,   159, 186, 217, 252, 302, 349;... %198
@@ -265,26 +265,26 @@ Length2=8300;
 
 Sill_length=50;
 margin=0;
-fine_ratio=6;  %fine meshed region, in comparison with the size of the initial sill region
+fine_ratio=3;  %fine meshed region, in comparison with the size of the initial sill region
 Show_z=[Length2 Length2+Sill_length*fine_ratio];
 Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2];  %intruded sill position
 min_show_range=Show_z(2)-Show_z(1);
 
 % define the meshing and mesh adaptivity
-Adaptive_mesh=0;     % set to one to turn one the adaptive meshing.
+Adaptive_mesh=1;     % set to one to turn on the adaptive meshing.
 Adaptive_step_gap0=10; %frequency of mesh adaptivity done
 Adaptive_step_time=1*Year; %minimal time gap before the new adaptation
 max_adaptive_number=1;
 
-min_dx=3;   % minimal cell length
-max_dx=80; % maximum cell length
-min_N=300;  % minimal number of allowed cells
+min_dx=5;   % minimal cell length
+max_dx=500; % maximum cell length
+min_N=100;  % minimal number of allowed cells
 max_N=8000; % maximum number of allowed cells
 aspect_ratio=2.3; % maximum change ratio between adjacent cells,
 
 
 dphi_max=3e-2; %targeting change of melt fraction in one cell.
-dphi_min=5e-3; %when mesh needs to be coarse.=1e-2
+dphi_min=4e-3; %when mesh needs to be coarse.=1e-2
 
 phi_threshold=0.75;
 phi_threshold2=0.15;
@@ -292,8 +292,8 @@ phi_threshold2=0.15;
 dS_max=1e-2;
 dS_min=5e-3;
 
-dMNV_min=10;    %change of MNV in %
-dMNV_max=35;
+dMNV_min=20;    %change of MNV 
+dMNV_max=30;
 
 
 Last_adapted=0;
@@ -329,9 +329,9 @@ cellz_km=(cellz-nodez(end))/1000;
 %% Calculate densities of three components in each phases from SiO2% and H2O%
 N_number=N;
 
-SiO2_crust=48;%SiO2% at bottom %  % percent
-SiO2_crust2=48;%SiO2% at -15km
-SiO2_crust3=50;%SiO2% at surface
+SiO2_crust=52;%SiO2% at bottom %  % percent
+SiO2_crust2=52;%SiO2% at -15km
+SiO2_crust3=55;%SiO2% at surface
 
 
 
@@ -398,17 +398,18 @@ N=N_number;
 index=find(cellz-nodez(end)>=-15e3-100,1,'first');
 MM=interp1([cellz(1) cellz(index) cellz(end)], [MM_crust MM_crust2 MM_crust3], cellz,'linear' ); 
 MM(Sill_index(1):Sill_index(2))=MM_sill;
-MM0=MM;
+
 
 % NN=linspace(NN_crust,NN_crust2,N)';
 NN=interp1([cellz(1) cellz(index) cellz(end)], [NN_crust NN_crust2 NN_crust3], cellz ,'linear' ); 
 NN(Sill_index(1):Sill_index(2))=NN_sill;
-NN0=NN;
+
 
 % V=zeros(N,1);
 % V=linspace(V_crust,V_crust2,N)';
 V=interp1([cellz(1) cellz(index) cellz(end)], [V_crust V_crust2 V_crust3], cellz ,'linear' ); 
 V(Sill_index(1):Sill_index(2))=V_sill;
+
 
 if N_component==5
     CL=interp1([cellz(1) cellz(index) cellz(end)], [CL1 CL2 CL3], cellz ,'linear' ); 
@@ -424,6 +425,9 @@ if Add_CLCU==1
 
     CL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CL_sill/100;
     CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CU_sill/100;
+else
+    CL=zeros(N,1);
+    CU=zeros(N,1);
 end
 
 % make the lower part dryer
@@ -447,16 +451,8 @@ if Conservation_type==2
 end
 dry_index=index_temp;
 
-V0=V;
 
 
-
-
-
-
-
-
-cb=MM_sill/(MM_sill+NN_sill); %approximation
 
 if N_component==3
     T0=abs(cellz-nodez(end))/1000*25+10;   %thermal gradient 25C/km, surface at 10C
@@ -469,7 +465,6 @@ else
 
     % Cu is treated as trace element, not taken into enthaly calculation
     H=(MM*cp0(1)+NN*cp0(2)+(V)*cp0(3)).*T0;
-    cb=(SiO2_sill-PD_range(1))/(PD_range(2)-PD_range(1));
     Lf_temp=cb*Lf(1)+(1-cb)*Lf(2);
     H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+Lf_temp*(MM_sill+NN_sill+V_sill)*Sillphi*1.85;
     Sill_den=MM_sill+NN_sill+V_sill+CL_sill;
@@ -481,15 +476,19 @@ H0=H;
 Show_z=[Length2 Length2+Sill_length*fine_ratio];
 % Show_z=[cellz(1) cellz(end)];
 
+
+Sum_M0=sum(MM.*dz);
+Sum_N0=sum(NN.*dz);
+Sum_V0=sum(V.*dz);
 %% Time steps
 fixed_dt=0;
 
 Courant0=9.5e-1;%0.025;  %During the start of the sill intrusion
 Courant1=9.5e-1;%0.15;  
-min_phi_dt=3e-2;
+min_phi_dt=5e-2;
 
 Max_dt=200*Year;
-Min_dt=2*Year;
+Min_dt=5*Year;
 
 if fixed_dt==1
     dt=1e-1*Year;    
@@ -565,7 +564,7 @@ dP=zeros(N+1,1);
 
 C_values=zeros(N+1,3);
 
-U_new=zeros((N+1)*3,1);
+U_new=zeros((N+1)*2,1);
 
 T=ones(N,1);
 
@@ -638,8 +637,8 @@ end
 Cb=(PD_range(2)*sum(Mass_data(:,[1,4]),2)+PD_range(1)*sum(Mass_data(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2);
 
 
-Convective_cut=0.995;
-Convective_cut2=0.995;
+Convective_cut=0.990;
+Convective_cut2=0.990;
 
 Calculate_capped_values2;
 %% Injection
@@ -664,13 +663,13 @@ SillNodez=round(Sill_length/(dzf));
 
 % injection_time=(5e3: 5e3: 3000e3)*Year; %
 % injection_time=(5e3: 5e3: 2000e3)*Year; %
-% injection_time=(10e3: 10e3: 4000e3)*Year;
+injection_time=(10e3: 10e3: 4000e3)*Year;
 % injection_time=(15e3: 15e3: 3000e3)*Year;
-% injection_time=(25e3: 25e3: 10000e3)*Year; %
+% injection_time=(20e3: 20e3: 8000e3)*Year; %
 % injection_time=(30e3: 30e3: 12000e3)*Year; %
 % injection_time=(40e3: 40e3: 16000e3)*Year; %
 % injection_time=(30e3: 30e3: 18000e3)*Year;
-injection_time=(50e3: 50e3: 20000e3)*Year;
+% injection_time=(50e3: 50e3: 20000e3)*Year;
 % injection_time=(60e3: 60e3: 24000e3)*Year;
 % injection_time=(75e3: 75e3: 30000e3)*Year;
 % injection_time=[50e3: 50e3: 10000e3, (10000e3+40e3):40e3:18000e3, (18000e3+30e3):30e3:24000e3]*Year;
@@ -707,6 +706,7 @@ Last_intrude_time=0;
 
 
 %% Evacuations - CAB
+To_evacuate=1; %set to 1 to enable evacuation
 % initialising arrays for layers
 % buoyant layers which have porosity>0
 buoy_phi_top=[];
@@ -736,7 +736,7 @@ Diameter = 60000;
 %Crust viscosity (Pa s)
 crust_visc = 1e19;
 %Rock strength (Pa)
-crit_crust = 3e6;
+crit_crust =10e6; %3e6;
 %Initial RTI scale (-)
 scale_RTI = 0.001;
 %Elastic modulus (Pa)
@@ -749,19 +749,35 @@ dTabove = 200;
 %Counter of evacuations
 evacuation_counter = 0;
 
-% Initial intrusion depth for evacuations
-Intrusion_Evac_1 = -15000+nodez(end);
-Intrusion_Evac_2 = -5000+nodez(end);
+% Intrusion method, similar to sill intrusion
+%1. density contrast based, or last location if no den_melt<den_crust point found.  
+%2. fixed depth
+Intrusion_Evac_method=1;  
 
-%Intrusion depth 1 for evacuations - Nodez
-initial_T_depth_N_1 = find(nodez>=Intrusion_Evac_1, 1, 'first');
-%Intrusion depth 1 for evacuations -cellz
-initial_T_Depth_1 = find(cellz==((nodez(initial_T_depth_N_1)+nodez(initial_T_depth_N_1-1))/2));
 
-%Intrusion depth 2 for evacuations - Nodez
-initial_T_depth_N_2 = find(nodez>=Intrusion_Evac_2, 1, 'first');
-%Intrusion depth 2 for evacuations -cellz
-initial_T_Depth_2 = find(cellz==((nodez(initial_T_depth_N_2)+nodez(initial_T_depth_N_2-1))/2));
+% Intrusion depth(s) for evacuations
+% Intrusion_Evac = [-15000 -5000];
+Intrusion_Evac = [-5000];
+Last_Intrusion_Evac=min(Intrusion_Evac);
+
+
+Intrusion_Evac=sort(Intrusion_Evac);
+
+%The distance of top of the system and the intended intrusion depth must be
+%larger than the following value in order for the evacuation to happen. 
+%It's a list for all the intended intrusion depths
+Safe_intrusion_evac_dist=5e3*ones(1,length(Intrusion_Evac));  
+
+
+% %Intrusion depth 1 for evacuations - Nodez
+% initial_T_depth_N_1 = find(nodez>=Intrusion_Evac_1, 1, 'first');
+% %Intrusion depth 1 for evacuations -cellz
+% initial_T_Depth_1 = find(cellz==((nodez(initial_T_depth_N_1)+nodez(initial_T_depth_N_1-1))/2));
+% 
+% %Intrusion depth 2 for evacuations - Nodez
+% initial_T_depth_N_2 = find(nodez>=Intrusion_Evac_2, 1, 'first');
+% %Intrusion depth 2 for evacuations -cellz
+% initial_T_Depth_2 = find(cellz==((nodez(initial_T_depth_N_2)+nodez(initial_T_depth_N_2-1))/2));
 
 
 Finding_porosity;
@@ -771,7 +787,7 @@ Finding_porosity;
 Out_time = 5000;
 output_counter=1;
 % Set as 1, to turn on txt outputs
-Record_data=1;
+Record_data=0;
 Record_index=2;
 Record_time=[0:Out_time*Year:End_time];
 restart_No=5;
@@ -839,7 +855,7 @@ end
 %      [6],[7],[8],[11]};   % a 2*4 plot setting
 % Plot_configure=...
 %     {[1,5,8],[10],[11]};  
-running_plot=0; %CAB added, if 1 it will plot whilst running
+running_plot=1; %CAB added, if 1 it will plot whilst running
 SiO2_range=[47 74]; %CAB added,
 Cb2=(sum(Mass_data(:,[3,6,7]),2))./sum(Mass_data,2); %CAB added,
 
@@ -874,50 +890,22 @@ if running_plot==1
 end
 
 tic;
-%%  Record videos
-
-Create_video=0;
-Fixed_record_dt0=500*Year;
+%%  Record videos (data)
+Create_video=1;
+Fixed_record_dt0=2000*Year;
 Fixed_record_dt=Fixed_record_dt0;
 Fixed_record=1;
-Font_Size=16;
 
-
-Break_videos=1; % set to 1 to break recorded videos into smaller pieceses instead of a long recording.
-Break_videos_times=30; %in seconds
-Break_video_index=1;
-Frame_recorded=0;
-% video_gap=2;
-if Create_video==1
-    if ispc
-        Video_format='MPEG-4';
-    else
-        Video_format='Motion JPEG AVI';
-    end
-
-    if Break_videos==1
-        eval(['Video_handel = VideoWriter(''Temp' num2str(Break_video_index)  ''', Video_format);'])
-    else
-        Video_handel = VideoWriter('Temp.avi', Video_format); %magma_mu12_b0.5_cut0.3
-    end
-Video_handel.Quality=50;
-Video_handel.FrameRate=20;
-open(Video_handel)
-end
-% Update_frame=20;    %Upgrade the plottings every Update_frame steps.
-
-if Create_video==1
-    Current_frame=getframe(13);
-    writeVideo(Video_handel,Current_frame);
-    Frame_recorded=Frame_recorded+1;
-end
+video_data_index=0;
+video_data_file_name=['Data' num2str(video_data_index)];
+save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
 
 %% Save simulation data
 Create_save_data=1;
 if Create_save_data==1
 %     Save_data_times=[10, 20 50 100]*Year;  %define the time where data are saved.
     % Save_data_times=[0:10e4:2e6 (2e6+5e4):5e4:5e6]*Year;
-    Save_data_times=[0:50e4:(End_time*1.1/Year)]*Year;
+    Save_data_times=[0:20e4:(End_time*1.1/Year)]*Year;
     % Save_data_times=[0:2e3:2e6 (2e6+5e4):5e4:5e6]*Year;
     % Save_data_times=0:2e4
     Save_data_times=[Save_data_times End_time+1000*Year];
@@ -954,7 +942,6 @@ Convergence_record_steps=10;
 Convergence_record=zeros(Convergence_record_steps,2);
 Num_non_convergence=0;
 file_iter = fopen('Iteration_recored.txt', 'w');
-% Sum_H0=sum(H.*dz);
 
 
 

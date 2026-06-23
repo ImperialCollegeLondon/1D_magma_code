@@ -3,7 +3,8 @@ clear;
 
 Step = 0;
 
-
+% Directory='/media/hh210/data/Matlab_Workplace/1D_magma_code/TwoPhase/Validation/';
+Directory='C:\Users\Doomseraph\Downloads\';
 % -------------------------------------------------
 % Load initial data
 % -------------------------------------------------
@@ -30,10 +31,10 @@ dy=5;
 
 y_range=[48 60];
 x_range=[-15.15 -14.95];
-
 data=cell(1,length(Cases));
 for i=1:length(Cases)
-    data{i} = readtable(['/media/hh210/data/Matlab_Workplace/1D_magma_code/TwoPhase/Validation/' Cases{i} '/output_' num2str(Step) '_CELLS.txt']);
+    % data{i} = readtable([Directory Cases{i} '/output_' num2str(Step) '_CELLS.txt']);
+    data{i} = readtable([Directory Cases{i} '\output_' num2str(Step) '_CELLS.txt']);
 end
 
 Font = 20;
@@ -127,7 +128,7 @@ S.figLabel = figLabel;
 S.Cases=Cases;
 S.dy=dy;
 S.Windows=Windows;
-
+S.Directory=Directory;
 guidata(gcf,S);
 
 
@@ -144,6 +145,7 @@ function sliderCallback(src,~)
     Cases=S.Cases;
     dy=S.dy;
     Windows=S.Windows;
+    Directory=S.Directory;
 
     % Current slider value
     Step = round(get(src,'Value'));
@@ -159,7 +161,7 @@ function sliderCallback(src,~)
     % -------------------------------------------------
     data=cell(1,length(Cases));
     for i=1:length(Cases)
-        data{i} = readtable(['/media/hh210/data/Matlab_Workplace/1D_magma_code/TwoPhase/Validation/' S.Cases{i} '/output_' num2str(Step) '_CELLS.txt']);
+        data{i} = readtable([Directory S.Cases{i} '/output_' num2str(Step) '_CELLS.txt']);
     end
 
     % -------------------------------------------------

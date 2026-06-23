@@ -217,7 +217,7 @@ while Time<Time_intended-Time_gap*1e-5
         end
        
         % mum_0_local=sqrt((mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2)+mus_coef_all(index_phi_nmus(i1),1).*phi_1+mus_coef_all(index_phi_nmus(i1),2)))./(dz(2:end)+dz(1+end-1))'.^2*2;
-        mum_0_local=min(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2))*ones(nI,1);
+        mum_0_local=max(min(mus_coef_all(index_phi_nmus(i0),1).*phi_0+mus_coef_all(index_phi_nmus(i0),2))*ones(nI,1),1);
         % physical constants
         Param(:,25:28) = [dz(i0)', dz(i1)', g*ones(nI,1), mum_0_local]; %mum_0*ones(nI,1)
         RHS(I)=rhs_mom(Vars(:,1),Vars(:,2),Vars(:,3),Vars(:,4),Vars(:,5),Vars(:,6),Vars(:,7),Vars(:,8),Vars(:,9),Vars(:,10),...
@@ -558,7 +558,7 @@ while Time<Time_intended-Time_gap*1e-5
         % RHS(new_frozen)=0;
         norm_R = max(abs(RHS));
         if norm_R < Precision
-            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e2,1e5);
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e2,1e6);
             % if iter<10 && (dt>Min_dt || Advance_time==0)
             %     % con_scaling=con_scaling*2;
             %     % con_scaling=min(1e6,con_scaling);
@@ -878,7 +878,7 @@ while Time<Time_intended-Time_gap*1e-5
             continue
         end
         if temp_norm < Precision
-            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e2,1e5);
+            con_scaling=min(1/max(abs(X(1:2*N+2)))/1e2,1e6);
             % if iter<10 && (dt>Min_dt || Advance_time==0)
             %     % con_scaling=con_scaling*2;
             %     % con_scaling=min(1e6,con_scaling);

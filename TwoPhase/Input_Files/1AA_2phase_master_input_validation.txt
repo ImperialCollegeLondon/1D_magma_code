@@ -12,7 +12,7 @@ Res_type_cb+enth=0_phi=1,dummy,
 ,res_type,0
 
 Use_Newton, dummy,
-,Use_Newton,1
+,Use_Newton,0
 
 CALCULATION_PRECISION,dummy,
 ,Precision,1e-8
@@ -230,7 +230,7 @@ Random_injection_length_above_and_low_metres,dummy,
 ,Rand_inject,200
 
 Length_of_sill_metres,dummy,
-,Sill_length,100
+,Sill_length,200
 
 Fine_meshed_region_ratio_compared_to_sillregion,dummy,
 ,fine_ratio,6
@@ -248,7 +248,7 @@ Composition_of_sills_Sio2,dummy,
 ,Comp_sill,65
 
 MeltFraction_of_sills,dummy,
-,MeltFracSill,0.3
+,MeltFracSill,0.5
 
 *****************Initial_Conditions*****************,dummy,
 Composition_of_crust,dummy,

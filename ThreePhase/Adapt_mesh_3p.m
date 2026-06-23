@@ -46,6 +46,11 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
     OG_Cb_FM = project_cell2node(nodez,dz,OG_Cb);
 
     if N>min_N
+        Top=find(phi>1e-3,1,'last');
+        Bottom=find(phi>1e-3,1,'first');
+        Top=cellz(Top);
+        Bottom=cellz(Bottom);
+        Reserve_depth=Bottom+(Top-Bottom)*0.85;
         for i=3:N-1
             if pass==1
                 pass=0;
@@ -62,13 +67,15 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 Changes2=Changes;
             end
 
-            if abs(phi_FM(i+1)-phi_FM(i-1))<dphi_min &&...
+            if abs(cellz(i)< Reserve_depth &&...
+                    phi_FM(i+1)-phi_FM(i-1))<dphi_min &&...
                     (S_FM(i+1)-S_FM(i-1))<dS_min &&...
                     prod(Changes2<0.05) &&...
                     newL<max_dx &&...
                     newL<(node_new(i+2-deleted)-node_new(i+1-deleted))*aspect_ratio &&...
                     newL<(node_new(i-1-deleted)-node_new(i-2-deleted))*aspect_ratio &&...
                     node_new(i-deleted)<Top0
+               
 
                 node_new(i-deleted)=[];
                 %                 u_all([i-deleted,i-deleted*2+N, i-deleted*3+N*2])=[];
@@ -158,13 +165,13 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
             olddphi=abs(phi_FM(i)-phi_FM(i-1));
             oldL=nodez_temp(i)-nodez_temp(i-1);
             % if (olddphi>dphi_max) && oldL>min_dx*2     %currently refining only considers phi
-            if ((olddphi >  dphi_max || (node_new(i+added)>Top0+100 && node_new(i+added-1)<Top0+100)|| (node_new(i+added)>Top0 && node_new(i+added)<Top0+100))      && (oldL > min_dx * 2))    
+            if (olddphi >  dphi_max || (node_new(i+added)>Top0+100 && node_new(i+added-1)<Top0+100)|| (node_new(i+added)>Top0 && node_new(i+added)<Top0+100))      && (oldL > min_dx * 2)  
                 
                 temp=ceil(olddphi/dphi_max);
                 if temp==0
                     insert_node=5;
                 else
-                    insert_node=temp;
+                    insert_node=min(temp,10);
                 end
                 % insert_node=min(ceil(olddphi/dphi_max), floor(oldL/min_dx));
 
