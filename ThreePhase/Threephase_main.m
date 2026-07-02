@@ -36,6 +36,8 @@ if To_Restart==0
     %CAB - mass cons - original Cb. Only updated in sill intrusion and 
     OG_Cb = Cb;
     OG_composition=sum(Cb);
+    Cb1=Cb; %CABG
+    Cb22=Cb2;
 
  
  %% CAB - outputs
@@ -110,6 +112,10 @@ if To_Restart==0
     File_comp=fopen('mass_cons.txt','w');
     fprintf(File_comp, '%10s \t %10s \t %10s \n', 'Time (ka)', 'Mass cons', 'Mass Res' );
 
+    % CABG - ongoing text file for tracking residuals
+    File_resid=fopen('residual_tracker.txt','w');
+    fprintf(File_resid, '%10s \t %10s \t %10s \t %10s \t %10s \n', 'Time (ka)', 'phi', 'cb', 'H', 'cb2' );
+
 % CAB END
 %%
 
@@ -157,10 +163,24 @@ else
 
 end
 %%
+iter=0;
 Adjusted=0;
 while Time<End_time
+    
+    if fixed_dt~=0 && iter<Min_iter_dt && eps/Precision<dt_resid
+        [dt, ~] = dynamic_dt_master(1,iter,dt,Min_dt,Max_dt, N_dt, Courant, dz, u_all,N,inc_N);
+
+        if dt==Max_dt
+            fprintf(File_echo, '%6s %5.5f %6s \n', 'Maximum time step reached', Time/Year/1000, 'ka');
+        end
+
+        disp(['Timestep increased: ' num2str(dt/Year),'yr'])
+    end
+
+
     iter=0;
     eps=1;
+
     
     Just_intruded=0;
     if Time>injection_time(Injected)  && To_intrude==1
@@ -252,6 +272,10 @@ while Time<End_time
             Courant=Courant1;
         end
 
+        % CABG for residual
+        Cb22 = (sum(Mass_data(:,[3,6,7]),2))./sum(Mass_data,2);
+        Cb1 = (PD_range(2)*sum(Mass_data(:,[1,4]),2)+PD_range(1)*sum(Mass_data(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2);
+
 
 
         % CAB EDIT - needed for finding_porosity 
@@ -306,6 +330,8 @@ while Time<End_time
     rho_old=rho;
     P_old=P;
     H_old=H;
+    
+
     Mass_data_old=Mass_data;
     Ts_local_old=Ts_local;
     Tl_local_old=Tl_local;
@@ -331,6 +357,8 @@ while Time<End_time
     if Courant<Courant0
         Courant=min(Courant*1.2,Courant0);
     end
+
+    
 
 
     
@@ -393,8 +421,9 @@ while Time<End_time
             SiO2=(Mass_data(:,1)*74+Mass_data(:,2)*47)./max(sum(Mass_data(:,1:2),2),1e-3); % SiO2%
             if Fix_H2O==1 || Fix_H2O==3
                 H2O=H2O_crust*ones(N,1);
-            else
+            else%% 
                 H2O=100*(Mass_data(:,3))./max(sum(Mass_data(:,1:3),2),1e-3); % H2O%  !!!
+                hhh=H2O;
                 for i=1:N
                     P3=Pg_real(i)*100;
                     Saturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5);
@@ -474,29 +503,29 @@ while Time<End_time
         %rho_ref=(aa(1)* max(T(1),300).^bb(1)+aa(2)*max(Pg_real(1)*1000,700).^bb(2)+aa(3)*max(T(1),300).^bb(3).*max(Pg_real(1)*1000,700).^cc(1))*1000; %% CAB DENSITY OF VOLATILES - Haiyang's original.
         rho_ref=(aa(1)* max(T,300).^bb(1)+aa(2)*max(Pg_real*1000,700).^bb(2)+aa(3)*max(T,300).^bb(3).*max(Pg_real*1000,700).^cc(1))*1000; %% CAB DENSITY OF VOLATILES - use this one
         %% update step times
-        if ~fixed_dt %&& iter==0
-            if max(abs(u_all))~=0
-                ind=u_all~=0;
-                index=find(phi>min_phi_dt);
-                index=intersect(index,find(phi<1-min_phi_dt));
-                dt=min(abs([Courant*dz(index)./u_all(index); Courant*dz(index)./u_all(index+N+1)]));
-            else
-                dt=3*dt;
-            end
-            if isempty(dt)
-                dt=50*Year;
-            end
-            if dt>1.7*dt_old
-                dt=1.7*dt_old;
-            end
+        %if ~fixed_dt %&& iter==0
+           % if max(abs(u_all))~=0
+             %   ind=u_all~=0;
+             %   index=find(phi>min_phi_dt);
+             %   index=intersect(index,find(phi<1-min_phi_dt));
+            %    dt=min(abs([Courant*dz(index)./u_all(index); Courant*dz(index)./u_all(index+N+1)]));
+            %else
+             %   dt=3*dt;
+            %end
+            %if isempty(dt)
+            %    dt=50*Year;
+           % end
+           % if dt>1.7*dt_old
+           %     dt=1.7*dt_old;
+          %  end
             
             %                 if Time<35*Year
             %                     dt=min(dt,0.2*Year);
             %                 end
             
-            dt=min(dt,Max_dt);
-            dt=max(dt,Min_dt);
-        end
+         %   dt=min(dt,Max_dt);
+        %    dt=max(dt,Min_dt);
+        %end
 %         dt=100;
         %% Component and Energy transport
         % Mass_data: [m1, n2, v1, m2, n2,v2, v3]
@@ -627,12 +656,12 @@ while Time<End_time
         %         H=Threephase_enthalpy_solver2(Mass_data_old, T_old, cp, u_all, kt, Lf, dz, dt);
         %         H=Threephase_enthalpy_solver_ffs(Mass_data, T_old, T, cp, u_all, kt, Lf, dz, dt);
         H_source= zeros(N,1);
-        
+        H_pre = H; %CABG
         kt=(kt0(1)*sum(Mass_data(:,[1 4]),2)+kt0(2)*sum(Mass_data(:,[2 5]),2))./max(sum(Mass_data(:,[1 2 5 5]),2),1e-3);
         if simplified_5p==1
-            H=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, 3);
+            [H,Lf1]=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, 3);
         else
-            H=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, N_component);
+            [H,Lf1]=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, N_component);
         end
         
 
@@ -673,7 +702,7 @@ while Time<End_time
                 phi(1:5)=0;
 
                 if isempty(gcp('nocreate'))
-                    parpool(8); % Reopen the pool desired number of cores
+                    parpool(2); % Reopen the pool desired number of cores
                 end
                 parfor i=2:N
                     warning('off', 'all');
@@ -706,7 +735,29 @@ while Time<End_time
                 end
             end
         end
-        eps=max(abs(phi-phi_pre))/1e4;
+
+        Cb1_pre = Cb1; %CABG
+        Cb1=(PD_range(2)*sum(Mass_data(:,[1,4]),2)+PD_range(1)*sum(Mass_data(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2); %CABG
+        
+        Cb2_pre= Cb22;
+        if N_component==3
+            Cb22=V./(MM+NN+V);
+        else
+            Cb22=V./(MM+NN+V+CL);
+        end
+
+        
+
+        maxresid_phi=max(abs(phi-phi_pre));% /1e4; %CABG
+        maxresid_cb = max(abs(Cb1-Cb1_pre));
+        maxresid_cb2 = max(abs(Cb22-Cb2_pre))*100;
+        idx_H = (Lf1~=0);
+        maxresid_H = max(abs((H(idx_H)-H_pre(idx_H))./Lf1(idx_H)));
+
+        eps=max([maxresid_H,maxresid_cb,maxresid_cb2]);% /1e4; %CABG maxresid_phi;%
+
+        %disp([iter, maxresid_H, maxresid_cb, maxresid_cb2])
+
         % eps=max(max(abs(Mass_data-Mass_data_pre))/1e7);
 
                 % Update_plot;
@@ -716,13 +767,20 @@ while Time<End_time
         %     eval(['save(''Record_error.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');']);
         %     error('sorry, it fucked up..')
         % end
+        
 
-        if Enhanced_convergence==1
+        if fixed_dt~=0
             if iter==Max_iter     
                 Num_non_convergence=Num_non_convergence+1;
-                Courant=Courant/2;
-                iter=1;
-                disp(['New Cournat: ' num2str(Courant)] )
+                
+
+                [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant,dz,u_all,N,inc_N);
+
+                if dt==Min_dt
+                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
+                end
+
+                disp(['Timestep decreased: ' num2str(dt/Year) 'yr'] )
 
                 phi=phi_old;
                 S=S_old;
@@ -736,7 +794,7 @@ while Time<End_time
 
                 T=T_old;
 
-                dt=dt_old;
+                
                 
                 %CAB
                 Mass_data_capped=Mass_data_old_capped;
@@ -746,8 +804,14 @@ while Time<End_time
             end
         end
     end
-
+   % figure(1)
+   % plot(phi,'x')
+   %  hold on
     
+    %CABG - output residuals
+    
+    disp([maxresid_phi,maxresid_cb,maxresid_H,maxresid_cb2])
+    fprintf(File_resid, '%10.5f \t %10.10f \t %10.10f \t %10.10f  \t %10.10f \n', Time/Year/1000, maxresid_phi, maxresid_cb, maxresid_H,maxresid_cb2);
 
     if To_extract_volatile==1
 
@@ -1302,7 +1366,7 @@ fclose(File_echo);
 fclose(File_precision);
 fclose(File_breaks);
 fclose(File_comp);
-
+fclose(File_resid);
 % CAB end
 
 

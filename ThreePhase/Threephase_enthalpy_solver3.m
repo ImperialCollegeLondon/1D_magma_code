@@ -1,4 +1,4 @@
-function H=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, k ,Lf, dz, cellz, nodez, dt, source, rho_BC, BC_flux, N_component)
+function [H, Latent]=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, k ,Lf, dz, cellz, nodez, dt, source, rho_BC, BC_flux, N_component)
 % A three phase enthalpy solver extended from the two phase version
 % H.H 5-12-2022
 % cp should be [cpl, cps, cpg]

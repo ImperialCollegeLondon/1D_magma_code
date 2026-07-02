@@ -86,3 +86,12 @@ end
 %% Calculating mass conservation
 Sillcomp =(PD_range(2)*sum(SillMass(:,[1,4]),2)+PD_range(1)*sum(SillMass(:,[2,5]),2))./sum(SillMass(:,[1 2 4 5]),2);
 OG_Cb = [OG_Cb(1:Start_depthN_c); Sillcomp.*ones(SillNodez,1);OG_Cb(Start_depthN_c+1:end)];
+
+%% Updating values for residuals - CABG
+
+Cb1 = [Cb1(1:Start_depthN_c); Sillcomp.*ones(SillNodez,1);Cb1(Start_depthN_c+1:end)]; 
+Sillwater = (sum(SillMass(:,[3,6,7]),2))./sum(SillMass,2);
+Cb22 = [Cb22(1:Start_depthN_c); Sillwater.*ones(SillNodez,1);Cb22(Start_depthN_c+1:end)]; 
+
+
+

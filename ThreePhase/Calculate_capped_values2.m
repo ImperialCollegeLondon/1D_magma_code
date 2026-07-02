@@ -49,6 +49,11 @@ else
 end
 
 
+excess = melt_fraction - Convective_cut;
+[maxExcess, idx] = max(excess);
+
+
+
 % Mass_data_capped=Mass_data;
 % melt_fraction_capped=melt_fraction;
 % solid_fraction_capped=solid_fraction;

@@ -14,7 +14,7 @@ Model_name="D0.2 c1.2 s5 SiO48-60 MDI mu 0.78-17 muf 0 2 4 7 P10F2 WK3-6 S50 EC"
 
 
 
-Use_parrallel=1;  %try to use parrallel
+Use_parrallel=0;  %try to use parrallel
 if Use_parrallel==1
    Num_core_use=8;  %% set the number of cores to use!
 end
@@ -35,9 +35,9 @@ Velocity_solver_type=2; % 1: Three phase solver, 2: Two phase solver
 Dynamic_scaling=1e8; % To improve the condition number of velocity solver LHS matrix
 g=9.81/Dynamic_scaling;
 
-Precision=1e-8;
+Precision=1e-4;
 % Precision2=Precision/1e2;
-Max_iter=100;
+Max_iter=10;
 min_iter=1;
 
 Enhanced_convergence=0;  %
@@ -221,7 +221,7 @@ chemical_solver_loader;
 % from 8000 bar to 0 bar, water 13% to 0 %
 %           13  12  11  10    9     8     7    6     5    4    3    2   1     0
 Data_point=[80, 83, 86, 91, 100,  115,  135, 164,  196, 230, 267, 307, 355, 401;... %70
-             0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;... %102
+             0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;...   %102
              0,  0, 84,87.5,95.5,108.5,126, 151.5, 180, 211, 243, 280, 329, 375;... %134
              0,  0, 0,   86, 93, 105,  121, 144,   170, 199, 230, 266, 316, 362;... %166
              0,  0, 0,    0,90.5,100,  115, 136,   159, 186, 217, 252, 302, 349;... %198
@@ -271,7 +271,7 @@ Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2]
 min_show_range=Show_z(2)-Show_z(1);
 
 % define the meshing and mesh adaptivity
-Adaptive_mesh=0;     % set to one to turn one the adaptive meshing.
+Adaptive_mesh=1;     % set to one to turn one the adaptive meshing.
 Adaptive_step_gap0=10; %frequency of mesh adaptivity done
 Adaptive_step_time=1*Year; %minimal time gap before the new adaptation
 max_adaptive_number=1;
@@ -482,22 +482,28 @@ Show_z=[Length2 Length2+Sill_length*fine_ratio];
 % Show_z=[cellz(1) cellz(end)];
 
 %% Time steps
-fixed_dt=0;
+fixed_dt=1;
 
-Courant0=9.5e-1;%0.025;  %During the start of the sill intrusion
-Courant1=9.5e-1;%0.15;  
+Courant0=9.5e-1; %0.01;% %During the start of the sill intrusion
+Courant1=0.0255; %9.5e-1;% 0.01;%
 min_phi_dt=3e-2;
 
 Max_dt=200*Year;
-Min_dt=2*Year;
+Min_dt=0.02*Year; %CABG 2 yr
 
 if fixed_dt==1
-    dt=1e-1*Year;    
+    dt=1e-2*Year;    
 else
     dt=1e-3*Year;
 end
 End_time=40e6*Year;   %250e3*Year;
 % End_time=50e3*Year;   %250e3*Year;
+
+N_dt=5;
+inc_N = 3;
+Min_iter_dt=6;
+
+dt_resid=0.5 ;
 
 Time=0;
 Courant=Courant0;
