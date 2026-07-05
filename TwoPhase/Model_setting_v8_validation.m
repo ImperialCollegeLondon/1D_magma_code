@@ -422,7 +422,7 @@ sigma=sigma_max-gamma;
 %mu_min_FLAG=1;
 %mu_min_MF=0.06;
 %mu_min_MF_grad = 0.05;
-%max_xi_m = 1e20;
+%max_xi_m = 1e20;Sill_injection
 if MU_type==0 % MU_type=0 - Nature model, MU_type=1 - Costa 2019 
     mu_m=Ref_Bulk_MN*ones(1,length(phi_range));
     if mu_min_FLAG == 0
@@ -462,7 +462,7 @@ elseif MU_type==1
     xi_m=ref_xi*ref_shear/ref_all(end);
     mu_all=mu_all(end:-1:1);
 else % uniform viscosity
-    mu_all=1e12*ones(1,N_vis);
+    mu_all=1e14*ones(1,N_vis);
 end
 
 
@@ -518,6 +518,7 @@ LengthT=abs(Top_crust-Injection_depth)*1000+Sill_length*fine_ratio; %Above the i
 
 
 Show_z=[LengthB LengthB+2*Sill_length*fine_ratio];
+
 min_show_range=Show_z(2)-Show_z(1);
 
 
@@ -535,6 +536,7 @@ cellz=(nodez(1:end-1)+nodez(2:end))/2;  % cell center points
 dz=nodez(2:end)-nodez(1:end-1);
 dzF=part2(2)-part2(1);
 dzC=part1(2)-part1(1);
+% Show_z=[0, nodez(end)];
 %% Sill properties
 
 %Number of nodes per sill
@@ -684,7 +686,7 @@ Varying_T=0;
 
 BC_T_type=[1,1];         %lower and upper boundary condition type for temperature: 1, fixed temperature (not enthalpy)  2, smooth 3. no flux 4.fixed enthalpy
 % BC_T=[2*Solidus(0)-1*Liquidus(0.09,A1, B1, C1, A2, B2, C2, ae), 1.5*Solidus(0)-0.5*Liquidus(0.09,A1, B1, C1, A2, B2, C2, ae)]; %lower and upper boundary condition value when fixed. 
-BC_T=[T(1), T(end)];
+% BC_T=[T(1), T(end)];
 
 BC_C_type=[3,3];
 BC_C_value=[0,0;0,0];
@@ -837,7 +839,7 @@ if Record_data2==1
         snapshots = struct('nodez',{},'us', {}, 'ul', {}, 'phi',{}, 'T',{},'Cs', {}, 'Cl',{},'S',{}, 'Cs2',{},'Cl2',{},'Tr',{},'Time',{});
     end
     chunkIdx=0;
-    Initial_record_period=20*Year;
+    Initial_record_period=10*Year;
     Record_period=Initial_record_period;    
 end
 
@@ -1448,3 +1450,6 @@ if With_monitor==1
     Monitor_frame=0;
 end
 Adaptive_show_range=1;
+
+%% final correction for validation
+BC_T=[T(1), T(end)];

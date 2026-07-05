@@ -41,10 +41,11 @@ mus_1=a1*phi_1+b1;
 % melt viscosity is a function of Cl and Cl2 and used only in coupling term,
 % so we directly model coupling term C
 % coupling coefficient is a function of muf and phi
+% phi, cl_1, cl_2
 if Has_volatile==2
-    Coupling=a2*cl_1+b2*cl2_1+c2*phi_1+d2*cl_1*cl2_1+e2*cl_1*phi_1+f2*cl2_1*phi_1+g2*cl_1*cl2_1*phi_1+h2;
+    Coupling=a2*cl_1+b2*cl2_1+c2*phi_1+d2*cl_1*cl2_1+e2*cl_1*phi_1+f2*cl2_1*phi_1+g2*cl_1*cl2_1*phi_1+h2;  %%NEED TO CORRECT!!! phi, cl_1, cl_2 sequence not correct!
 else
-    Coupling=a2*cl_1+b2*phi_1+c2*cl_1*phi_1+d2;
+    Coupling=a2*phi_1+b2*cl_1+c2*cl_1*phi_1+d2;
 end
 
 

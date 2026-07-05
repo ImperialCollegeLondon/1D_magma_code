@@ -180,8 +180,8 @@ load('test1.mat')
 figure(10)
 clf; hold on
 set(gcf,'color','w');
-plot(nodez,X(N+2:2*N+2),'b');
-plot(nodez_save,u_all(N+2:2*N+2),'--','Color','b')
+A=plot(nodez,X(N+2:2*N+2),'b');
+B=plot(nodez_save,u_all(N+2:2*N+2),'--','Color','b');
 
 plot(nodez,X(1:N+1),'r');
 plot(nodez_save,u_all(1:N+1),'--','Color','r')
@@ -190,6 +190,7 @@ plot(nodez_save,u_all(1:N+1),'--','Color','r')
 xlabel('Distance (m)','FontSize',20)
 ylabel('Velocities (m/s)','FontSize',20)
 xlim([9500 12500])
+legend('Newton','Nonlinear','fontsize',20)
 % subplot(2,1,1)
 % plot(X(N+2:2*N+2));
 % hold on

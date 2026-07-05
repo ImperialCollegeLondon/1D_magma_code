@@ -252,7 +252,7 @@ while Time<Time_intended-Time_gap*1e-5
         cols(entry_count+(0:3))=[1 N+1 N+2 2*N+2];
         vals(entry_count+(0:3))=1;
 
-        RHS([1 N+1 N+2 2*N+2])=X([1 N+1 N+2 2*N+2]);
+        RHS([1 N+1 N+2 2*N+2])=0; %X([1 N+1 N+2 2*N+2]);
         entry_count=entry_count+4;
 
         %% Continuity assembly
@@ -594,11 +594,11 @@ while Time<Time_intended-Time_gap*1e-5
             break;
         end
 
-        bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
-
-        bad_count=bad_count + ismember(1:N+1, bad_nodes)';
-        bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
-        new_frozen = find(bad_count >= Kfreeze);
+        % bad_nodes=find(abs(RHS(1:N+1))>Precision); %detect_trouble_nodes(RHS,N,Precision);
+        % 
+        % bad_count=bad_count + ismember(1:N+1, bad_nodes)';
+        % bad_count(~ismember(1:N+1,bad_nodes)) = max(bad_count(~ismember(1:N+1,bad_nodes)) - 1, 0);
+        % new_frozen = find(bad_count >= Kfreeze);
 
         Matrix_A = sparse(rows(1:entry_count-1), cols(1:entry_count-1), vals(1:entry_count-1), Dof, Dof);
         

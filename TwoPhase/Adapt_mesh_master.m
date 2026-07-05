@@ -372,6 +372,7 @@ Last_adapted=Time;
 
 Cb=Cl.*phi(1:N)+Cs.*(1-phi(1:N));
 Cb_all=sum(Cb.*dz');
+Cphi_all=[C_all(1:N).*phi(1:N); C_all(N+1:2*N).*phi(N+1:2*N)];
 if Has_volatile==1
     Cb2=Cl2.*phi(1:N)+Cs2.*(1-phi(1:N))+S;
     Cb2_all=sum(Cb2.*dz');

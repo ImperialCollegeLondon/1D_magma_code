@@ -20,8 +20,8 @@ warning('off')
 set(groot,'DefaultFigureWindowStyle','docked')
 
 % CAB - calling the m-file which contains the settings for the run.
-Model_setting_v8_sill_exe_master; 
-% Model_setting_v8_validation; 
+% Model_setting_v8_sill_exe_master; 
+Model_setting_v8_validation; 
 
 Inputs= readtable('Input_Files/1AA_2Phase_code_RESTART.txt');
 [r,~] = size(Inputs);
