@@ -2,11 +2,7 @@ name: MATLAB Tests
 
 on:
   push:
-    branches:
-      - Haiyang_dev
   pull_request:
-    branches:
-      - Haiyang_dev
   workflow_dispatch:
 
 env:
