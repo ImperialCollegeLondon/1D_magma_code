@@ -18,7 +18,8 @@ tao0=sigma/um_0;    %time scale
 Year=365.25*24*3600;
 
 
-To_show=(10:10:200)*Year/tao0;
+% To_show=(10:10:200)*Year/tao0;
+To_show=(10:10:180)*Year/tao0;
 % To_show=[0.5,1,2,4,10];
 
 N_to_show=length(To_show);

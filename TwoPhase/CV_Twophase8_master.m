@@ -14,21 +14,36 @@
 
 %% 
 %%
-clear;
-clc
-warning('off')
-set(groot,'DefaultFigureWindowStyle','docked')
+
+
+% clear;
+% clc
+% warning('off')
+% set(groot,'DefaultFigureWindowStyle','docked')
 
 % CAB - calling the m-file which contains the settings for the run.
-% Model_setting_v8_sill_exe_master; 
-Model_setting_v8_validation; 
+% HH if Validation not defined, run the normal setting file, if defined before for validation purpose, run the specific validation settings
+if exist('Validation','var')
+    if Validation==0
+        Model_setting_v8_sill_exe_master
+    else
+        Model_setting_v8_validation;
+    end
+end
+
+disp(['Validation=' num2str(Validation)])
+% clear this variable for safety
+clear Validation 
+
+
+
 
 Inputs= readtable('Input_Files/1AA_2Phase_code_RESTART.txt');
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
 for i=1:r-1
-    assignin('base',names(i),Number(i))
+    eval([char(names(i)) ' = Number(i);']); 
 end
 filename4restart = names(r);
 filename4restart = string(filename4restart{1});
@@ -240,7 +255,9 @@ else
     SillCm=injection_Cs;
     
     sill_intrusion_master
-    Update_plot_master;
+    if With_monitor==1
+        Update_plot_master;
+    end
     Adapt_mesh_master;
     
     Cb_all0=sum(Cb.*dz');
@@ -522,7 +539,9 @@ while Time<End_time
 
 
             sill_intrusion_master;
-            Update_plot_master;
+            if With_monitor==1
+                Update_plot_master;
+            end
             Adapt_mesh_master
 
             Cb_all0=sum(Cb.*dz');
@@ -731,8 +750,10 @@ while Time<End_time
                 end
             end
             if Record_data==1
-                if Time+dt>Record_time(Record_index)
-                    dt=Record_time(Record_index)-Time;
+                if Record_index<=length(Record_time)
+                    if Time+dt>Record_time(Record_index)
+                        dt=Record_time(Record_index)-Time;
+                    end
                 end
             end
        %% Enthalpy and components transport

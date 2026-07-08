@@ -18,7 +18,7 @@ Has_volatile=0;
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
 for i=1:r
-    assignin('base',names(i),Number(i))
+    assignin('caller',names(i),Number(i))
 end
 Precision0=Precision;
 

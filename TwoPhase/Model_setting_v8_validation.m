@@ -3,9 +3,9 @@
 % Settings for a sill intrusion simulation
 
 % If code or comments are written by Catherine Booth, it is annotated CAB
-
-clear all;
-fclose('all'); % close all files
+% 
+% clear all;
+% fclose('all'); % close all files
 %execute='1AA_4M_2_phase_HS_mc_input_update_2.txt';
 
 
@@ -18,17 +18,30 @@ Has_volatile=0;
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
 for i=1:r
-    assignin('base',names(i),Number(i))
+    eval([char(names(i)) ' = Number(i);']); 
 end
-Precision0=Precision;
 
+
+
+%% overwrite the defined variable
+if Validation==1
+    Use_Newton=0;
+    Precision=1e-4;
+elseif Validation==2
+    Use_Newton=1;
+    Precision=1e-8;
+else
+    error('Wrong Validation type!')
+end
+
+Precision0=Precision;
 if HHJPet==1
     Inputs= readtable('Input_Files/1AA_2phase_HHJPet_validation.txt');
     [r,~] = size(Inputs);
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
     for i=1:r
-        assignin('base',names(i),Number(i))
+        eval([char(names(i)) ' = Number(i);']); 
     end
     
     is_eutectic=1;
@@ -73,7 +86,7 @@ elseif SSPD==1
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
     for i=1:r
-        assignin('base',names(i),Number(i))
+        eval([char(names(i)) ' = Number(i);']); 
     end
     n_order=n_PD;
 
@@ -121,7 +134,7 @@ elseif FourMPD==1
     names=string(Inputs.Var2);
     Number=Inputs.Var3;
     for i=1:r
-        assignin('base',names(i),Number(i))
+        eval([char(names(i)) ' = Number(i);']); 
     end
 
     % set values to zero that are used in sill_intrusion and solid_state
@@ -469,18 +482,20 @@ end
 
 
 %phi_range=phi_range(end:-1:1);
-Font=35;
-f3 = figure(3);
-clf; set(gcf,'Color','w')
-set(gca,'TickDir','out');
-semilogy(phi_range,mu_all,'linewidth',2)
-hold on
-box off
-set(gca,'fontsize',Font)
-xlabel('Melt fraction (-)', 'FontSize',Font)
-ylabel('Solid viscosity (Pa s)', 'FontSize',Font)
-line([0.2 0.2], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
-line([0.6 0.6], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
+if With_monitor==1
+    Font=35;
+    f3 = figure(3);
+    clf; set(gcf,'Color','w')
+    set(gca,'TickDir','out');
+    semilogy(phi_range,mu_all,'linewidth',2)
+    hold on
+    box off
+    set(gca,'fontsize',Font)
+    xlabel('Melt fraction (-)', 'FontSize',Font)
+    ylabel('Solid viscosity (Pa s)', 'FontSize',Font)
+    line([0.2 0.2], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
+    line([0.6 0.6], [1 1e20],'linestyle','--', 'color','red','linewidth',1.5)
+end
 % semilogy(phi_range,mu_m)
 % semilogy(phi_range,xi_m, 'x-')
 
@@ -1453,3 +1468,11 @@ Adaptive_show_range=1;
 
 %% final correction for validation
 BC_T=[T(1), T(end)];
+
+
+if Validation==1
+    Max_dtY=1;
+    Max_iter=20;
+elseif Validation==2
+    Max_dtY=0.5;
+end

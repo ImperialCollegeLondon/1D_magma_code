@@ -296,10 +296,10 @@ Courant_Number,dummy,
 ,Courant, 0.1
 
 End_time_of_model_in_years,dummy,
-,End_timeY,1e6
+,End_timeY,185
 
 Output_Rate_of_data_plots_in_years,dummy,
-,Out_time,10
+,Out_time,180
 
 Y_limits_crust_bottom,dummy,
 ,crust_bottom,-6.65
@@ -308,7 +308,7 @@ Y_limits_crust_top,dummy,
 ,crust_top,-6.45
 
 With_monitor_if1_plotsOutputWithCode,dummy,
-,With_monitor,1
+,With_monitor,0
 
 Update_frame_howManyStepsBeforeMonitorIsRefreshed,dummy,
 ,Update_frame,1
