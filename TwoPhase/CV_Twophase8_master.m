@@ -241,6 +241,8 @@ else
     % Update sillcount
     SillCount=1;
 
+    improve=1e-4;
+
 
 
 %%
@@ -509,9 +511,13 @@ while Time<End_time
 
 %%
         % increase timestep if needed
-        if fixed_dt==0 && iter<Min_iter
+        %disp([fixed_dt, iter, Min_iter, improve/Precision])
+        if fixed_dt==0 && iter<Min_iter && improve/Precision<dt_resid
+            dt_year =  dt/Year;
+            disp(['Timestep increased, dt_old:', num2str(dt_year), 'yr'])
             [dt, ~] = dynamic_dt_master(1,iter,dt,Min_dt,Max_dt, N_dt, Courant, dz, u_all,N,inc_N);
-
+            dt_year =  dt/Year;
+            disp(['Timestep increased, dt_new:', num2str(dt_year), 'yr'])
             if dt==Max_dt
                     fprintf(File_echo, '%6s %5.5f %6s \n', 'Maximum time step reached', Time/Year/1000, 'ka');
             end
@@ -547,10 +553,8 @@ while Time<End_time
         %end
        
 %%
-        kt=kt_background*ones(N,1);
-        ind1=find(dz<max(dz)*0.9,1,'first');
-        ind2=find(dz<max(dz)*0.9,1,'last');
-        kt(ind1+1:ind2-1)=kt0;
+        
+
         kc=kc0*ones(N,1);
         % Max_iter=30;
 
@@ -570,6 +574,55 @@ while Time<End_time
         %%
         %CAB - iteration for the timestep starts
         while improve>Precision && iter<Max_iter
+
+            if kt_FLAG==0
+                kt=kt_background*ones(N,1);
+                ind1=find(dz<max(dz)*0.9,1,'first');
+                ind2=find(dz<max(dz)*0.9,1,'last');
+                kt(ind1+1:ind2-1)=kt0;
+            else
+                kt = kt_low_background*ones(N,1);
+                ind1=find(dz<max(dz)*0.9,1,'first');
+                ind2=find(dz<max(dz)*0.9,1,'last');
+    
+                for i=1:N
+                    if phi(i)<=kt_minMF
+                        kt(i) = kt_low_background;
+                    elseif phi(i)>=kt_maxMF
+                        kt(i) = kt_high_background;
+                    else
+                        ss = (phi(i)-kt_minMF)/(kt_maxMF-kt_minMF);
+                        kt(i) = kt_low_background + (kt_high_background-kt_low_background)*(3*ss^2-2*ss^3);%/(exp(-kt_s*(phi(i)-KC_perm_MF_b))); 
+                    end
+                end
+            end
+            %% Estimate dt
+            if fixed_dt==0 && iter==Max_iter-1
+                dt_year =  dt/Year;
+                disp(['Timestep decreased, dt_old:',num2str(dt_year), 'yr'])
+                [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant, dz, u_all, N,inc_N);
+                dt_year =  dt/Year;
+                disp(['Timestep decreased, dt_new:',num2str(dt_year), 'yr'])
+                if dt==Min_dt
+                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
+                end
+
+                phi=phi_old;
+                u_all=u_all_old;
+                H=H_old;
+                T=T_old;
+                C_all=C_all_old;
+                Cphi_all=Cphi_all_old;
+                Cb=Cb_old;
+
+
+
+            end
+
+
+
+
+
             %%  Solving Momentum equation
             temp1=project_cell2node_master(nodez,dz,phi(1:N));     %project phi from cell center to nodes, fluid part;
             temp2=project_cell2node_master(nodez,dz,phi(N+1:2*N)); %project phi from cell center to nodes;
@@ -678,15 +731,7 @@ while Time<End_time
     %                 u_all=u_all*0;
                 %     u_all(1:N)=movmean(u_all(1:N),30);
                 %     u_all(N+1:2*N)=movmean(u_all(N+1:2*N),5);
-            %% Estimate dt
-            if fixed_dt==0 && iter==Max_iter-1
-                [dt,iter] = dynamic_dt_master(0,iter,dt,Min_dt,Max_dt,N_dt,Courant, dz, u_all, N,inc_N);
-
-                if dt==Min_dt
-                    fprintf(File_echo, '%6s %5.5f %6s \n', 'Minimum time step reached', Time/Year/1000, 'ka');
-                end
-
-            end
+            
        %% Enthalpy and components transport
             H_nonlinear=H;
             u_bar=u_all(1:N+1).*phi_on_nodes(1:N+1)+u_all(N+2:2*N+2).*phi_on_nodes(N+2:2*N+2);
@@ -802,6 +847,7 @@ while Time<End_time
                 improve1=max(abs(Cb(1:N)-Cb_nonlinear(1:N)));
                 improve2=max(abs(H(1:N)-H_nonlinear(1:N)))/Lf;
                 improve=max(improve1,improve2);
+                %disp([Time/Year,iter, improve1,improve2,dt/Year])
             else
                 improve=max(abs(phi(1:N)-phi_old_nonlinear(1:N)));
             end

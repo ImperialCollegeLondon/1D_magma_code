@@ -65,6 +65,10 @@ end
 if max(abs(u_all))~=0
     courant_dt = min(abs([Courant*dz'./u_all(1:N); Courant*dz'./u_all(N+2:2*N+1)]));
 
+    if dt_new>courant_dt
+        disp('dt controlled by courant number')
+    end
+
     dt_new = min(dt_new,courant_dt);
     
 end

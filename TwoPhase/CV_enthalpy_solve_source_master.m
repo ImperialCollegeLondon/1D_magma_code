@@ -31,7 +31,11 @@ function [H,H2]=CV_enthalpy_solve_source_master(H_old,phi,u_all,u_bar,dz,dt,kt,c
     
     
     dz=dz';
-    kk=(kt(1:N-1).*dz(1:N-1)+kt(2:N).*dz(2:N))./(dz(1:N-1)+dz(2:N));
+    kk=kt;%(kt(1:N-1).*dz(1:N-1)+kt(2:N).*dz(2:N))./(dz(1:N-1)+dz(2:N));
+    %index1=find(phi(1:N)==0);
+    %kk(index1)=kt(index1);
+    %kk(index1(2:end)-1)=kt(index1(2:end)-1);
+
     coe=2;
     phi_old=phi;
     Source2=zeros(N,1); % The right hand side of enthalpy transport equation, diffusion of the difference between the enthalpy and sensitive heat 
