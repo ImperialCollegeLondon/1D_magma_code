@@ -1,7 +1,24 @@
 function [Results, Err]=Pure_compaction()
 
-repo_root = fileparts(fileparts(mfilename('fullpath')));
-addpath(genpath(fullfile(repo_root, 'TwoPhase')));
+% Get the directory where this file is located
+test_file_path = mfilename('fullpath');
+fprintf('Test file location: %s\n', test_file_path);
+
+% Go up 3 levels to reach repository root
+repo_root = fileparts(fileparts(fileparts(test_file_path)));
+fprintf('Repository root: %s\n', repo_root);
+
+% Add TwoPhase folder to path
+twoPhase_path = fullfile(repo_root, 'TwoPhase');
+fprintf('TwoPhase path: %s\n', twoPhase_path);
+
+% Verify TwoPhase exists
+if ~exist(twoPhase_path, 'dir')
+    error('TwoPhase folder not found at: %s', twoPhase_path);
+end
+
+addpath(genpath(twoPhase_path));
+
 
 % test Newton's method
 Newton_finished=0;
