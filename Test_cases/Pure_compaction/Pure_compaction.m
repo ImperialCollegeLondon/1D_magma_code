@@ -28,9 +28,9 @@ Nonlinear_finished=0;
     x2=data.Depth_km_; y2=data.MeltFrac_;
     disp('Nonlinear solver finished')
     Nonlinear_finished=1;
-catch
+% catch
     disp('Nonlinear method failed')
-end
+% end
 
 % load the expected McKenzie data
 McKenzie_data=readtable('MacKenzie.txt');
