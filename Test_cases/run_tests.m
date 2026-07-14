@@ -16,7 +16,7 @@ function run_tests()
         test_name = test_cases{i};
         test_folder = fullfile(current_dir, test_name);
         
-        fprintf('Test: %s... ', test_name);
+        disp(['Test:' test_name]);
         
         % Check if the folder exists
         if ~exist(test_folder, 'dir')

@@ -31,7 +31,7 @@ if exist('Validation','var')
     end
 end
 
-disp(['Validation=' num2str(Validation)])
+% disp(['Validation=' num2str(Validation)])
 % clear this variable for safety
 clear Validation 
 

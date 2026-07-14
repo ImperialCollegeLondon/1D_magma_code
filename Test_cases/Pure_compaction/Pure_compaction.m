@@ -5,23 +5,25 @@ addpath(genpath(fullfile(repo_root, 'TwoPhase')));
 
 % test Newton's method
 Newton_finished=0;
-try    
+% try    
     Validation=2;
     CV_Twophase8_master
+    disp('Newton solver finished')
     data=readtable("output_1_CELLS.txt");
     x3=data.Depth_km_; y3=data.MeltFrac_;
     disp('Newton solver finished')
     Newton_finished=1;
-catch
-    disp('Newton method failed')
-end
+% catch
+%     disp('Newton method failed')
+% end
 
 clearvars -except Newton_finished x3 y3;
 % test nonlinear method
 Nonlinear_finished=0;
-try 
+% try 
     Validation=1; 
     CV_Twophase8_master
+    disp('Nonlinear solver finished')
     data=readtable("output_1_CELLS.txt");
     x2=data.Depth_km_; y2=data.MeltFrac_;
     disp('Nonlinear solver finished')
