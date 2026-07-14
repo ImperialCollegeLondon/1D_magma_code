@@ -2,27 +2,27 @@ function [Results, Err]=Pure_compaction()
 
 % Get the directory where this file is located
 test_file_path = mfilename('fullpath');
-fprintf('Test file location: %s\n', test_file_path);
+% fprintf('Test file location: %s\n', test_file_path);
 
 % Go up 3 levels to reach repository root
 repo_root = fileparts(fileparts(fileparts(test_file_path)));
-fprintf('Repository root: %s\n', repo_root);
+% fprintf('Repository root: %s\n', repo_root);
 
 % Add TwoPhase folder to path
 twoPhase_path = fullfile(repo_root, 'TwoPhase');
-fprintf('TwoPhase path: %s\n', twoPhase_path);
+% fprintf('TwoPhase path: %s\n', twoPhase_path);
 
 % Verify TwoPhase exists
-if ~exist(twoPhase_path, 'dir')
-    error('TwoPhase folder not found at: %s', twoPhase_path);
-end
+% if ~exist(twoPhase_path, 'dir')
+%     error('TwoPhase folder not found at: %s', twoPhase_path);
+% end
 
 addpath(genpath(twoPhase_path));
 
 
 % test Newton's method
 Newton_finished=0;
-% try    
+try    
     Validation=2;
     CV_Twophase8_master
     disp('Newton solver finished')
@@ -30,14 +30,14 @@ Newton_finished=0;
     x3=data.Depth_km_; y3=data.MeltFrac_;
     disp('Newton solver finished')
     Newton_finished=1;
-% catch
-%     disp('Newton method failed')
-% end
+catch
+    disp('Newton method failed')
+end
 
 clearvars -except Newton_finished x3 y3;
 % test nonlinear method
 Nonlinear_finished=0;
-% try 
+try 
     Validation=1; 
     CV_Twophase8_master
     disp('Nonlinear solver finished')
@@ -45,9 +45,9 @@ Nonlinear_finished=0;
     x2=data.Depth_km_; y2=data.MeltFrac_;
     disp('Nonlinear solver finished')
     Nonlinear_finished=1;
-% catch
+catch
     disp('Nonlinear method failed')
-% end
+end
 
 % load the expected McKenzie data
 McKenzie_data=readtable('MacKenzie.txt');
