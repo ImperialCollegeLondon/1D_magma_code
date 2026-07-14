@@ -3,7 +3,7 @@ Description_use_4_spaces,dummy,sill_length
 ,Input_name,Input_No
 
 Use_parallel,dummy,
-,Use_parallel,1
+,Use_parallel,0
 
 No_cores_in_parallel,dummy,
 ,Num_core_use,8
