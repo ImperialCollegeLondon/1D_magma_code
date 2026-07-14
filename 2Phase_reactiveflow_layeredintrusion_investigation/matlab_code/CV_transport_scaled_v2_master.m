@@ -16,11 +16,7 @@ function results=CV_transport_scaled_v2_master(dz,value_old,phi,phi_old,u,k,dt,S
     
     coe=1;  % theta=1: implicit; theta=0.5: Crank-Nicolson 
     dz=dz';
-    kk=k;%(k(1:N-1).*dz(1:N-1)+k(2:N).*dz(2:N))./(dz(1:N-1)+dz(2:N));
-    %index1=find(phi(1:N)==0);
-    %kk(index1)=k(index1);
-    %kk(index1(2:end)-1)=k(index1(2:end)-1);
-
+    kk=(k(1:N-1).*dz(1:N-1)+k(2:N).*dz(2:N))./(dz(1:N-1)+dz(2:N));
     for i=0:N-3             
       indexi(i*3+1)=i+2; indexj(i*3+1)=i+1; value(i*3+1)=      -coe*2*kk(i+1)*phi(i+1)/(dz(i+1)+dz(i+2))/dz(i+2);
       indexi(i*3+2)=i+2; indexj(i*3+2)=i+2; value(i*3+2)=phi(i+2)/dt +coe*2*k(i+1)*phi(i+2)/(dz(i+1)+dz(i+2))/dz(i+2)+coe*2*kk(i+2)*phi(i+2)/(dz(i+2)+dz(i+3))/dz(i+2);

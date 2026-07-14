@@ -1,0 +1,12 @@
+This folder contains the input files for the code. 
+These input files are the same as the 27th Feb 26 commit to the TwoPhase branch. 
+Input files related to the manuscript:
+'1AA_2Phase_code_RESTART' - allows user to restart code at particular point if it crashes.
+'1AA_2Phase_FourMPD' - contains the inputs for the chemical model used in the manuscript.
+'1AA_2Phase_master_input_v6' - main input file for model. 
+'1AA_2Phase_SSPD_master' and '1AA_2Phase_HHJPet_master' are input files for other chemical
+models which can be used with the model (see TwoPhase branch). However, they do not affect the model
+run for the manuscrpt. But must be present to run model.
+
+File last updated: 10th June 26
+

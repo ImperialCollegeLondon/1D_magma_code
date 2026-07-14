@@ -9,7 +9,7 @@ clear;
 %execute='1AA_4M_2_phase_HS_mc_input_update_2.txt';
 
 
-Inputs= readtable('1AA_2phase_master_input_v7.txt');
+Inputs= readtable('1AA_2phase_master_input_v6_2.txt');
 [r,~] = size(Inputs);
 names=string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -205,36 +205,9 @@ if HHJPet==1
     TsU=A1+B1+C1; % Solidus is at liquidus of eutectic point
 end
 
-if kt_FLAG==0
-    kt0=kt0s/DensSill; %3/2850;                %Thermal difusivity of the sill
-    kt_background=kt0b/DensSill; %3/2850;      %Thermal difusivity of the surrounding 
-else
-    phi_range=linspace(0,1,N_vis);
-    phi_range(phi_range<Precision_BV)=1e-2;
-    phi_range(phi_range>1-Precision_BV)=1-Precision_BV;
 
-
-   for i=1:N_vis
-       if phi_range(i)<=kt_minMF
-           kt0(i) = kt_low/DensSill;
-           kt_low_background = kt_low/DensSill;
-       elseif phi_range(i)>=kt_maxMF
-           kt0(i) = kt_high/DensSill;
-           kt_high_background = kt_high/DensSill;
-       else
-           ss = (phi_range(i)-kt_minMF)/(kt_maxMF-kt_minMF);
-            
-           kt0(i) = (kt_low + (kt_high-kt_low)*(3*ss^2-2*ss^3))/DensSill;%/(exp(-kt_s*(phi_range(i)-KC_perm_MF_b))))/DensSill;
-       end
-
-   end
-
-   %figure(2)
-   %plot(phi_range,kt0*DensSill)
-
-
-
-end
+kt0=kt0s/DensSill; %3/2850;                %Thermal difusivity of the sill
+kt_background=kt0b/DensSill; %3/2850;      %Thermal difusivity of the surrounding 
 
 
 
@@ -477,17 +450,17 @@ end
 
 
 
-phi_range=phi_range(end:-1:1);
+%phi_range=phi_range(end:-1:1);
 f3 = figure(3);
-%clf;
+clf;
 set(gca,'TickDir','out');
 semilogy(phi_range,mu_m)
 hold on
 semilogy(phi_range,xi_m, 'x-')
-semilogy(phi_range,mu_all)
+%semilogy(phi_range,mu_all)
 ylim([min(mu_m)/2 max(mu_all)])
 legend({'Shear','Bulk','Sum'})
-saveas(f3,'Shear_bulk_viscosity','svg')
+%saveas(f3,'Shear_bulk_viscosity','svg')
 
 %%
 scaling_factor=sqrt(scaling_factorB^scaling_factorEx);%10^12.5);  %to make the velocity LHS matrix have better conditioning number
@@ -729,22 +702,7 @@ um=zeros(N+1,1);
 u_all=[uf;um];
 
 C_values=zeros(N,1);  % the coupling term coefficient
-if kt_FLAG==0
-    kt=kt0*ones(N,1);
-else
-    kt = ones(N,1);
-    for i=1:N
-        if phi(i)<=kt_minMF
-            kt(i) = kt_low_background;
-        elseif phi(i)>=kt_maxMF
-            kt(i) = kt_high_background;
-        else
-            ss = (phi(i)-kt_minMF)/(kt_maxMF-kt_minMF);
-            kt(i) = kt_low_background + (kt_high_background-kt_low_background)*(3*ss^2-2*ss^3);%/(exp(-kt_s*(phi(i)-KC_perm_MF_b))); 
-        end
-    end
-   
-end
+kt=kt0*ones(N,1);
 kc=kc0*ones(N,1);
 %% Initialize the chemical differentiation number
 Lrange1=[6100 6200];  %the range of the studied region 

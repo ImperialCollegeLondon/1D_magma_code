@@ -1,12 +1,6 @@
 % HH 2/2/2020
 % Solving momentum equations based on (Hu et al, 2022)
 function [U_new, Portion]=Velocity_solve_portion_with_source_master(phi,u_all_old, Nonzero,ZerosU, ZerosU_values, C_values,mu_f,mu_m,power,rhof,rhom, Precision,N,dz,g,Source)
-
-% Fix for viscosities sent over by Haiyang on 7/7/26
-mu_m = reshape(mu_m,[N,1]);
-mu_f = reshape(mu_f,[N,1]);
-
-
 % A velocity solver carried on nodes, suitable for CV version of codes.    
     if isempty(Nonzero)
         U_new=u_all_old*0;

@@ -84,5 +84,9 @@ end
 % CAB end
 
 %% Calculating mass conservation
+Sum_M0=Sum_M0+MM_sill*dzf*SillNodez;
+Sum_N0=Sum_N0+NN_sill*dzf*SillNodez;
+Sum_V0=Sum_V0 +V_sill*dzf*SillNodez;
+
 Sillcomp =(PD_range(2)*sum(SillMass(:,[1,4]),2)+PD_range(1)*sum(SillMass(:,[2,5]),2))./sum(SillMass(:,[1 2 4 5]),2);
 OG_Cb = [OG_Cb(1:Start_depthN_c); Sillcomp.*ones(SillNodez,1);OG_Cb(Start_depthN_c+1:end)];

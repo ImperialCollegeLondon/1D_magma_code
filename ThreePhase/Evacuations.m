@@ -14,12 +14,6 @@ Thick_melt_m = abs(cellz(melt_top-1) - cellz(melt_base)); %Thick_melt_evac;
 deni = -5000;
 while deni ==-5000
     for i=melt_top+1:N%-Thick_melt_evac
-        
-       % if rho_on_cellz(i)<=av_rho_T  % av_rho_magma will be calculated outside this script
-        %    depth_int_N_c = i;
-         %   deni=0;
-        %end
-
         if i==N%-Thick_melt_evac
             if melt_top<initial_T_Depth_1
                 depth_int_N_c = initial_T_depth_N_1;%-Thick_melt_evac;
@@ -77,8 +71,10 @@ end
 
 
 % Nx1 arrays
-dz_removed = dz(melt_base-1:melt_top-1);
-dz(melt_base-1:melt_top-1) = [];
+% dz_removed = dz(melt_base-1:melt_top-1);
+dz0=dz;
+dz_removed = dz(melt_base:melt_top);
+dz(melt_base:melt_top) = [];
 
 
 
@@ -102,6 +98,9 @@ if Add_CLCU==1
     Partition_CL_CU_removed = Partition_CL_CU(melt_base:melt_top,:);
     %av_Partition_CL_CI_T = mean(Partition_CL_CU_removed);
     Partition_CL_CU(melt_base:melt_top,:)=[];
+else
+    Partition_CL_CU_removed=zeros(melt_top-melt_base+1,2);    
+    Partition_CL_CU=zeros(N,2);
 end
 
 T_removed = T(melt_base:melt_top);
@@ -111,6 +110,10 @@ T(melt_base:melt_top)=[];
 Ts_local_removed = Ts_local(melt_base:melt_top);
 %av_Ts_local_T = mean(Ts_local_removed);
 Ts_local(melt_base:melt_top)=[];
+
+Tl_local_removed = Ts_local(melt_base:melt_top);
+Tl_local(melt_base:melt_top)=[];
+
 
 Pg_real_removed = Pg_real(melt_base:melt_top);
 %av_Pg_real_T = mean(Pg_real_removed);
@@ -147,7 +150,9 @@ depth_int_N_c = depth_int_N_c - (melt_top-melt_base);
 
 %% Intrusion of magma (intruding nodes)
 
-dz = [dz(1:depth_int_N_c-2); dzf.*ones(Thick_melt_int,1); dz(depth_int_N_c-1:end)];
+
+% dz = [dz(1:depth_int_N_c-2); dze.*ones(Thick_melt_int,1); dz(depth_int_N_c-1:end)];
+dz = [dz(1:depth_int_N_c); dze.*ones(Thick_melt_int,1); dz(depth_int_N_c+1:end)];
 
 nodez = zeros(N+1+(Thick_melt_int - Thick_melt_evac),1);
 
@@ -175,16 +180,18 @@ Mass_data=[Mass_data(1:depth_int_N_c,:);   av_Mass_data_T.*ones(Thick_melt_int,1
 H = [H(1:depth_int_N_c); av_H_T.*ones(Thick_melt_int,1);H(depth_int_N_c+1:end)];
 
 if Add_CLCU==1
-    Partition_CL_CU=[Partition_CL_CU(1:depth_int_N_c,:); nan(Thick_melt_int,2); Partition_CL_CU(depth_int_N_c+1:end,:)]; 
+    Partition_CL_CU=[Partition_CL_CU(1:depth_int_N_c,:); av_Partition_CL_CU.*ones(Thick_melt_int,2); Partition_CL_CU(depth_int_N_c+1:end,:)]; 
 end
 
 %Temperature
 T = [T(1:depth_int_N_c); av_T_T.*ones(Thick_melt_int,1);T(depth_int_N_c+1:end)];
 
-Ts_local = [Ts_local(1:depth_int_N_c); av_Ts_local_T.*ones(Thick_melt_int,1);Ts_local(depth_int_N_c+1:end)];  %just to fill the data, filled Ts_local is not correct value
+Ts_local = [Ts_local(1:depth_int_N_c); av_Ts_local_T.*ones(Thick_melt_int,1);Ts_local(depth_int_N_c+1:end)];  
+Tl_local = [Tl_local(1:depth_int_N_c); av_Tl_local_T.*ones(Thick_melt_int,1);Tl_local(depth_int_N_c+1:end)];
+
 
 Pg_real=[Pg_real(1:depth_int_N_c); Pg_real(depth_int_N_c).*ones(Thick_melt_int,1); Pg_real(depth_int_N_c+1:end)];
-S_cap=[S_cap(1:depth_int_N_c); S_cap(depth_int_N_c).*ones(Thick_melt_int,1); S_cap(depth_int_N_c+1:end)];
+S_cap=[S_cap(1:depth_int_N_c); av_S_cap.*ones(Thick_melt_int,1); S_cap(depth_int_N_c+1:end)];
 
 T_S_region=[T_S_region(1:depth_int_N_c,:); T_S_region(depth_int_N_c,:).*ones(Thick_melt_int,1); T_S_region(depth_int_N_c+1:end,:)];
 
