@@ -13,12 +13,16 @@ function [U_new, Portion]=Velocity_solve_portion_with_source_master(phi,u_all_ol
         Portion=zeros(N,3);
         return
     end
+    
+    % Make sure mu_m and mu_f are all column vectors
+    mu_m=reshape(mu_m,[N 1]);
+    mu_f=reshape(mu_f,[N 1]);
 
     indexi=zeros(length(Nonzero)*3,1);
     indexj=zeros(length(Nonzero)*3,1);
     value=zeros(length(Nonzero)*3,1);    
     
-    APHI=(mu_f).*phi(1:N);
+    APHI=mu_f.*phi(1:N);
     for i=1:length(Nonzero)   
 %           Flux1=  APHI(Nonzero(i)-1)/dz(Nonzero(i)-1)*2/(dz(Nonzero(i)-1)+dz(Nonzero(i)));
 %           Flux2=  APHI(Nonzero(i))/dz(Nonzero(i))*2/(dz(Nonzero(i)-1)+dz(Nonzero(i)));          
@@ -36,9 +40,9 @@ function [U_new, Portion]=Velocity_solve_portion_with_source_master(phi,u_all_ol
 %     Coef=log(0.5)*(1-Dynamic_matrix_vis_coefficient)/(-Dynamic_matrix_vis_coefficient);
 %     mu_m=mu_m.*exp(-Coef*phi(1:N)./phi(N+1:2*N))+0.1;
     
-    %     APHI=(mu_m*4/3+zeta_m(power,zeta0,phi0,phi(1:N),Precision)).*phi(N+1:2*N);
+%     APHI=(mu_m*4/3+zeta_m(power,zeta0,phi0,phi(1:N),Precision)).*phi(N+1:2*N);
 %     APHI=zeta_m(power,mu_m,phi(1:N),Precision).*phi(N+1:2*N);
-    APHI=mu_m'.*phi(N+1:2*N);
+    APHI=mu_m.*phi(N+1:2*N);
     for i=1:length(Nonzero)
 %           Flux1=  APHI(Nonzero(i)-1)/dz(Nonzero(i)-1)*2/(dz(Nonzero(i)-1)+dz(Nonzero(i)));
 %           Flux2=  APHI(Nonzero(i))/dz(Nonzero(i))*2/(dz(Nonzero(i)-1)+dz(Nonzero(i)));                 
