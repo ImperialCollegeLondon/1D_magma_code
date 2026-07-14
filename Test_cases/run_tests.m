@@ -1,35 +1,53 @@
-% tests/run_tests.m
 function run_tests()
     fprintf('=== Running 1D magma simulation test cases===\n\n');
     
-    % Define all test cases
+    % Define all test cases - now store the folder name only
     test_cases = {
-        'Pure_compaction', 'Pure_compaction.m'
+        'Pure_compaction'
     };
     
     passed = 0;
     failed = 0;
     
-    for i = 1:size(test_cases, 1)
-        test_name = test_cases{i, 1};
-        expected_file = test_cases{i, 2};
+    % Get the current directory where run_tests.m is located
+    current_dir = fileparts(mfilename('fullpath'));
+    
+    for i = 1:length(test_cases)
+        test_name = test_cases{i};
+        test_folder = fullfile(current_dir, test_name);
         
         fprintf('Test: %s... ', test_name);
         
+        % Check if the folder exists
+        if ~exist(test_folder, 'dir')
+            error('Test folder not found: %s', test_folder);
+        end
         
-        addpath(test_cases{i});
-        % Run the settings file to set parameters
-        func=str2func (test_cases{i});
-        [Results, err]=func();
-        rmpath(test_cases{i});
-
-        if all(Results) && max(err)<0.03
-            passed=passed+1;
-            disp(['test: ' test_name ' passed.'])
+        % Add the test folder to path
+        addpath(test_folder);
+        
+        % Run the test function (function name matches folder name)
+        try
+            func = str2func(test_name);
+            [Results, err] = func();
+        catch ME
+            fprintf('ERROR: %s\n', ME.message);
+            failed = failed + 1;
+            rmpath(test_folder);
+            continue;
+        end
+        
+        % Remove from path
+        rmpath(test_folder);
+        
+        % Check results
+        if all(Results) && max(err) < 0.03
+            passed = passed + 1;
+            fprintf('PASSED\n');
         else
-            disp(['test: ' test_name ' failed.'])
-            failed=failed+1;
-        end    
+            fprintf('FAILED\n');
+            failed = failed + 1;
+        end
     end
     
     fprintf('\n=== Results: %d/%d tests passed ===\n', passed, passed + failed);
