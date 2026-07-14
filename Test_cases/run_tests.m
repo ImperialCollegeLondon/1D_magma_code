@@ -25,7 +25,9 @@ function run_tests()
 
         if all(Results) && max(err)<0.03
             passed=passed+1;
+            disp(['test: ' test_name ' passed.'])
         else
+            disp(['test: ' test_name ' failed.'])
             failed=failed+1;
         end    
     end
