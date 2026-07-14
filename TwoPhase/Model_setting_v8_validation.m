@@ -1332,9 +1332,9 @@ conservation2=1;
 if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
-    [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat,  Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator2(Has_volatile, is_eutectic);
-    % [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator(Has_volatile, is_eutectic);
-
+    % [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat,  Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator2(Has_volatile, is_eutectic);
+    
+    load('Jacobians_for_Newton.mat')
     disp(['All Jacobians generated/loaded']);
 
     u_all_old=u_all;
