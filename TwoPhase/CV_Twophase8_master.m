@@ -29,6 +29,8 @@ if exist('Validation','var')
     else
         Model_setting_v8_validation;
     end
+else
+    Model_setting_v8_sill_exe_master
 end
 
 % disp(['Validation=' num2str(Validation)])
@@ -117,7 +119,7 @@ else
     
                 File_Out = fopen(FilenameO, 'w');
             
-                fprintf(File_Out, '%4s %6.4f %3s \n', 'Time', Time/Year/1000, 'kyr');
+                % fprintf(File_Out, '%4s %6.4f %3s \n', 'Time', Time/Year/1000, 'kyr');
     
                 if (HHJPet ==1 || SSPD==1)
                     if To_cal_mc==1
@@ -803,7 +805,7 @@ while Time<End_time
 
                 if N<50 || Use_parallel==0
                     for i=1:N
-                        [phi(i), T(i), C_all(i), C_all(i+N),TYPE(i), Tl_local(i), Ts_loal(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
+                        [phi(i), T(i), C_all(i), C_all(i+N),TYPE(i), Tl_local(i), Ts_local(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
                     end
                 else
                    if isempty(gcp('nocreate'))
@@ -813,7 +815,7 @@ while Time<End_time
                    parfor i=1:N
                        warning('off', 'all');
                        %set(0,'DefaultFigureVisible','off')
-                       [phi(i), T(i), C_all(i), C_all_dummy(i),TYPE(i), Tl_local(i), Ts_loal(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
+                       [phi(i), T(i), C_all(i), C_all_dummy(i),TYPE(i), Tl_local(i), Ts_local(i)]=poro_component_solve_solid_master(Cb(i), H(i), A1, B1, C1, alpha, n_PD ,Lf, cp, Precision_PD,step_size);
                    end
 
 

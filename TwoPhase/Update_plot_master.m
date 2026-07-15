@@ -35,8 +35,8 @@ for i=1:(Plot_size(1)*Plot_size(2))
                 set(Handel_all{i}(j),'xdata',H,'ydata',cellz/1000-Base_crust);
             case 5
                 set(Handel_all{i}(1),'xdata',T,'ydata',cellz/1000-Base_crust);
-                set(Handel_all{i}(2),'xdata',Ts,'ydata',cellz/1000-Base_crust);
-                set(Handel_all{i}(3),'xdata',Tl,'ydata',cellz/1000-Base_crust);
+                set(Handel_all{i}(2),'xdata',Ts_local,'ydata',cellz/1000-Base_crust);
+                set(Handel_all{i}(3),'xdata',Tl_local,'ydata',cellz/1000-Base_crust);
             case 6
                 temp=C_all(1:N);
                 temp(phi<1e-6)=nan;

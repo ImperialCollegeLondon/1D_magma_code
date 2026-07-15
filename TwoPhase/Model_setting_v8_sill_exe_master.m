@@ -11,7 +11,7 @@ fclose('all'); % close all files
 
 Inputs= readtable('Input_Files/1AA_2phase_master_input_v6.txt');
 
-Has_volatile=0;
+Has_volatile=1;
 
 
 [r,~] = size(Inputs);
@@ -814,7 +814,7 @@ rho_mean=2700;
 %% Data output
 
 
-Record_data=0; % set to 1 to save the simulation data
+Record_data=1; % set to 1 to save the simulation data
 Step_counts=0;
 Output_Flag=1;
 % Record_time=[0:5:240]*Year;
@@ -1308,7 +1308,6 @@ if Use_Newton==1
 
     % Generate the Jacobians for Newton's method or load from the exisitng
     [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat,  Jac_ct_central , rhs_ct_central, Jac_con_central, rhs_con_central]=Newton_initiator2(Has_volatile, is_eutectic);
-    % [Jac_mom, rhs_mom, Jac_con, rhs_con, Jac_ct, rhs_ct, Jac_ent, rhs_ent, Jac_solidus, rhs_solidus, Jac_liquidus, rhs_liquidus, Jac_ct2,rhs_ct2, Jac_ssat, rhs_ssat, Jac_lsat, rhs_lsat]=Newton_initiator(Has_volatile, is_eutectic);
 
     disp(['All Jacobians generated/loaded']);
 
@@ -1393,6 +1392,8 @@ if With_monitor==1
             Plot_configure=  {[1],[5],[6,7,8]};
         end
     end    
+    Ts_local=Ts;
+    Tl_local=Tl;
     Plot_settings_master;
     drawnow
     Update_frequency=0.1; %every X sec

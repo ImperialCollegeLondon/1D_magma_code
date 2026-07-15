@@ -4,7 +4,7 @@ clear;
 Step = 0;
 
 
-Compare_McKenzie=1;
+Compare_McKenzie=0;
 
 if Compare_McKenzie==1
     McKenzie_data=readtable('MacKenzie.txt');
@@ -37,13 +37,17 @@ Directory='D:\Workspace\1D_magma_code\TwoPhase\Validation\';
 % Cases={'Newton_eu_13.5','Nonlinear_eu_13.5',};
 % Labels={'Newton','Nonlinear'};
 
-Cases={'Newton','Nonlinear',};
+x_range=[-15.15 -14.95];
+% x_range=[-12.2 -11];
+
+
+Cases={'Newton\muN_13','Nonlinear\muN_13',};
 Labels={'Newton','Nonlinear'};
 
 
 % Cases={'Newton_eu_C17-13','Nonlinear_eu_C17-13',};
 % Labels={'Newton','Nonlinear'};
-Range = [0 20];
+Range = [0 26];
 
 % Cases={'Non_linear_muM_13_20y_-4','Non_linear_muM_13_20y','Newton_muM_13_20y'};
 % Labels={'Nonlinear-4','Nonlinear-6','Newton'};
@@ -60,8 +64,7 @@ Range = [0 20];
 dy=5;
 
 y_range=[48 60];
-% x_range=[-15.15 -14.95];
-x_range=[-12.2 -11];
+
 data=cell(1,length(Cases));
 for i=1:length(Cases)
     % data{i} = readtable([Directory Cases{i} '/output_' num2str(Step) '_CELLS.txt']);

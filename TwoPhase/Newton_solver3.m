@@ -69,9 +69,14 @@ end
 
 
 
-%% 
-if SSPD==1
-    Use_central=1; % 1 for central, 0 for upwinding
+%%
+if exist('Just_intruded','var')
+    if Just_intruded==1
+        Use_central=1; % 1 for central, 0 for upwinding
+    else
+        Use_central=0;
+    end
+
 else
     Use_central=0;
 end
@@ -89,7 +94,7 @@ end
 if Advance_time==1
     Time_intended=Time_intended+Time_gap;
 end
-while Time<Time_intended-Time_gap*1e-5
+while Time<Time_intended-Time_gap*1e-5 || Advance_time==0
     % if dt_intended<0.5e-5*Year
     %     dt_intended=1*Year;
     % end
@@ -1074,6 +1079,9 @@ end
 
 
 function prevStr=Display_monitor(Time,Time_intended, Time_gap, dt, iter, prevStr, conservation1, conservation2)
+    % Check if running in MATLAB
+    isMatlab = ~isempty(ver('MATLAB'));
+    
     frac=(Time-Time_intended+Time_gap)/Time_gap;
     nfill = round(frac*40);
     bar = [repmat('=',1,nfill),repmat(' ',1,40-nfill)];
@@ -1083,10 +1091,21 @@ function prevStr=Display_monitor(Time,Time_intended, Time_gap, dt, iter, prevStr
         '[%s] %6.2f %%\n'...
         'Conservation: %3.8f  %3.8f'], ...
         Time, Time_gap, dt, iter, bar, 100*frac,conservation1,conservation2);
-    fprintf(repmat('\b',1,length(prevStr)));
+    
+    if isMatlab
+        % MATLAB-specific clearing
+        fprintf(repmat('\b',1,length(prevStr)));
+    else
+        % Terminal/console clearing
+        % Move up 4 lines (number of lines in your output) and clear them
+        fprintf(repmat('\033[F',1,4));  % Move up 4 lines
+        fprintf(repmat('\033[K',1,4));  % Clear 4 lines
+    end
+    
     fprintf('%s', str);
     prevStr = str;
 end
+
 % 
 function bad_nodes=detect_trouble_nodes(RHS,N, tol)
     rnode=RHS(1:N+1);

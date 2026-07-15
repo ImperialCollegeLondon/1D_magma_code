@@ -299,7 +299,7 @@ End_time_of_model_in_years,dummy,
 ,End_timeY,1e6
 
 Output_Rate_of_data_plots_in_years,dummy,
-,Out_time,5
+,Out_time,10
 
 Y_limits_crust_bottom,dummy,
 ,crust_bottom,-6.65
