@@ -15,7 +15,7 @@ CALCULATION_PRECISION,dummy,
 ,Precision,1e-4
 
 MAX_NUMBER_OF_ITERATIONS,dummy,
-,Max_iter,50
+,Max_iter,10
 
 MeltSeg_Flag_gt_0_SEGREGATION,dummy,
 ,MeltSeg_Flag,1
@@ -140,7 +140,7 @@ N_vis,dummy,
 ,N_vis,1e5
 
 MushBulk_Visc_Type_MattNatureModel=0_CostaModel=1,dummy,
-,MU_type,1
+,MU_type,0
 
 Mush_bulk_visc_min_FLAG_No=0_Yes=1,dummy,
 ,mu_min_FLAG,0
@@ -156,26 +156,26 @@ Bulk_visc_MAX_VALUE,dummy,
 
 **FOR_MATT_NAT_MODEL**,dummy,
 Ref_Bulk_Visc_MattNature,dummy,
-,Ref_Bulk_MN,1e15
+,Ref_Bulk_MN,1e14
 
 **FOR_COSTA_MODEL**,dummy,
 Einstein_Coeff,dummy,
-,B_vis,1
+,B_vis,2
 
 Phi_star,dummy,
 ,phistar,0.5
 
 gamma,dummy,
-,gamma,5
+,gamma,12.5
 
 sigma_max,dummy,
-,sigma_max,7
+,sigma_max,13
 
 epsilon,dummy,
 ,epsilon,1e-3
 
 Reference_shear_visc,dummy,
-,ref_shear,1e17
+,ref_shear,1e15
 
 Bulk_To_Shear_ratio,dummy,
 ,BS_ratio,0.6
@@ -289,19 +289,19 @@ Dynamic_dt=0,dummy,
 ,fixed_dt,0
 
 Ratio_residual_To_precision_4_increase_of_dt,dummy, 
-,dt_resid, 0.1
+,dt_resid, 0.5
 
 Number_of_dt_Steps_between_min_max,dummy, 
 ,N_dt, 5
 
 Value_of_Steps_to_increasedt,dummy, 
-,inc_N, 5
+,inc_N, 1
 
 Minimum_number_of_iterations_to_increasedt,dummy, 
-,Min_iter,25
+,Min_iter,4
 
 Initial_dt_in_years,dummy,
-,dt0Y,1e-5
+,dt0Y,1
 
 Maximum_dt_in_years,dummy,
 ,Max_dtY,2
@@ -310,7 +310,7 @@ Minimum_dt_in_years,dummy,
 ,Min_dtY,1e-5
 
 Courant_Number,dummy,
-,Courant, 0.6
+,Courant, 0.45
 
 End_time_of_model_in_years,dummy,
 ,End_timeY,500e3
