@@ -23,6 +23,7 @@ if Add_CLCU==1
     CU_temp=(Sum_mass(11)+Sum_mass(12)+Sum_mass(13));
 end
 
+
 % total enthalpy
 H_temp=(sum(H(melt_base:melt_top).*dz(melt_base:melt_top)))/Length;
 av_H_T=H_temp; 
@@ -37,7 +38,7 @@ else
 end
 [av_phi_T,av_S_T, av_T_T, av_rho_T,~,~,~,av_Ts_local_T, av_Mass_data_T,av_S_cap, av_Tl_local_T,~,~, av_Partition_CL_CU]=Phase_component_updated_solid3(input,Pg_real(melt_top), 800, 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(melt_top,:),   rho_constant, Lf, [K(melt_top) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(melt_top),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
 
-
+av_mass_addition=sum(Mass_data_addition(melt_base:melt_top,:).*dz(melt_base:melt_top),1)/Length;
 %% Average OG_cb  %still kept as the old way
 av_OG_Cb_T = mean(OG_Cb(melt_base:melt_top));
 

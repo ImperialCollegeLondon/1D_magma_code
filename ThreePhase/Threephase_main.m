@@ -6,18 +6,18 @@ clear;
 
 To_Restart=0;  %set to 1 to restart the simulation from a saved state
 if To_Restart==1
-    Load_data_index=13;  % The restart step to load 
+    Load_data_index=20;  % The restart step to load 
 end
 
 
 
 if To_Restart==0
 
-    Model_setting_threephase_sill_multi_intrustion2;    
-
+    % Model_setting_threephase_sill_multi_intrustion2;    
+    Model_setting_threephase_sill_multi_intrustion3;
     %%    
 %     Plot_configure=  {[1],[19],[5],[8,6,7],[24], [2,3,20],[23], [99]}; 
-
+    
     if running_plot==1
         Plot_settings
         Update_plot
@@ -134,7 +134,7 @@ else
         fileID = fopen('Volatile_leak.txt', 'a');
     end
     running_plot=1;
-    Courant0=9.5e-1;
+    Courant0=6.5e-1;
 %     Plot_configure=  {[1],[19],[5],[8,6,7],[24], [2,3,20],[23], [99]}; 
 
     if running_plot==1
@@ -228,7 +228,7 @@ while Time<End_time
         
         % old_check_buoy_top_km = cellz(all_phi_buoy_top)-nodez(end);
         % old_check_buoy_base_km = cellz(all_phi_buoy_base)-nodez(end);
-       
+        
         Adapt_mesh_3p;
        
         Calculate_capped_values2;
@@ -388,7 +388,7 @@ while Time<End_time
                 for i=1:N
                     P3=Pg_real(i)*100;
                     Saturation=(2.859e-2*P3-1.495e-3*P3.^1.5+2.702e-5*P3.^2+0.257*P3.^0.5);
-                    H2O(i)=H2O(i)/Saturation;
+                    H2O(i)=H2O(i)/Saturation; %%should I do the scaling here????
                 end
             end
             vis_B=vis_b1*SiO2+vis_b2*H2O+vis_b3*log(1+H2O);
@@ -524,8 +524,11 @@ while Time<End_time
             % CLg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,10), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0 0]);
             % CL=CLs+CLl+CLg;
 
-            CUs=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,12), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc,dt, 0,[3,3],0);
-            CUl=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,11), ones(N,1), ones(N,1), u_all(1:N+1)    , kc*10,dt, 0,[3,3],0);
+            % CUs=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,12), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc,dt, 0,[3,3],0);
+            % CUl=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,11), ones(N,1), ones(N,1), u_all(1:N+1)    , kc*10,dt, 0,[3,3],0);
+            % no need to transport anymore for the new Cu and Sul calculation...just for a place holder
+            CUs=Mass_data_old_capped(:,12);
+            CUl=Mass_data_old_capped(:,11);
             % CUg=CV_transport_scaled_v2(dz,Mass_data_old_capped(:,13),ones(N,1), ones(N,1), u_all(2*N+3:3*N+3), kc,dt, 0,[1,2],[rho_ref*phi(1)*S(1)*CU_vol 0]);
             % CUg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,13), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0 0]);
             % CU=CUs+CUl+CUg;      
@@ -554,9 +557,11 @@ while Time<End_time
                 Vg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0, 0]);
             end
         else
-                Vg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0, 0]);
+            Vg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0, 0]);
             CLg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,10), ones(N,1), ones(N,1), zeros(N+1,1), kc3 ,dt, 0,[3,3],[0 0]);
-            CUg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,13), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0 0]);
+
+            % CUg=CV_transport_scaled_one_sided(dz, Mass_data_old_capped(:,13), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0 0]);
+            CUg=Mass_data_old_capped(:,13);
             % CL=CLs+CLl+Mass_data_old_capped(:,10);
         end
         % V=Vs+Vl+Mass_data_old_capped(:,7)+max(Mass_data_old_capped(:,6)-Mass_solid.*S_cap,0);  
@@ -636,6 +641,7 @@ while Time<End_time
         iter_chemical=zeros(N,1);
 
         Tl_local=zeros(N,1);
+        Saturation=zeros(N,1);
         Mass_data_pre=Mass_data;        
         Output_guess=[0,0,0, MM(1), NN(1),V(1),0, 500, S_cap(1)]; 
         K=K0*ones(N,1);
@@ -653,7 +659,7 @@ while Time<End_time
                 else
                     input=[H(1),MM(1),NN(1),V(1)];
                 end
-                [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,~, Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,Pg_real(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+                [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,Pg_real(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
 
                 % [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),Cases(1)]=Phase_component_updated_solid3(H(1),MM(1),NN(1),V(1),Pg_real(1), 500, 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),   rho_constant, Lf, K0, Ts, Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, 1);
                 phi(1:5)=0;
@@ -670,7 +676,7 @@ while Time<End_time
                     else
                         input=[H(i),MM(i),NN(i),V(i)];
                     end
-                    [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,~, Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+                    [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
                     % [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),Cases(i)]=Phase_component_updated_solid3(H(i),MM(i),NN(i),V(i),Pg_real(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, force_solid);
                 end
                 catch
@@ -706,7 +712,7 @@ while Time<End_time
         %     error('sorry, it fucked up..')
         % end
 
-        if Enhanced_convergence==1
+        if Enhanced_convergence==1 
             if iter==Max_iter && Courant>1e-3 && dt>1e-2*Year    
                 Num_non_convergence=Num_non_convergence+1;
                 Courant=Courant/2;
@@ -735,7 +741,21 @@ while Time<End_time
             end
         end
     end
-
+    %post-processings for the new Sulfur and Copper calculations
+    % transport S and Cu
+    CUs=CV_transport_scaled_v2(dz,Mass_data_addition(:,5), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc,dt, 0,[3,3],0);
+    CUl=CV_transport_scaled_v2(dz,Mass_data_addition(:,4), ones(N,1), ones(N,1), u_all(1:N+1)    , kc*10,dt, 0,[3,3],0);
+    CUg=CV_transport_scaled_one_sided(dz, Mass_data_addition(:,6), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0 0]); %may need to update this....
+    CU=CUs+CUl+CUg;
+    
+    Suls=CV_transport_scaled_v2(dz,Mass_data_addition(:,2), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc,dt, 0,[3,3],0);
+    Sull=CV_transport_scaled_v2(dz,Mass_data_addition(:,1), ones(N,1), ones(N,1), u_all(1:N+1)    , kc*10,dt, 0,[3,3],0);
+    Sulg=CV_transport_scaled_one_sided(dz, Mass_data_addition(:,3), ones(N,1), ones(N,1), zeros(N+1,1), kc3,dt, 0,[3,3],[0 0]); %may need to update this....
+    SUL=Suls+Sull+Sulg;
+    
+    S_CU_to_process=1:N;
+    S_Cu_postprocessing;
+    
     if Enhanced_convergence==1
         if iter<Max_iter/5
             Courant=min(Courant*1.03,Courant0);
@@ -774,8 +794,10 @@ while Time<End_time
                 temp=temp./max(V,1e-3)/2;
                 Leak_CU=Leak_CU+sum(CL(vol_cells).*temp(vol_cells).*dz(vol_cells));
                 Leak_CL=Leak_CL+sum(CU(vol_cells).*temp(vol_cells).*dz(vol_cells));
+                Leak_SUL=Leak_SUL+sum(SUL(vol_cells).*temp(vol_cells).*dz(vol_cells));
                 CU(vol_cells)=CU(vol_cells)-CU(vol_cells).*temp(vol_cells);
                 CL(vol_cells)=CL(vol_cells)-CL(vol_cells).*temp(vol_cells);
+                SUL(vol_cells)=SUL(vol_cells)-SUL(vol_cells).*temp(vol_cells);
             end
 
             Leak_H=Leak_H+sum(release.*dz(vol_cells).*T(vol_cells).*cp(vol_cells,3));            
@@ -785,18 +807,20 @@ while Time<End_time
             % MM(vol_cells)=MM(vol_cells)+scale.*release;
             % NN(vol_cells)=NN(vol_cells)+(1-scale).*release;
             for i=1:length(vol_cells)
-                try
+                % try
                     if Add_CLCU==1
                         input=[H(vol_cells(i)),MM(vol_cells(i)),NN(vol_cells(i)),V(vol_cells(i)),CL(vol_cells(i)),CU(vol_cells(i))];
                     else
                         input=[H(vol_cells(i)),MM(vol_cells(i)),NN(vol_cells(i)),V(vol_cells(i))];
                     end
                     [phi(vol_cells(i)),S(vol_cells(i)),T(vol_cells(i)),rho(vol_cells(i),:),~,T_S_region(vol_cells(i),:),Ts_new(vol_cells(i)),Ts_local(vol_cells(i)),Mass_data(vol_cells(i),:),S_cap(vol_cells(i)),Tl_local(vol_cells(i)),~,~,Partition_CL_CU(vol_cells(i),:)]=Phase_component_updated_solid3(input,Pg_real(vol_cells(i)-1),T_old(vol_cells(i)), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(vol_cells(i),:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, max_melt, dz(vol_cells(i)),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS, 0);
-                catch
-                    eval(['save(''Record_error2'  '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
-                    % error('error 2')
-                end
+                % catch
+                %     eval(['save(''Record_error2'  '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
+                %     % error('error 2')
+                % end
             end
+            S_CU_to_process=vol_cells;
+            S_Cu_postprocessing;
         end
         
         Record_vol_time=Record_vol_time+dt;
@@ -910,6 +934,9 @@ while Time<End_time
             end
         end
     end
+
+
+    
 % CAB end
     %% Outputs
 
@@ -1163,7 +1190,7 @@ while Time<End_time
     if Create_video==1 && Time>(video_data_index+1)*Fixed_record_dt0
         video_data_index=video_data_index+1;
         video_data_file_name=['Data' num2str(video_data_index)];
-        save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
+        save(video_data_file_name,'Time','cellz','Mass_data','Mass_data_addition', 'Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
     end
     if isempty(find(T>Ts_local-1,1)) && (Time>injection_time(end-1)|| To_intrude==0 )
         eval(['save(''Record_' num2str(Save_data_index) '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])

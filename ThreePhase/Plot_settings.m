@@ -274,48 +274,61 @@ for i=1:(Plot_size(1)*Plot_size(2))
                 ylim(Show_z)
             case 30
                 Cb_cl=CL./(MM+NN+V+CL+CU);
-                Handel_all{i}(1)=plot(Cb_cl*100,cellz,'linewidth',2.5);
-                Cll=Mass_data(:,8)./sum(Mass_data(:,[1 2 3 8 11]),2)*100;
-                Cls=Mass_data(:,9)./sum(Mass_data(:,[4 5 6 9 12]),2)*100;
-                Clg=Mass_data(:,10)./sum(Mass_data(:,[7 10 13]),2)*100;
-                Handel_all{i}(2)=plot(Cll,Ytick1,'linewidth',2,'visible','off'); %melt
-                Handel_all{i}(3)=plot(Cls,Ytick1,'linewidth',1.5,'visible','off'); %solid
-                Handel_all{i}(4)=plot(Clg,Ytick1,'linewidth',1.5,'visible','off'); %volatile
+                Handel_all{i}(1)=plot(Cb_cl*100,Ytick1,'linewidth',2.5);
+                % Cll=Mass_data(:,8)./sum(Mass_data(:,[1 2 3 8]),2)*100;
+                % Cls=Mass_data(:,9)./sum(Mass_data(:,[4 5 6 9]),2)*100;
+                % Clg=Mass_data(:,10)./sum(Mass_data(:,[7 10]),2)*100;
+                % Handel_all{i}(2)=plot(Cll,Ytick1,'linewidth',2,'visible','on'); %melt
+                % Handel_all{i}(3)=plot(Cls,Ytick1,'linewidth',1.5,'visible','on'); %solid
+                % Handel_all{i}(4)=plot(Clg,Ytick1,'linewidth',1.5,'visible','on'); %volatile
                 xlabel('Cl (%)','fontsize',Font_Size)
                 yticklabels({})
-                xlim([0 20])
+                xlim([-0.1 15])
                 ylim(Show_z)    
                 ax_extra=axes('Position',get(ha(i),'Position'),'XAxisLocation','top','Color','none','XColor','b','YColor','none');
                 hold on;
                 x=ones(N,1);%Partition_CL_CU(:,1);
 %                 x(not_vol)=nan;
                 ylim(Show_z)
-                Handel_all{i}(5)=plot(ax_extra,x,Ytick1,'--','linewidth',1.5,'Parent',ax_extra,'color','b'); %D_cl
-                legend(ax_extra,[Handel_all{i}],{'$$\bar{C}_{Cl}$$','$$C_{Cl_l}$$','$$C_{Cl_s}$$','$$C_{Cl_g}$$','$$D^{g/l}_{Cl}$$'},'interpreter','Latex','fontsize',Font_Size)
-                xlabel('D_{Cl}^{g/l} (-)','fontsize',Font_Size)
-                xlim([0 110])
+                % Handel_all{i}(5)=plot(ax_extra,x,Ytick1,'--','linewidth',1.5,'Parent',ax_extra,'color','b'); %D_cl
+                % legend(ax_extra,[Handel_all{i}],{'$$\bar{C}_{Cl}$$','$$C_{Cl_l}$$','$$C_{Cl_s}$$','$$C_{Cl_g}$$','$$D^{g/l}_{Cl}$$'},'interpreter','Latex','fontsize',Font_Size)
+                % xlabel('D_{Cl}^{g/l} (-)','fontsize',Font_Size)
+                % xlim([0 110])
             case 31
                 Cb_cu=CU./(MM+NN+V+CL+CU);
-                Handel_all{i}(1)=plot(Cb_cu*100,cellz,'linewidth',2.5);
-                Cul=Mass_data(:,11)./sum(Mass_data(:,[1 2 3 8 11]),2)*100;
-                Cus=Mass_data(:,12)./sum(Mass_data(:,[4 5 6 9 12]),2)*100;
-                Cug=Mass_data(:,13)./sum(Mass_data(:,[7 10 13]),2)*100;
-                Handel_all{i}(2)=plot(Cul,Ytick1,'linewidth',2,'visible','off'); %melt
-                Handel_all{i}(3)=plot(Cus,Ytick1,'linewidth',1.5,'visible','off'); %solid
-                Handel_all{i}(4)=plot(Cug,Ytick1,'linewidth',1.5,'visible','off'); %volatile
+                Handel_all{i}(1)=plot(Cb_cu*100,Ytick1,'linewidth',2.5);
+                % Cul=Mass_data(:,11)./sum(Mass_data(:,[1 2 3 8]),2)*100;
+                % Cus=Mass_data(:,12)./sum(Mass_data(:,[4 5 6 9]),2)*100;
+                % Cug=Mass_data(:,13)./sum(Mass_data(:,[7 10 ]),2)*100;
+                % Handel_all{i}(2)=plot(Cul,Ytick1,'linewidth',2,'visible','off'); %melt
+                % Handel_all{i}(3)=plot(Cus,Ytick1,'linewidth',1.5,'visible','off'); %solid
+                % Handel_all{i}(4)=plot(Cug,Ytick1,'linewidth',1.5,'visible','off'); %volatile
                 xlabel('Cu (%)','fontsize',Font_Size)
                 yticklabels({})
-                xlim([0 13])
+                xlim([-0.002 0.05])
                 ylim(Show_z)
-                ax_extra=axes('Position',get(ha(i),'Position'),'XAxisLocation','top','Color','none','XColor','b','YColor','none');
-                hold on;
+%                 ax_extra=axes('Position',get(ha(i),'Position'),'XAxisLocation','top','Color','none','XColor','b','YColor','none');
+%                 hold on;
+%                 ylim(Show_z)
+%                 x=ones(N,1);%Partition_CL_CU(:,2);
+% %                 x(not_vol)=nan;
+%                 Handel_all{i}(5)=plot(ax_extra,x,Ytick1,'--','linewidth',1.5,'Parent',ax_extra,'color','b'); %D_cl
+%                 legend(ax_extra,[Handel_all{i}],{'$$\bar{C}_{Cu}$$','$$C_{Cu_l}$$','$$C_{Cu_s}$$','$$C_{Cu_g}$$','$$D^{g/l}_{Cu}$$'},'interpreter','Latex','fontsize',Font_Size)
+%                 xlabel('D_{Cu}^{g/l} (-)','fontsize',Font_Size)
+%                 xlim([20 250])
+            case 32
+                Cb_sul=SUL./(MM+NN+V+CL+CU+SUL);
+                Handel_all{i}(1)=plot(Cb_sul*100,Ytick1,'linewidth',2.5);
+                % sull=Mass_data(:,11)./sum(Mass_data(:,[1 2 3 8]),2)*100;
+                % suls=Mass_data(:,12)./sum(Mass_data(:,[4 5 6 9]),2)*100;
+                % sulg=Mass_data(:,13)./sum(Mass_data(:,[7 10 ]),2)*100;
+                % Handel_all{i}(2)=plot(Cul,Ytick1,'linewidth',2,'visible','off'); %melt
+                % Handel_all{i}(3)=plot(Cus,Ytick1,'linewidth',1.5,'visible','off'); %solid
+                % Handel_all{i}(4)=plot(Cug,Ytick1,'linewidth',1.5,'visible','off'); %volatile
+                xlabel('Sulfur (%)','fontsize',Font_Size)
+                yticklabels({})
+                xlim([-0.01 0.5])
                 ylim(Show_z)
-                x=ones(N,1);%Partition_CL_CU(:,2);
-%                 x(not_vol)=nan;
-                Handel_all{i}(5)=plot(ax_extra,x,Ytick1,'--','linewidth',1.5,'Parent',ax_extra,'color','b'); %D_cl
-                legend(ax_extra,[Handel_all{i}],{'$$\bar{C}_{Cu}$$','$$C_{Cu_l}$$','$$C_{Cu_s}$$','$$C_{Cu_g}$$','$$D^{g/l}_{Cu}$$'},'interpreter','Latex','fontsize',Font_Size)
-                xlabel('D_{Cu}^{g/l} (-)','fontsize',Font_Size)
-                xlim([20 250])
             case 50
                 if melt_viscosity_type==0
                     %old melt viscosity model

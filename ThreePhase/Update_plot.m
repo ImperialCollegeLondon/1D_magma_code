@@ -183,24 +183,36 @@ for i=1:(Plot_size(1)*Plot_size(2))
                 Cls=Mass_data(:,9)./sum(Mass_data(:,[4 5 6 9 12]),2)*100;
                 Clg=Mass_data(:,10)./sum(Mass_data(:,[7 10 13]),2)*100;
                 set(Handel_all{i}(1), 'xdata',Cb_cl,'ydata',Ytick1);
-                set(Handel_all{i}(2), 'xdata',Cll,'ydata',Ytick1);
-                set(Handel_all{i}(3), 'xdata',Cls,'ydata',Ytick1);
-                set(Handel_all{i}(4), 'xdata',Clg,'ydata',Ytick1);
-                x=Partition_CL_CU(:,1);
-                x(not_vol)=nan;
-                set(Handel_all{i}(5), 'xdata',x,'ydata',Ytick1);      
+                % set(Handel_all{i}(2), 'xdata',Cll,'ydata',Ytick1);
+                % set(Handel_all{i}(3), 'xdata',Cls,'ydata',Ytick1);
+                % set(Handel_all{i}(4), 'xdata',Clg,'ydata',Ytick1);
+                % x=Partition_CL_CU(:,1);
+                % x(not_vol)=nan;
+                % set(Handel_all{i}(5), 'xdata',x,'ydata',Ytick1);      
             case 31
                 Cb_cu=CU./(MM+NN+V+CL+CU)*100;
-                Cul=Mass_data(:,11)./sum(Mass_data(:,[1 2 3 8 11]),2)*100;
-                Cus=Mass_data(:,12)./sum(Mass_data(:,[4 5 6 9 12]),2)*100;
-                Cug=Mass_data(:,13)./sum(Mass_data(:,[7 10 13]),2)*100;
+                % Cul=Mass_data(:,11)./sum(Mass_data(:,[1 2 3 8 11]),2)*100;
+                % Cus=Mass_data(:,12)./sum(Mass_data(:,[4 5 6 9 12]),2)*100;
+                % Cug=Mass_data(:,13)./sum(Mass_data(:,[7 10 13]),2)*100;
                 set(Handel_all{i}(1), 'xdata',Cb_cu,'ydata',Ytick1);
-                set(Handel_all{i}(2), 'xdata',Cul,'ydata',Ytick1);
-                set(Handel_all{i}(3), 'xdata',Cus,'ydata',Ytick1);
-                set(Handel_all{i}(4), 'xdata',Cug,'ydata',Ytick1);
-                x=Partition_CL_CU(:,2);
-                x(not_vol)=nan;
-                set(Handel_all{i}(5), 'xdata',x,'ydata',Ytick1);   
+                % set(Handel_all{i}(2), 'xdata',Cul,'ydata',Ytick1);
+                % set(Handel_all{i}(3), 'xdata',Cus,'ydata',Ytick1);
+                % set(Handel_all{i}(4), 'xdata',Cug,'ydata',Ytick1);
+                % x=Partition_CL_CU(:,2);
+                % x(not_vol)=nan;
+                % set(Handel_all{i}(5), 'xdata',x,'ydata',Ytick1);   
+            case 32
+                Cb_sul=SUL./(MM+NN+V+CL+CU)*100;
+                % Cul=Mass_data(:,11)./sum(Mass_data(:,[1 2 3 8 11]),2)*100;
+                % Cus=Mass_data(:,12)./sum(Mass_data(:,[4 5 6 9 12]),2)*100;
+                % Cug=Mass_data(:,13)./sum(Mass_data(:,[7 10 13]),2)*100;
+                set(Handel_all{i}(1), 'xdata',Cb_sul,'ydata',Ytick1);
+                % set(Handel_all{i}(2), 'xdata',Cul,'ydata',Ytick1);
+                % set(Handel_all{i}(3), 'xdata',Cus,'ydata',Ytick1);
+                % set(Handel_all{i}(4), 'xdata',Cug,'ydata',Ytick1);
+                % x=Partition_CL_CU(:,2);
+                % x(not_vol)=nan;
+                % set(Handel_all{i}(5), 'xdata',x,'ydata',Ytick1);   
             case 50
                 if melt_viscosity_type==0
                     %old melt viscosity model

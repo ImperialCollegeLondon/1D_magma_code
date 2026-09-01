@@ -98,8 +98,11 @@ if ~isempty(idx)
 
 
     Mass_data_removed = Mass_data(melt_base:melt_top,:);
+    
     %av_Mass_data_T = mean(Mass_data_removed);
     Mass_data(melt_base:melt_top,:)=[];
+
+    Mass_data_addition(melt_base:melt_top,:)=[];
 
     H_removed = H(melt_base:melt_top);
     %av_H_T = mean(H_removed);
@@ -195,6 +198,8 @@ if ~isempty(idx)
 
         %Massdata
         Mass_data=[Mass_data(1:depth_int_N_c,:);   av_Mass_data_T.*ones(Thick_melt_int,1); Mass_data(depth_int_N_c+1:end,:)];
+
+        Mass_data_addition=[Mass_data_addition(1:depth_int_N_c,:);   av_mass_addition.*ones(Thick_melt_int,1); Mass_data_addition(depth_int_N_c+1:end,:)];
 
         %Enthalpy
         H = [H(1:depth_int_N_c); av_H_T.*ones(Thick_melt_int,1);H(depth_int_N_c+1:end)];

@@ -30,6 +30,7 @@ rho=[rho(1:Start_depthN_c,:);   Sillrho.*ones(SillNodez,1); rho(Start_depthN_c+1
 
 %Massdata
 Mass_data=[Mass_data(1:Start_depthN_c,:);   SillMass.*ones(SillNodez,1); Mass_data(Start_depthN_c+1:end,:)];
+Mass_data_addition=[Mass_data_addition(1:Start_depthN_c,:);   SillMass_addition.*ones(SillNodez,1); Mass_data_addition(Start_depthN_c+1:end,:)];
 
 %Enthalpy
 H = [H(1:Start_depthN_c); SillH.*ones(SillNodez,1);H(Start_depthN_c+1:end)];

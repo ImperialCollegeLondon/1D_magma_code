@@ -86,6 +86,8 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
 
                 Mass_data(i-deleted-1,:)=(Mass_data(i-deleted-1,:)*dz(i-deleted-1)+Mass_data(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
 
+                Mass_data_addition(i-deleted-1,:)=(Mass_data_addition(i-deleted-1,:)*dz(i-deleted-1)+Mass_data_addition(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
+
                 OG_Cb(i-deleted-1,:)=(OG_Cb(i-deleted-1,:)*dz(i-deleted-1)+OG_Cb(i-deleted,:)*dz(i-deleted))/(dz(i-deleted-1)+dz(i-deleted));
 
                 %                 [phi(i-deleted-1),T(i-deleted-1),C_all(i-deleted-1), C_all(i-deleted*2-1+N), ~]=poro_component_solve(Cb(i-deleted-1), H(i-deleted-1),A1, B1, C1, A2, B2, C2, ae, Lf, rhof, cp,Precision);
@@ -127,6 +129,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                     S_cap(i-deleted)=[];
                 end
                 Mass_data(i-deleted,:)=[];
+                Mass_data_addition(i-deleted,:)=[];
                 OG_Cb(i-deleted,:)=[];
                 % if N_component==5 || Add_CLCU==1
                 %     Partition_CL_CU(i-deleted,:)=[];
@@ -197,6 +200,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
                 %             X=(Cb(i-1+added)*insert_node-grad*insert_node*(insert_node-1)/2)/insert_node;
                 %             Cb=[Cb(1:i-2+added);  linspace(X,X+(insert_node-1)*grad, insert_node)';   Cb(i+added:end)];
                 Mass_data=[Mass_data(1:i-2+added,:);  ones(insert_node,1)*Mass_data(i-1+added,:);   Mass_data(i+added:end,:)];
+                Mass_data_addition=[Mass_data_addition(1:i-2+added,:);  ones(insert_node,1)*Mass_data_addition(i-1+added,:);   Mass_data_addition(i+added:end,:)];
                 OG_Cb=[OG_Cb(1:i-2+added,:);  ones(insert_node,1)*OG_Cb(i-1+added,:);   OG_Cb(i+added:end,:)];
                 if N_component==5 || Add_CLCU==1
                     % Partition_CL_CU=[Partition_CL_CU(1:i-2+added,:); ones(insert_node,1)*Partition_CL_CU(i-1+added,:); Partition_CL_CU(i+added:end,:)];

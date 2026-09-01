@@ -9,8 +9,8 @@ function [av_rho_T, av_Mass_data_T, av_H_T, av_T_T, av_Ts_local_T, av_phi_T, av_
 % met
 
 %% Average porosity
-av_phi_T = mean(phi(melt_base:melt_top));
-
+av_phi_T = mean(phi(melt_base:melt_top))
+;
 
 
 %% Average volatile fraction
@@ -44,7 +44,6 @@ if Add_CLCU==1
    u1_T = mean(Mass_data(melt_base:melt_top,11));
    u2_T = mean(Mass_data(melt_base:melt_top,12));
    u3_T = mean(Mass_data(melt_base:melt_top,13));
-
 end
 
 
