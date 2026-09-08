@@ -214,4 +214,4 @@ set(gca,'FontSize',Font)
 subplot(3,3,9)
 axis off
 % text(0.1,0.5,[num2str(Fitting_order) ' order least-squares fits'],'FontSize',12)
-
+save('Oxides_coefficients.mat','Oxides_coefficients');
