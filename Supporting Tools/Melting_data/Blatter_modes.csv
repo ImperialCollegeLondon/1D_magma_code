@@ -1,0 +1,7 @@
+Run,Temperature (°C),Pressure (MPa),Glass,Clinopyroxene,Orthopyroxene ,Plagioclase,Hornblende ,Magnetite ,Ilmenite ,Olivine,Chromium Spinel ,Vapor 
+2370,950,700,12,6,5,30,45,2,0,0,0,6
+2376,975,700,17,9,7,27,39,1,0,0,0,1
+2387,1000,700,20,11,12,28,27,2,0,0,0,0
+2388,1025,700,36,16,9,22,14,3,0,0,0,0
+2374,1050,700,51,20,0,20,0,2,0,7,0,0
+2379,1100,700,79,15,0,3,0,0,0,3,0,0

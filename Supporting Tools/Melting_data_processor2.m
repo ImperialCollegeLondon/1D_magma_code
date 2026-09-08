@@ -1,8 +1,6 @@
 Papers={'Blatter', 'Blatter2','Alonso','Melekhova','Nandedkar','Sisson'};
 
-% Folder='/media/hh210/data/Matlab_Workplace/CV_1D_twophase/1D_threephase/Draw/Melting_data/';
-% Folder='D:\1D_magma_code\1D_threephase\Draw\Melting_data\';
-Folder='D:\Workspace\CV_1D_twophase\1D_threephase\Draw\Melting_data\';
+Folder='Melting_data\';
 
 
 Index=0;
