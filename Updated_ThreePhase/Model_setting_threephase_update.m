@@ -49,11 +49,21 @@ warning('off') % this turns off warnings MATLAB may output, turn warnings on for
 File_echo = fopen('echo_screen.txt','w');
 
 
-%% Flags that cannot be user changed at this moment
+%% Flags/inputs that cannot be user changed at this moment
 % Conservation type - 1 for mass conservation, 2 for volume conservation
 Conservation_type=2; % currently unsure if mass conservation works
+
 % 1: Three phase solver, 2: Two phase solver
 Velocity_solver_type=2; % we do not model the volatile phase, so the two phase solver is appropriate. 
+
+% Below are the boundary conditions that are used in transport function
+% files such as CV_transport and enthalpy, currently set as fixed boundary.
+% The other boundary condition is flux/conservative. However, this may not
+% work.
+BC_type=[3,3];
+BC_value=[0,0];
+
+
 
 %% Outputting the choices made 
 % Outputting the choices made via the flags in the input files. 
@@ -109,6 +119,8 @@ else
 
 end
 
+% Melt density type either 0 for melt density dependent only on SiO2 or 1
+% for melt density dependent on H2O and SiO2
 if Melt_density_type==1
     disp('Melt density relationship dependent on H2O and SiO2, solid density dependent on SiO2')
     fprintf(File_echo, '%s \n', 'Melt density relationship dependent on H2O and SiO2, solid density dependent on SiO2');
@@ -116,6 +128,17 @@ if Melt_density_type==1
 else
     disp('Melt density indepedent of H2O and dependent on SiO2, solid density dependent on SiO2')
     fprintf(File_echo, '%s \n', 'Melt density indepedent of H2O and dependent on SiO2, solid density dependent on SiO2');
+
+end
+
+% To_evacuate - turn on magma moving through crust
+if To_evacuate==1
+    disp('Magma evacuation from the reservoir is turned on')
+    fprintf(File_echo, '%s \n', 'Magma evacuation from the reservoir is turned on');
+
+else
+    disp('Magma evacuation from the reservoir is turned off')
+    fprintf(File_echo, '%s \n', 'Magma evacuation from the reservoir is turned off');
 
 end
 
@@ -224,7 +247,129 @@ rhom_1=(y2-y1)/(x2-x1)*(PD_range_max-x1)+y1; %Density solid, most evolved
 
 
 %% Density
-rho_constant=[rhof_1, rhof_2; rhom_1, rhom_2];
+rho_constant=[rhof_1, rhof_2; rhom_1, rhom_2]; % NEED TO ADD COMMENT HERE
+
+%% Thermal parameters
+%Latent heat of [evolved refractory]
+Lf=[Lf_evolved  Lf_refrac];  
+
+%Heat capacity of [evolved refractory water]
+cp0=[cp_evolved cp_refrac cp_water];   
+
+%Thermal difusivity for [evolved refractory]
+kt0=[kt_evolved kt_refrac]/rho_mean; %rho_mean used as the boussinesq approximation is applied      
+
+
+%% Chemical model
+%defining B1 for the chemical model
+B1=B1_T-C1-A1;
+
+%restructuring chemical model inputs
+a1=A1/(-A1-B1); b1=B1/(-A1-B1); c1=1;
+
+%Minimum solidus 
+Ts=A1+B1+C1; %define solidus
+%Liquidus
+Tl=C1; % define liquidus
+
+% Sets up the Jacobian, RHS, constant index and Extra_func (if Add_CLCU=1
+% or simplified_5p=1) as a function_handle
+chemical_solver_loader;
+
+load('Oxides_coefficients.mat') %NO COMMENT need to figure out what this is for.
+
+
+%% H2O dependancy for solidus and liquidus 
+% Data is from Holtz 2001 and Lambert & Wylie 1972
+
+%Possible data Haiyang used:
+%(0,0)    : (57,326)
+%(1200,0) : (455,326)
+%(0,8000) : (57,70)
+% from 8000 bar to 0 bar, water 13% to 0 %
+%           13  12  11  10    9     8     7    6     5    4    3    2   1     0
+
+% DATA:
+Data_point=[80, 83, 86, 91, 100,  115,  135, 164,  196, 230, 267, 307, 355, 401;... %70
+             0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;... %102
+             0,  0, 84,87.5,95.5,108.5,126, 151.5, 180, 211, 243, 280, 329, 375;... %134
+             0,  0, 0,   86, 93, 105,  121, 144,   170, 199, 230, 266, 316, 362;... %166
+             0,  0, 0,    0,90.5,100,  115, 136,   159, 186, 217, 252, 302, 349;... %198
+             0,  0, 0,    0,   0, 95,  109, 128.5, 150, 176, 205, 241, 291, 339;... %223
+             0,  0, 0,    0,   0,  0,  103, 120,   141, 165, 194, 230, 280, 328;... %248
+             0,  0, 0,    0,   0,  0,    0, 113,  133.5,155.5,185,220, 270, 320;... %268
+             0,  0, 0,    0,   0,  0,    0,   0,   127,146.5,176, 211.5,261,313;... %285
+             0,  0, 0,    0,   0,  0,    0,   0,     0, 141, 170, 206, 256, 309;... %295
+             0,  0, 0,    0,   0,  0,    0,   0,     0,   0, 164, 200, 250, 305;... %305
+             0,  0, 0,    0,   0,  0,   0,    0,     0,   0,   0, 194, 244, 301;... %316
+             0,  0, 0,    0,   0,  0,   0,    0,     0,    0,  0,   0, 240, 298;... %322
+             0,  0,  0,   0,   0,  0,    0,   0,     0,   0,   0,   0,   0, 297];   %326   
+Data_y=[70, 102,134,166,198,223,248,268,285,295,305,316,322,326];
+Data_y=8000-(Data_y-70)*8000/(326-70);
+Data_point=(Data_point-57)*(1200-600)/(455-57)+600;
+%
+% Again possible data Haiyang used
+% (0,0) (61,738)
+% (0,1700) (838,738)
+% (0,40000) (61 33)
+%             20   10    5   2    0
+
+% DATA 2
+Data_point2=[358, 428,  512, 586, 699;...%120
+             321, 397,  477, 547, 653;...%208
+             288, 369,  443, 508, 604;...%297
+             274, 351,  412, 473, 558;...%390
+               0, 340,  391, 447, 517;...%473
+               0, 332,  379, 427, 477;...%561
+               0, 329,  376, 420, 462;...%596
+               0,   0,  374, 414, 438;...%691
+               0,   0,    0, 413, 436;...%728
+               0,   0,    0,   0, 436];...%738  
+Data_y2=[120,208,297,390,473,561,596,691,728,738];               
+Data_y2=40000-(Data_y2-120)*40000/(738-120);
+Data_point2=(Data_point2-61)*(1700-800)/(838-61)+800;
+
+
+
+%% Set up domain and depths
+
+% Calculate lengths between areas where we need small nodes to be
+% present. They are: 
+%                   (1) the injection depth of the sill: Injection_depth_km. 
+%                   (2) the depth magma wil evacuate to (mid-crust):
+%                   Evac_intrusion_middepth_km
+%                   (3) the depth magma will evacuate to (upper-crust):
+%                   Evac_intrusion_upperdepth_km
+
+%Convert the small node depths to m
+Injection_depth_m = Injection_depth_km*1000;
+Evac_intrusion_middepth_m = Evac_intrusion_middepth_km*1000;
+Evac_intrusion_upperdepth_m = Evac_intrusion_upperdepth_km*1000;
+
+%Convert important depths from km to m
+base_crust_m = base_crust_km*1000;
+
+%Calculate the lengths
+if To_evacuate==0 % no evacuations
+    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio; %Below sill intrusion depth to crust
+    Length1 = (-Injection_depth_m)+Sill_length*fine_ratio; % Above sill intrusion depth to surface
+else %evacuations
+    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio; %Below sill intrusion depth to crust
+    Length1 = (Evac_intrusion_middepth_m-Injection_depth_m)+Sill_length*fine_ratio; %Above sill intrusion depth to evacuated magma mid intrusion depth
+    Length2 = (Evac_intrusion_upperdepth_m-Evac_intrusion_middepth_m)-Sill_length*fine_ratio; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
+    Length3 = -Evac_intrusion_upperdepth_m+Sill_length*fine_ratio; %evacuated upper intrusion depth to surface
+end
+
+
+Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2];  %intruded sill position
+
+
+
+
+
+
+Last_adapted=0;
+
 
 
 
@@ -336,7 +481,7 @@ mug=5; % DELETE
 %beta
 % 18: 5e-5
 % 17: 2.2e-4
-ref_shear=1e17;
+%ref_shear=1e17;
 % epsilon=2.2e-4;
 % epsilon=1e-2;
 
@@ -406,130 +551,130 @@ ref_shear=1e17;
 %rho_mean=2800; %the value used when volumn conservation/Bossinessq approximation is used 
 %%%%%%  
 %% Thermal parameters
-Lf=[350e3   600e3];  %Latent heat of component A and B
+%Lf=[350e3   600e3];  %Latent heat of component A and B
 
-cp0=[1100 1100 1100];   %Heat capacity of [component A, B, water]
-kt0=[2.5, 1.5]/rho_mean;      %Thermal difusivity for component A B
+%cp0=[1100 1100 1100];   %Heat capacity of [component A, B, water]
+%kt0=[2.5, 1.5]/rho_mean;      %Thermal difusivity for component A B
 
-kc0=mean(kt0)*1e-7;
-kc20=mean(kt0)*1e-7*1;
+%kc0=mean(kt0)*1e-7;
+%kc20=mean(kt0)*1e-7*1;
 
 % kc0=1e-12;        %Chemical diffusivity for SiO2
 % kc20=1e-10;        %Chemical diffusivity for H2O
 
-BC_type=[3,3];
-BC_value=[0,0];
+%BC_type=[3,3];
+%BC_value=[0,0];
 %% State equation data -% paper based huber
-aa=[-112.528, 127.811, 112.04];
-bb=[-0.381, -1.135, -0.411];
-cc=[0.033, 0, 0];
+aa=[-112.528, 127.811, 112.04]; %DELETE - VISCOSITY DENSITY
+bb=[-0.381, -1.135, -0.411]; % DELETE - VISCOSITY DENSITY
+cc=[0.033, 0, 0]; % DELETE - VISCOSITY DENSITY 
 
 %% Phase diagram parameters  
-A1=-99.6;  C1=1160; B1=760-C1-A1;
+%A1=-99.6;  C1=1160; B1=760-C1-A1;
 
-a1=A1/(-A1-B1); b1=B1/(-A1-B1); c1=1; %-a1-b1;
+%a1=A1/(-A1-B1); b1=B1/(-A1-B1); c1=1; %-a1-b1;
 % A1=50; B1=-360; C1=1433.15-273.15; %Matt paper
-A2=0; B2=0; C2=0; ae=1;  
-Ts=A1+B1+C1;
-Tl=C1;
+%A2=0; B2=0; C2=0; ae=1;  
+%Ts=A1+B1+C1;
+%Tl=C1;
 
-is_solid_solution=1; 
-simplified_TS=1; % simplified solidus shape, then alpha =1;
+is_solid_solution=1; %DELETE 
+%simplified_TS=1; % Simplified solidus shape, then alpha =1;
 if N_component==5
-    simplified_5p=1;
+    simplified_5p=1; %DELETE
 else
-    simplified_5p=0;
+    simplified_5p=0; %DELETE
 end
-n_order=40;  % the order for T=(a2*(1-x).^n+(1-a2)*(1-x.^(1/n)))*(Tl-Ts)+Ts;
-alpha_order=1;
+%n_order=40;  % the order for T=(a2*(1-x).^n+(1-a2)*(1-x.^(1/n)))*(Tl-Ts)+Ts;
+%alpha_order=1;
 
 % [Jacobians,Rhs,Constant_index ]=chemical_solver_initiator(is_solid_solution, 3, simplified_TS, simplified_5p);   %For initialize the Jacobion, must remove for compiling
-chemical_solver_loader;
-load('Oxides_coefficients.mat')
+%chemical_solver_loader;
+%load('Oxides_coefficients.mat')
 %% H2O dependancy for solidus and liquidus - % paper based 
 %(0,0)    : (57,326)
 %(1200,0) : (455,326)
 %(0,8000) : (57,70)
 % from 8000 bar to 0 bar, water 13% to 0 %
 %           13  12  11  10    9     8     7    6     5    4    3    2   1     0
-Data_point=[80, 83, 86, 91, 100,  115,  135, 164,  196, 230, 267, 307, 355, 401;... %70
-             0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;... %102
-             0,  0, 84,87.5,95.5,108.5,126, 151.5, 180, 211, 243, 280, 329, 375;... %134
-             0,  0, 0,   86, 93, 105,  121, 144,   170, 199, 230, 266, 316, 362;... %166
-             0,  0, 0,    0,90.5,100,  115, 136,   159, 186, 217, 252, 302, 349;... %198
-             0,  0, 0,    0,   0, 95,  109, 128.5, 150, 176, 205, 241, 291, 339;... %223
-             0,  0, 0,    0,   0,  0,  103, 120,   141, 165, 194, 230, 280, 328;... %248
-             0,  0, 0,    0,   0,  0,    0, 113,  133.5,155.5,185,220, 270, 320;... %268
-             0,  0, 0,    0,   0,  0,    0,   0,   127,146.5,176, 211.5,261,313;... %285
-             0,  0, 0,    0,   0,  0,    0,   0,     0, 141, 170, 206, 256, 309;... %295
-             0,  0, 0,    0,   0,  0,    0,   0,     0,   0, 164, 200, 250, 305;... %305
-             0,  0, 0,    0,   0,  0,   0,    0,     0,   0,   0, 194, 244, 301;... %316
-             0,  0, 0,    0,   0,  0,   0,    0,     0,    0,  0,   0, 240, 298;... %322
-             0,  0,  0,   0,   0,  0,    0,   0,     0,   0,   0,   0,   0, 297];   %326   
-Data_y=[70, 102,134,166,198,223,248,268,285,295,305,316,322,326];
-Data_y=8000-(Data_y-70)*8000/(326-70);
-Data_point=(Data_point-57)*(1200-600)/(455-57)+600;
+%Data_point=[80, 83, 86, 91, 100,  115,  135, 164,  196, 230, 267, 307, 355, 401;... %70
+ %            0, 82, 85,90, 98, 111.5,130.5,158,  189, 220, 255, 293, 343, 388;... %102
+  %           0,  0, 84,87.5,95.5,108.5,126, 151.5, 180, 211, 243, 280, 329, 375;... %134
+   %          0,  0, 0,   86, 93, 105,  121, 144,   170, 199, 230, 266, 316, 362;... %166
+    %         0,  0, 0,    0,90.5,100,  115, 136,   159, 186, 217, 252, 302, 349;... %198
+     %        0,  0, 0,    0,   0, 95,  109, 128.5, 150, 176, 205, 241, 291, 339;... %223
+     %        0,  0, 0,    0,   0,  0,  103, 120,   141, 165, 194, 230, 280, 328;... %248
+      %       0,  0, 0,    0,   0,  0,    0, 113,  133.5,155.5,185,220, 270, 320;... %268
+       %      0,  0, 0,    0,   0,  0,    0,   0,   127,146.5,176, 211.5,261,313;... %285
+        %     0,  0, 0,    0,   0,  0,    0,   0,     0, 141, 170, 206, 256, 309;... %295
+        %     0,  0, 0,    0,   0,  0,    0,   0,     0,   0, 164, 200, 250, 305;... %305
+         %    0,  0, 0,    0,   0,  0,   0,    0,     0,   0,   0, 194, 244, 301;... %316
+         %    0,  0, 0,    0,   0,  0,   0,    0,     0,    0,  0,   0, 240, 298;... %322
+         %    0,  0,  0,   0,   0,  0,    0,   0,     0,   0,   0,   0,   0, 297];   %326   
+%Data_y=[70, 102,134,166,198,223,248,268,285,295,305,316,322,326];
+%Data_y=8000-(Data_y-70)*8000/(326-70);
+%Data_point=(Data_point-57)*(1200-600)/(455-57)+600;
 %
 % (0,0) (61,738)
 % (0,1700) (838,738)
 % (0,40000) (61 33)
 %             20   10    5   2    0
-Data_point2=[358, 428,  512, 586, 699;...%120
-             321, 397,  477, 547, 653;...%208
-             288, 369,  443, 508, 604;...%297
-             274, 351,  412, 473, 558;...%390
-               0, 340,  391, 447, 517;...%473
-               0, 332,  379, 427, 477;...%561
-               0, 329,  376, 420, 462;...%596
-               0,   0,  374, 414, 438;...%691
-               0,   0,    0, 413, 436;...%728
-               0,   0,    0,   0, 436];...%738  
-Data_y2=[120,208,297,390,473,561,596,691,728,738];               
-Data_y2=40000-(Data_y2-120)*40000/(738-120);
-Data_point2=(Data_point2-61)*(1700-800)/(838-61)+800;
+%Data_point2=[358, 428,  512, 586, 699;...%120
+%             321, 397,  477, 547, 653;...%208
+ %            288, 369,  443, 508, 604;...%297
+  %           274, 351,  412, 473, 558;...%390
+   %            0, 340,  391, 447, 517;...%473
+    %           0, 332,  379, 427, 477;...%561
+     %          0, 329,  376, 420, 462;...%596
+      %         0,   0,  374, 414, 438;...%691
+       %        0,   0,    0, 413, 436;...%728
+        %       0,   0,    0,   0, 436];...%738  
+%Data_y2=[120,208,297,390,473,561,596,691,728,738];               
+%Data_y2=40000-(Data_y2-120)*40000/(738-120);
+%Data_point2=(Data_point2-61)*(1700-800)/(838-61)+800;
 %% Domain
 % CAB
-Length01=4700;
-Length0=9700;
-Length1=14700;
-Length2=8300;
+%Length01=4700;
+%Length0=9700;
+%Length1=14700;
+%Length2=8300;
 % CAB end
 
-Sill_length=50;
-margin=0;
-fine_ratio=3;  %fine meshed region, in comparison with the size of the initial sill region
+%Sill_length=50;
+%margin=0;
+%fine_ratio=3;  %fine meshed region, in comparison with the size of the initial sill region
 Show_z=[Length2 Length2+Sill_length*fine_ratio];
-Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2];  %intruded sill position
+%Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2];  %intruded sill position
 min_show_range=Show_z(2)-Show_z(1);
 
 % define the meshing and mesh adaptivity
-Adaptive_mesh=1;     % set to one to turn on the adaptive meshing.
-Adaptive_step_gap0=10; %frequency of mesh adaptivity done
-Adaptive_step_time=1*Year; %minimal time gap before the new adaptation
-max_adaptive_number=1;
+%Adaptive_mesh=1;     % set to one to turn on the adaptive meshing.
+%Adaptive_step_gap0=10; %frequency of mesh adaptivity done
+%Adaptive_step_time=1*Year; %minimal time gap before the new adaptation
+%max_adaptive_number=1;
 
-min_dx=5;   % minimal cell length
-max_dx=500; % maximum cell length
-min_N=100;  % minimal number of allowed cells
-max_N=8000; % maximum number of allowed cells
-aspect_ratio=2.3; % maximum change ratio between adjacent cells,
-
-
-dphi_max=3e-2; %targeting change of melt fraction in one cell.
-dphi_min=4e-3; %when mesh needs to be coarse.=1e-2
-
-phi_threshold=0.75;
-phi_threshold2=0.15;
-
-dS_max=1e-2;
-dS_min=5e-3;
-
-dMNV_min=20;    %change of MNV 
-dMNV_max=30;
+%min_dx=5;   % minimal cell length
+%max_dx=500; % maximum cell length
+%min_N=100;  % minimal number of allowed cells
+%max_N=8000; % maximum number of allowed cells
+%aspect_ratio=2.3; % maximum change ratio between adjacent cells,
 
 
-Last_adapted=0;
-Adaptive_step_gap=Adaptive_step_gap0;
+%dphi_max=3e-2; %targeting change of melt fraction in one cell.
+%dphi_min=4e-3; %when mesh needs to be coarse.=1e-2
+
+%phi_threshold=0.75;
+%phi_threshold2=0.15;
+
+%dS_max=1e-2;
+%dS_min=5e-3;
+
+%dMNV_min=20;    %change of MNV 
+%dMNV_max=30;
+
+
+%Last_adapted=0;
+%Adaptive_step_gap=Adaptive_step_gap0;
 %%
 % CAB
 part1=linspace(0,Length2,max(round(min_N/8),5));
