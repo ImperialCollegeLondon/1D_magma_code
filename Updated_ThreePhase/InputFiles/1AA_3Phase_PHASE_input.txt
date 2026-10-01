@@ -21,6 +21,9 @@ n_order, dummy,
 alpha_order,dummy, 
 ,alpha_order,1
 
+simplified_solidus_shape_=1,dummy, 
+,simplified_TS,1
+
 A1,dummy, 
 ,A1,-99.6
 

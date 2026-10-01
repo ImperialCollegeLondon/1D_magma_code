@@ -54,6 +54,28 @@ Fraction_of_cells_in_silldomain,dummy,
 Minimum_fraction_of_cellz_silldomain,dummy,
 ,Min_fraction_sill_cells,0.05
 
+******************Adaptive_mesh_parameters****************,dummy,
+Turn_adaptive_mesh_on_=1,dummy, 
+,Adaptive_mesh,1
+
+Frequency_of_mesh_adaptivity_timesteps,dummy,
+,Adaptive_step_gap,10
+
+Time_between_mesh_adaptivity_years,dummy, 
+,Adaptive_step_time,1
+
+Maximum_adaptive_number,dummy, 
+,max_adaptive_number,1
+
+Maximum_change_ratio_between_adjacent_cells,dummy, 
+,aspect_ratio,2.3
+
+Difference_in_phi_between_cells_to_cause_additional_cellz,dummy, 
+,dphi_max, 3e-2
+
+Difference_in_phi_between_cells_to_cause_loss_cells,dummy, 
+,dphi_min,4e-3
+
 ******************Timestep_parameters****************,dummy,
 Fixed_timesteps_=0yes_=1no,dummy,
 ,Fixed_dt,1
