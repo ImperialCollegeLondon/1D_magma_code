@@ -42,16 +42,13 @@ Minimum_dx_to_use_m,dummy,
 Maximum_dx_to_use_m,dummy,
 ,max_dx,500
 
-Minimum_number_of_cells_in_wholedomain,dummy, 
+Minimum_number_of_cells_in_adomain,dummy, 
 ,min_N_cells, 100
 
-Maximum_number_of_cells_in_wholedomain,dummy,
-,max_N_cells, 8000
-
-Fraction_of_cells_in_silldomain,dummy,
+Fraction_of_cells_in_outerdomain,dummy,
 ,fraction_sill_cells,0.125
 
-Minimum_fraction_of_cellz_silldomain,dummy,
+Minimum_fraction_of_cellz_outerdomain,dummy,
 ,Min_fraction_sill_cells,0.05
 
 ******************Adaptive_mesh_parameters****************,dummy,
