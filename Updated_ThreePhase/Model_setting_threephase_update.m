@@ -332,6 +332,7 @@ Data_point2=(Data_point2-61)*(1700-800)/(838-61)+800;
 
 
 %% Set up domain and depths
+Last_adapted=0; % setting the counter for when the mesh was last adapted.
 
 % Calculate lengths between areas where we need small nodes to be
 % present. They are: 
@@ -349,32 +350,98 @@ Evac_intrusion_upperdepth_m = Evac_intrusion_upperdepth_km*1000;
 %Convert important depths from km to m
 base_crust_m = base_crust_km*1000;
 
-%Calculate the lengths
+%Calculate the lengths - these lengths are calculated so that the intrusion
+%depths are in the centre of the fine mesh area.
 if To_evacuate==0 % no evacuations
-    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio; %Below sill intrusion depth to crust
-    Length1 = (-Injection_depth_m)+Sill_length*fine_ratio; % Above sill intrusion depth to surface
+    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
+    Length1 = (-Injection_depth_m)+Sill_length*fine_ratio/2; % Above sill intrusion depth to surface
 else %evacuations
-    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio; %Below sill intrusion depth to crust
-    Length1 = (Evac_intrusion_middepth_m-Injection_depth_m)+Sill_length*fine_ratio; %Above sill intrusion depth to evacuated magma mid intrusion depth
-    Length2 = (Evac_intrusion_upperdepth_m-Evac_intrusion_middepth_m)-Sill_length*fine_ratio; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
-    Length3 = -Evac_intrusion_upperdepth_m+Sill_length*fine_ratio; %evacuated upper intrusion depth to surface
+    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
+    Length1 = (Evac_intrusion_middepth_m-Injection_depth_m)+Sill_length*fine_ratio/2; %Above sill intrusion depth to evacuated magma mid intrusion depth
+    Length2 = (Evac_intrusion_upperdepth_m-Evac_intrusion_middepth_m)-Sill_length*fine_ratio/2; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
+    Length3 = -Evac_intrusion_upperdepth_m+Sill_length*fine_ratio/2; %evacuated upper intrusion depth to surface
 end
 
+%From base of crust to the below the sill intrusion domain (coarse)
+part1 = linspace(0,Length0, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells));
 
-Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2];  %intruded sill position
+% Magma domain (fine)
+part2 = linspace(0, Sill_length*fine_ratio,min_N);
 
-
-
-
-
-
-Last_adapted=0;
-
-
-
+% if evacuation on: above sill intrusion domain to evacuated magma mid
+% intrusion domain // if evacuation off: above sill intrusion domain to
+% surface
+part3 = linspace(0, Length1, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells));
 
 
+if To_evacuate==0 %no evacuations
+    %parts combined to make nodez used in the model.
+    nodez= [part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end)]; 
+else %evacuations 
+    % From top of evacauted magma mid intrusion domain to base of evacuated
+    % magma upper intrusion domain
+    part4 = linspace(0,Length2, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells));
+    %From top of evacuated magma upper intrusion domain to the surface of
+    %the crust
+    part5 = linspace(0,Length3, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells)); 
+    %parts combined to make nodez used in the model
+    nodez = [part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end) part1(end)+part2(end)+part3(end)+part2(2:end)
+        part1(end)+2*part2(end)+part3(end)+part4(2:end) part1(end)+2*part2(end)+part3(end)+part4(end)+part2(2:end)  
+        part1(end)+3*part2(end)+part3(end)+part4(end)+part5(2:end)];
 
+end
+
+%transpose the nodez vector
+nodez=nodez';
+
+%Calculate the number of nodez in the model.
+N=length(nodez)-1;    
+
+% Calculate the centre of the nodez and name them the cellz
+cellz=(nodez(1:end-1)+nodez(2:end))/2;  % cell center points
+
+%Calculate the spatial steps throughout the model
+dz=nodez(2:end)-nodez(1:end-1);
+
+% Create array that has the nodez values in km
+nodez_km=(nodez-nodez(end))/1000;
+
+% create array that has cellz values in km
+cellz_km=(cellz-nodez(end))/1000;
+
+%Calculate number of nodez/cellz in a sill
+dzf = part2(2)-part2(1); % calculate the fine spatial step
+SillNodez = round(Sill_length/dzf); % the number of nodez/cellz in a sill
+
+% Find intrusion depths 
+Injection_depth_nodez = find(nodez_km<Injection_depth_km & nodez_km>Injection_depth_km-dzf); % initial sill intrusion depth - nodez
+Injection_depth_cellz = find(cellz_km<Injection_depth_km & cellz_km>Injection_depth_km-dzf); % initial sill intrusion depth - cellz
+
+Evac_intrusion_middepth_nodez = find(nodez_km<Evac_intrusion_middepth_km & nodez_km>Evac_intrusion_middepth_km-dzf); % evacuation mid intrusion depth - nodez
+Evac_intrusion_middepth_cellz = find(cellz_km<Evac_intrusion_middepth_km & cellz_km>Evac_intrusion_middepth_km-dzf); % evacuation mid intrusion depth - cellz
+
+Evac_intrusion_upperdepth_nodez = find(nodez_km<Evac_intrusion_upperdepth_km & nodez_km>Evac_intrusion_upperdepth_km-dzf); % evacuation upper intrusion depth - nodez
+Evac_intrusion_upperdepth_cellz = find(cellz_km<Evac_intrusion_upperdepth_km & cellz_km>Evac_intrusion_upperdepth_km-dzf); % evacuation upper intrusion depth - cellz 
+
+% The cellz over which sills are intruded
+Sill_index=[Injection_depth_cellz-Sill_length; Injection_depth_cellz];
+
+
+
+%% Calculating initial crust conditions
+if Add_CLCU==1
+    %Recalculate chlorine, copper and sulfur from ppm (input file) to mass
+    %percent
+    %Crust values
+    CL_crust = CLcrust_ppm*1e-4;
+    CU_crust = CUcrust_ppm*1e-4;
+    SUL_crust = SULcrust_ppm*1e-4;
+
+    %Sill values
+    CL_sill = CLsill_ppm*1e-4;
+    CU_sill = CUsill_ppm*1e-4;
+    SUL_sill = SULsill_ppm*1e-4;
+end
 
 %% OLD
 %A test setting for switching the influence of H2O off. 
@@ -677,60 +744,60 @@ min_show_range=Show_z(2)-Show_z(1);
 %Adaptive_step_gap=Adaptive_step_gap0;
 %%
 % CAB
-part1=linspace(0,Length2,max(round(min_N/8),5));
-part2=linspace(0,Sill_length*fine_ratio,min_N);
-part3=linspace(0,Length1,max(round(min_N/8),5));
-part4=linspace(0,Sill_length*fine_ratio,min_N);
-part5=linspace(0,Length0,max(round(min_N/8),5));
-part6=linspace(0,Sill_length*fine_ratio,min_N);
-part7=linspace(0,Length01,max(round(min_N/8),5));
-nodez=[part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end)...
-    part1(end)+part2(end)+part3(end)+part4(2:end) part1(end)+part2(end)+part3(end)+part4(end)+part5(2:end)...
-    part1(end)+part2(end)+part3(end)+part4(end)+part5(end)+part6(2:end) part1(end)+part2(end)+part3(end)+part4(end)+part5(end)+part6(end)+part7(2:end)];
+%part1=linspace(0,Length2,max(round(min_N/8),5));
+%part2=linspace(0,Sill_length*fine_ratio,min_N);
+%part3=linspace(0,Length1,max(round(min_N/8),5));
+%part4=linspace(0,Sill_length*fine_ratio,min_N);
+%part5=linspace(0,Length0,max(round(min_N/8),5));
+%part6=linspace(0,Sill_length*fine_ratio,min_N);
+%part7=linspace(0,Length01,max(round(min_N/8),5));
+%nodez=[part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end)...
+%    part1(end)+part2(end)+part3(end)+part4(2:end) part1(end)+part2(end)+part3(end)+part4(end)+part5(2:end)...
+%    part1(end)+part2(end)+part3(end)+part4(end)+part5(end)+part6(2:end) part1(end)+part2(end)+part3(end)+part4(end)+part5(end)+part6(end)+part7(2:end)];
 % CAB end 
-nodez=nodez';
+%nodez=nodez';
 % nodez=nodez-nodez(end); %Change the distance
 
-N=length(nodez)-1;    
+%N=length(nodez)-1;    
 
-cellz=(nodez(1:end-1)+nodez(2:end))/2;  % cell center points
+%cellz=(nodez(1:end-1)+nodez(2:end))/2;  % cell center points
 
-dz=nodez(2:end)-nodez(1:end-1);
+%dz=nodez(2:end)-nodez(1:end-1);
 
-Sill_index=zeros(2,1);
-Sill_index(1)=find(cellz>Sill(1),1,'first');
-Sill_index(2)=find(cellz<Sill(2),1,'last');
+%Sill_index=zeros(2,1);
+%Sill_index(1)=find(cellz>Sill(1),1,'first');
+%Sill_index(2)=find(cellz<Sill(2),1,'last');
 
-nodez_km=(nodez-nodez(end))/1000;
-cellz_km=(cellz-nodez(end))/1000;
+%nodez_km=(nodez-nodez(end))/1000;
+%cellz_km=(cellz-nodez(end))/1000;
 %% Calculate densities of three components in each phases from SiO2% and H2O%
 N_number=N;
 
-SiO2_crust=48;%SiO2% at bottom %  % percent
-SiO2_crust2=48;%SiO2% at -15km
-SiO2_crust3=50;%SiO2% at surface
+%SiO2_crust=48;%SiO2% at bottom %  % percent
+%SiO2_crust2=48;%SiO2% at -15km
+%SiO2_crust3=50;%SiO2% at surface
 
 
 
 
-H2O_crust=1.21;%1.21;%H2O% at bottom  %1.21;% for D0.2
-H2O_crust2=1.21;%1.21;%H2O% at -15km
-H2O_crust3=1.21;%1.21;%H2O% at surface
+%H2O_crust=1.21;%1.21;%H2O% at bottom  %1.21;% for D0.2
+%H2O_crust2=1.21;%1.21;%H2O% at -15km
+%H2O_crust3=1.21;%1.21;%H2O% at surface
 
 
-SiO2_sill=50;%0.09*(74-47)+47;  % percent  
-H2O_sill=3;%1.21; % percent
+%SiO2_sill=50;%0.09*(74-47)+47;  % percent  
+%H2O_sill=3;%1.21; % percent
 
 %in percent, numbers in ppm, add a e-4 for the unit scaling
-CL_crust=150e-4;
-CU_crust=50e-4;
-SUL_crust=300e-4;%%300e-4;
+%CL_crust=150e-4;
+%CU_crust=50e-4;
+%SUL_crust=300e-4;%%300e-4;
 
-CL_sill=1000e-4;
-CU_sill=80e-4;
-SUL_sill=1000e-4;%1000e-4;
+%CL_sill=1000e-4;
+%CU_sill=80e-4;
+%SUL_sill=1000e-4;%1000e-4;
 
-Sillphi=0.935;% melt fraction of the sill %0.934: 50S1 0.876 50S2 ; 0.861 50S5
+%Sillphi=0.935;% melt fraction of the sill %0.934: 50S1 0.876 50S2 ; 0.861 50S5
               %Geo24.5 phi 0.835 H2O 1.5:0.8
 
 x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust, CL_crust, N_component, Conservation_type, Precision);              
