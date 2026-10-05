@@ -10,7 +10,7 @@ M_S = 32.065;
 
 CU_fraction=CU./Mass_total;
 SUL_fraction=SUL./Mass_total;
-for i=S_CU_to_process
+parfor i=S_CU_to_process
     
     % if i==81
     %     aaa=1
@@ -44,7 +44,8 @@ for i=S_CU_to_process
     % calculate_S_redox(Na2O, MgO, Al2O3, SiO2, K2O, CaO, TiO2, MnO, FeOt, Fe3_over_Fe_total, T_input_C, S_ppm, mode, Pressure, Ni, Cu)
     % Ni assumed to be 100ppm Cu in this step assumed to be 80ppm, these only affects aFeS whose contribution is much smaller than other terms
     Fe3ratio=0.5;
-    results=calculate_S_redox(wt_percent(8), wt_percent(6), wt_percent(3), wt_percent(1), wt_percent(9), wt_percent(7), wt_percent(2), wt_percent(5), wt_percent(4),    Fe3ratio, T(i), 0, 1, Pg_real(i)/10, 100, 80);
+    H2O_melt=v1/max(m1+n1+v1,1e-12)*100;
+    results=calculate_S_redox(wt_percent(8), wt_percent(6), wt_percent(3), wt_percent(1), wt_percent(9), wt_percent(7), wt_percent(2), wt_percent(5), wt_percent(4),    Fe3ratio, T(i), 0, 1, Pg_real(i)/10, 100, 80, H2O_melt);
 
     dFMQ=results.DeltaQFM;
     D_s=40000/(238+1701/(1+10^(0.78-2*(dFMQ-1)))); %reference
