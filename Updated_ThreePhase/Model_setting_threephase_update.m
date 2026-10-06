@@ -443,6 +443,16 @@ if Add_CLCU==1
     SUL_sill = SULsill_ppm*1e-4;
 end
 
+%%
+%%
+%%
+%%
+%%
+%%
+%%
+%%
+%%
+%%
 %% OLD
 %A test setting for switching the influence of H2O off. 
 % mode 0: all on
@@ -1405,61 +1415,61 @@ file_iter = fopen('Iteration_recored.txt', 'w');
 found_error=0;
 
 
-function x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust, CL_crust, N_component,Conservation_type,Precision)
-    err=1;
-    if N_component==3
-        x=[1500, 1500, 20]';  %(M,N,V)
-        M=x(1); N=x(2); V=x(3);
-        J=zeros(3);
-        J(1,:)=[PD_range(2)-SiO2_crust, PD_range(1)-SiO2_crust, 0];  %(74*M+N*47)/(M+N)=SiO2_crust
-        J(2,:)=[-H2O_crust, -H2O_crust, 100-H2O_crust];              %100*V/(M+N+V)=H2O_crust
-        while err>Precision
-            if Conservation_type==1
-                J(3,:)=[rhom_1 - 2*N - V - 2*M, rhom_2 - 2*N - V - 2*M, - M - N];    %rhom_1*N+rhom_2*M=(M+ N+V)*(M+N)
-                rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
-                    (100-H2O_crust)*V-H2O_crust*(M+N);...
-                    rhom_1*N+rhom_2*M-(M+N+V)*(M+N)];
-            else
-                J(3,:)=[1,1,1];    %M+N+V=rho_mean
-                rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
-                    (100-H2O_crust)*V-H2O_crust*(M+N);...
-                    M+N+V-rho_mean];
-            end
-            dx=J\rhs;
-            x=x-dx;
-            err=max(abs(dx(:)));
-            M=x(1); N=x(2); V=x(3);
-        end
+%function x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust, CL_crust, N_component,Conservation_type,Precision)
+   % err=1;
+    %if N_component==3
+       % x=[1500, 1500, 20]';  %(M,N,V)
+       % M=x(1); N=x(2); V=x(3);
+       % J=zeros(3);
+       % J(1,:)=[PD_range(2)-SiO2_crust, PD_range(1)-SiO2_crust, 0];  %(74*M+N*47)/(M+N)=SiO2_crust
+       % J(2,:)=[-H2O_crust, -H2O_crust, 100-H2O_crust];              %100*V/(M+N+V)=H2O_crust
+       % while err>Precision
+            %if Conservation_type==1
+             %   J(3,:)=[rhom_1 - 2*N - V - 2*M, rhom_2 - 2*N - V - 2*M, - M - N];    %rhom_1*N+rhom_2*M=(M+ N+V)*(M+N)
+             %   rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
+             %       (100-H2O_crust)*V-H2O_crust*(M+N);...
+             %       rhom_1*N+rhom_2*M-(M+N+V)*(M+N)];
+            %else
+              %  J(3,:)=[1,1,1];    %M+N+V=rho_mean
+             %   rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
+            %        (100-H2O_crust)*V-H2O_crust*(M+N);...
+           %         M+N+V-rho_mean];
+          %  end
+         %   dx=J\rhs;
+        %    x=x-dx;
+       %     err=max(abs(dx(:)));
+      %      M=x(1); N=x(2); V=x(3);
+     %   end
         % MM_crust=x(1);
         % NN_crust=x(2);
         % V_crust=x(3);
-    else
-        x=[1500, 1500, 20, 3]';  %(M,N,V,CL)
-        M=x(1); N=x(2); V=x(3); CL=x(4);
-        J=zeros(4);
-        J(1,:)=[PD_range(2)-SiO2_crust, PD_range(1)-SiO2_crust, 0, 0];  %(74*M+N*47)/(M+N)=SiO2_crust
-        J(2,:)=[-H2O_crust, -H2O_crust, 100-H2O_crust, -H2O_crust];     %100*V/(M+N+V+CL)=H2O_crust
-        J(3,:)=[-CL_crust, -CL_crust,-CL_crust, 100-CL_crust]; %100*CL/(M+N+V+CL)=CL_crust
-        while err>Precision
-            if Conservation_type==1
-                J(3,:)=[rhom_1 - 2*N - V - 2*M, rhom_2 - 2*N - V - 2*M, - M - N];    %rhom_1*N+rhom_2*M=(M+ N+V)*(M+N)
-                rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
-                    (100-H2O_crust)*V-H2O_crust*(M+N);...
-                    rhom_1*N+rhom_2*M-(M+N+V)*(M+N)];
-            else
-                J(4,:)=[1,1,1,1];    %M+N+V+CL=rho_mean
+    %else
+       % x=[1500, 1500, 20, 3]';  %(M,N,V,CL)
+       % M=x(1); N=x(2); V=x(3); CL=x(4);
+       % J=zeros(4);
+       % J(1,:)=[PD_range(2)-SiO2_crust, PD_range(1)-SiO2_crust, 0, 0];  %(74*M+N*47)/(M+N)=SiO2_crust
+       % J(2,:)=[-H2O_crust, -H2O_crust, 100-H2O_crust, -H2O_crust];     %100*V/(M+N+V+CL)=H2O_crust
+       % J(3,:)=[-CL_crust, -CL_crust,-CL_crust, 100-CL_crust]; %100*CL/(M+N+V+CL)=CL_crust
+       % while err>Precision
+           % if Conservation_type==1
+          %      J(3,:)=[rhom_1 - 2*N - V - 2*M, rhom_2 - 2*N - V - 2*M, - M - N];    %rhom_1*N+rhom_2*M=(M+ N+V)*(M+N)
+         %       rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
+        %            (100-H2O_crust)*V-H2O_crust*(M+N);...
+       %             rhom_1*N+rhom_2*M-(M+N+V)*(M+N)];
+      %      else
+     %           J(4,:)=[1,1,1,1];    %M+N+V+CL=rho_mean
                 
-                rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
-                    (100-H2O_crust)*V-H2O_crust*(M+N+CL);...
-                    (100-CL_crust)*CL-CL_crust*(M+N+V)
-                    M+N+V+CL-rho_mean];
-            end
-            dx=J\rhs;
-            x=x-dx;
-            err=max(abs(dx(:)));
-            M=x(1); N=x(2); V=x(3); CL=x(4);
-        end
-    end
-end
+     %           rhs=[(PD_range(2)-SiO2_crust)*M+ (PD_range(1)-SiO2_crust)*N;...
+    %                (100-H2O_crust)*V-H2O_crust*(M+N+CL);...
+   %                 (100-CL_crust)*CL-CL_crust*(M+N+V)
+  %                  M+N+V+CL-rho_mean];
+ %           end
+ %           dx=J\rhs;
+ %           x=x-dx;
+ %           err=max(abs(dx(:)));
+ %           M=x(1); N=x(2); V=x(3); CL=x(4);
+%        end
+%    end
+%end
 tic;
 
