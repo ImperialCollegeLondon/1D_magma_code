@@ -142,6 +142,16 @@ else
 
 end
 
+% The lower portion of the crust is made dry
+if Dry_Depth_Flag==1
+    disp('The lower porition of the crust is made dry')
+    fprintf(File_echo, '%s \n', 'The lower porition of the crust is made dry');
+
+else
+    disp('The lower porition of the crust is not dry')
+    fprintf(File_echo, '%s \n', 'The lower porition of the crust is not dry');
+
+end
 
 %% Unchangeable definitions
 % Values that are fixed (such as how many seconds in a year) so are not
@@ -429,19 +439,191 @@ Sill_index=[Injection_depth_cellz-Sill_length; Injection_depth_cellz];
 
 
 %% Calculating initial crust conditions
+
+% If trace elements are turned on, convert chlorine, copper and sulfur from ppm (input file) to mass
+% percent for the crust values.
 if Add_CLCU==1
-    %Recalculate chlorine, copper and sulfur from ppm (input file) to mass
-    %percent
-    %Crust values
+    % Crust values
     CL_crust = CLcrust_ppm*1e-4;
     CU_crust = CUcrust_ppm*1e-4;
     SUL_crust = SULcrust_ppm*1e-4;
+end
 
-    %Sill values
+% The initial crust can be made out of three different compositions:
+% crust1, crust 2, crust 3
+
+% The compositions are inputted in 1AA_3Phase_MAGMA_input. Composition is
+% interpolated from specific depths throughout the crust. 
+
+% Crust composition can be decided on by either intrusion depths or
+% specified depths by the user.
+%
+%
+% Calculate the initial mass of evolved, refractory and water of the
+% initial composition given by crust1
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust1, H2O_crust1, CL_crust, N_component, Conservation_type, Precision);              
+MM_crust=x(1);
+NN_crust=x(2);
+V_crust=x(3);
+
+
+% Calculate the initial mass of evolved, refractory and water of the
+% initial composition given by crust2
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust2, H2O_crust2, CL_crust, N_component, Conservation_type, Precision);              
+MM_crust2=x(1);
+NN_crust2=x(2);
+V_crust2=x(3);
+
+% Calculate the initial mass of evolved, refractory and water of the
+% initial composition given by crust3
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust3, H2O_crust3, CL_crust, N_component, Conservation_type, Precision);              
+MM_crust3=x(1);
+NN_crust3=x(2);
+V_crust3=x(3);
+
+
+
+
+% Calculate the depths at which the initial compositions are 
+BaseCrustCompFLAG=0;
+if crust_comp_FLAG==0 
+    % These depths are specified by the user
+    index1=find(cellz-nodez(end)>=-Depth1_crust_km*1000,1,'first'); %deepest depth
+    index2=find(cellz-nodez(end)>=Depth2_crust_km*1000,1,'first'); %middle depth
+    % index 3 is the surface so is not calculated.
+    
+    % If Depth1_crust_km is shallower than the base of the crust, then from
+    % Depth1_crust_km to the base of the crust, the crust has the same
+    % composition 
+    if Depth1_crust_km<Base_crust_km
+        BaseCrustCompFLAG=1;
+    end
+
+else
+    % These depths are specified by the intrusion depths
+    index1=find(cellz-nodez(end)>=-Injection_depth_km*1000,1,'first'); %Sill intrusion depth (deepest depth) 
+    index2=find(cellz-nodez(end)>=-Evacuation_depth_km*1000,1,'first'); %Evacuation depth (middle depth)
+    % index 3 is the surface so is not calculated
+
+    % If Injection_depth_km is shallower than the base of the crust, then
+    % from Injection_depth_km to the base of the crust, the crust has the
+    % same composition 
+    if Injection_depth_km<Base_crust_km
+        BaseCrustCompFLAG=1;
+    end
+end
+
+% Defining initial evolved component throughout the crust
+MM=interp1([cellz(index1) cellz(index2) cellz(end)], [MM_crust1 MM_crust2 MM_crust3], cellz,'linear' ); 
+% Defining initial refractory component throughout the crust
+NN=interp1([cellz(index1) cellz(index2) cellz(end)], [NN_crust1 NN_crust2 NN_crust3], cellz,'linear' ); 
+% Defining volatile component throughout the crust 
+V=interp1([cellz(index1) cellz(index2) cellz(end)], [V_crust1 V_crust2 V_crust3], cellz,'linear' ); 
+
+% If the the base of the crust is lower than the deepest composition depth
+% (either Injection_depth_km or Depth1_crust_km)
+if BaseCrustCompFLAG==1
+    MM(1:index1-1)=MM(index1);
+    NN(1:index1-1)=NN(index1);
+    V(1:index1-1)=V(index1);
+end
+
+% Calculate the trace elements of chlorine, copper and sulfur in the crust
+% (also converts them into masses)
+if Add_CLCU==1
+
+    %chlorine 
+    CL=(MM+NN+V)*CL_crust/100; %trace element
+    %copper
+    CU=(MM+NN+V)*CU_crust/100; %trace element
+    %sulfur
+    SUL=(MM+NN+V)*SUL_crust/100;
+
+else
+    CL=zeros(N,1);
+    CU=zeros(N,1);
+    SUL=zeros(N,1);
+end
+
+
+%% If flag is on (Dry_Depth_Flag), make the lower crust dry
+
+if Dry_Depth_Flag==1
+    % Find the first cell above the dry_depth_km, this is boundary of the dry region 
+    index_dry=find(cellz-nodez(end)>-Dry_depth_km*1000,1,'first');
+    
+    % Update the volatile component of the crust to make it dry 
+    V(1:index_dry)=dry_volatile*ones(index_dry,1); 
+
+    % Calculate the correction needed to make the total mass equal to
+    % rho_mean = MM + NN + V
+    mass_correction=rho_mean-(MM(1:index_dry)+NN(1:index_dry)+V(1:index_dry));
+
+    %Fraction of the evolved components to correct
+    MM_fraction=MM(1:index_dry)./(MM(1:index_dry)+NN(1:index_dry));
+
+    % Distribute the mass_correction between MM and NN while preserving
+    % their relative proportions
+    MM(1:index_dry)=MM(1:index_dry)+mass_correction.*MM_fraction;
+    NN(1:index_dry)=NN(1:index_dry)+mass_correction.*(1-MM_fraction);
+     
+end
+
+
+%% Saving initial composition to calculate the conservation of mass
+Sum_M0=sum(MM.*dz); % evolved component
+Sum_N0=sum(NN.*dz); % refractory component
+Sum_V0=sum(V.*dz); % volatile component 
+
+
+%% Initializing temperature and enthalpy
+
+% Setting the temperature dependent on the thermal gradient and surface
+% temperature
+T0=abs(cellz-nodez(end))/1000*geotherm_crust+temp_surface;   
+
+% Calculating initial enthalpy from temperature. 
+H=(MM*cp_evolved+NN*cp_refrac+V*cp_water).*T0;  
+H0=H;
+
+
+%% Intruding the first sill
+
+% Melt fraction of sill
+Sillphi=0.935; %why
+
+% Calculate the initial mass of evolved, refractory and water of the
+% sill composition
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_sill, H2O_sill, CL_sill, N_component, Conservation_type, Precision);              
+MM_sill=x(1);
+NN_sill=x(2);
+V_sill=x(3);
+
+% Composition of sill - defining the evolved, refractory and volatile component of sills
+MM(Sill_index(1):Sill_index(2))=MM_sill; % evolved
+NN(Sill_index(1):Sill_index(2))=NN_sill; %refractory
+V(Sill_index(1):Sill_index(2))=V_sill; %volatile
+
+% Trace elements of sill
+if Add_CLCU==1
+    % Convert chlorine, copper and sulfur from ppm (input file) to mass
+    % percent for the crust and sill values.
     CL_sill = CLsill_ppm*1e-4;
     CU_sill = CUsill_ppm*1e-4;
     SUL_sill = SULsill_ppm*1e-4;
+    
+    % trace elements of the sill
+    CL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CL_sill/100; %Chlorine
+    CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CU_sill/100; %Copper
+    SUL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*SUL_sill/100; %Sulfur
 end
+
+% Setting enthalpy of sill
+H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+mean(Lf)*(MM_sill+NN_sill+V_sill)*Sillphi*2.1; % what is this? 
+Sill_den=MM_sill+NN_sill+V_sill;
+
+
+%% Timesteps
 
 %%
 %%
@@ -810,134 +992,134 @@ N_number=N;
 %Sillphi=0.935;% melt fraction of the sill %0.934: 50S1 0.876 50S2 ; 0.861 50S5
               %Geo24.5 phi 0.835 H2O 1.5:0.8
 
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust, CL_crust, N_component, Conservation_type, Precision);              
-MM_crust=x(1);
-NN_crust=x(2);
-V_crust=x(3);
-if N_component==5
-    CL1=x(4);
-end
+%x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust, CL_crust, N_component, Conservation_type, Precision);              
+%MM_crust=x(1);
+%NN_crust=x(2);
+%V_crust=x(3);
+%if N_component==5 %DELETE
+%    CL1=x(4); %DELETE
+%end%DELETE
 
 
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust2, H2O_crust2, CL_crust, N_component, Conservation_type, Precision);              
-MM_crust2=x(1);
-NN_crust2=x(2);
-V_crust2=x(3);
-if N_component==5
-    CL2=x(4);
-end
+%x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust2, H2O_crust2, CL_crust, N_component, Conservation_type, Precision);              
+%MM_crust2=x(1);
+%NN_crust2=x(2);
+%V_crust2=x(3);
+%if N_component==5%DELETE
+%    CL2=x(4);%DELETE
+%end%DELETE
 
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust3, H2O_crust3, CL_crust, N_component, Conservation_type, Precision);              
-MM_crust3=x(1);
-NN_crust3=x(2);
-V_crust3=x(3);
-if N_component==5
-    CL3=x(4);
-end
+%x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust3, H2O_crust3, CL_crust, N_component, Conservation_type, Precision);              
+%MM_crust3=x(1);
+%NN_crust3=x(2);
+%V_crust3=x(3);
+%if N_component==5
+%    CL3=x(4);
+%end
 
 
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_sill, H2O_sill, CL_sill, N_component, Conservation_type, Precision);              
-MM_sill=x(1);
-NN_sill=x(2);
-V_sill=x(3);
-if N_component==5
-    CL_sill=x(4);
-end
+%x=Calculate_Initial_state(PD_range, rho_mean, SiO2_sill, H2O_sill, CL_sill, N_component, Conservation_type, Precision);              
+%MM_sill=x(1);
+%NN_sill=x(2);
+%V_sill=x(3);
+%if N_component==5
+%    CL_sill=x(4);
+%end
 
 % For sill part, negative values are possible....so used the same procedure
 
-N=N_number;
+%N=N_number;
 
 
 % MM=linspace(MM_crust,MM_crust2,N)'; 
-index=find(cellz-nodez(end)>=-15e3-100,1,'first');
-MM=interp1([cellz(1) cellz(index) cellz(end)], [MM_crust MM_crust2 MM_crust3], cellz,'linear' ); 
-MM(Sill_index(1):Sill_index(2))=MM_sill;
+%index=find(cellz-nodez(end)>=-15e3-100,1,'first');
+%MM=interp1([cellz(1) cellz(index) cellz(end)], [MM_crust MM_crust2 MM_crust3], cellz,'linear' ); 
+%MM(Sill_index(1):Sill_index(2))=MM_sill;
 
 
 % NN=linspace(NN_crust,NN_crust2,N)';
-NN=interp1([cellz(1) cellz(index) cellz(end)], [NN_crust NN_crust2 NN_crust3], cellz ,'linear' ); 
-NN(Sill_index(1):Sill_index(2))=NN_sill;
+%NN=interp1([cellz(1) cellz(index) cellz(end)], [NN_crust NN_crust2 NN_crust3], cellz ,'linear' ); 
+%NN(Sill_index(1):Sill_index(2))=NN_sill;
 
 
 % V=zeros(N,1);
 % V=linspace(V_crust,V_crust2,N)';
-V=interp1([cellz(1) cellz(index) cellz(end)], [V_crust V_crust2 V_crust3], cellz ,'linear' ); 
-V(Sill_index(1):Sill_index(2))=V_sill;
+%V=interp1([cellz(1) cellz(index) cellz(end)], [V_crust V_crust2 V_crust3], cellz ,'linear' ); 
+%V(Sill_index(1):Sill_index(2))=V_sill;
 
 
-if N_component==5
-    CL=interp1([cellz(1) cellz(index) cellz(end)], [CL1 CL2 CL3], cellz ,'linear' ); 
-    CU=(MM+NN+V+CL)*CU_crust/100; %trace element
+%if N_component==5
+%    CL=interp1([cellz(1) cellz(index) cellz(end)], [CL1 CL2 CL3], cellz ,'linear' ); 
+%    CU=(MM+NN+V+CL)*CU_crust/100; %trace element
     
-    CL(Sill_index(1):Sill_index(2))=CL_sill;
-    CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill+CL_sill)*CU_sill/100;
-end
+%    CL(Sill_index(1):Sill_index(2))=CL_sill;
+%    CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill+CL_sill)*CU_sill/100;
+%end
 
-if Add_CLCU==1
-    CL=(MM+NN+V)*CL_crust/100; %trace element
-    CU=(MM+NN+V)*CU_crust/100; %trace element
+%if Add_CLCU==1
+%    CL=(MM+NN+V)*CL_crust/100; %trace element
+%    CU=(MM+NN+V)*CU_crust/100; %trace element
 
-    CL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CL_sill/100;
-    CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CU_sill/100;
+    %CL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CL_sill/100;
+    %CU(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*CU_sill/100;
 
-    SUL=(MM+NN+V)*SUL_crust/100; %trace element
-    SUL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*SUL_sill/100;
-else
-    CL=zeros(N,1);
-    CU=zeros(N,1);
-end
+    %SUL=(MM+NN+V)*SUL_crust/100; %trace element
+    %SUL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*SUL_sill/100;
+%else
+%    CL=zeros(N,1);
+%    CU=zeros(N,1);
+%end
 
 % make the lower part dryer
-Dry_depth=Length2-300;  % the lowest part has much higher solidus
-index_temp=find(cellz>Dry_depth,1,'first');
-V(1:index_temp)=0.01*ones(index_temp,1); %linspace(0.001, V(index_temp), index_temp);
-if Conservation_type==2
-    if N_component==3
-        temp=rho_mean-(MM(1:index_temp)+NN(1:index_temp)+V(1:index_temp));
-        correction=MM(1:index_temp)./(MM(1:index_temp)+NN(1:index_temp));
-        MM(1:index_temp)=MM(1:index_temp)+temp.*correction;
-        NN(1:index_temp)=NN(1:index_temp)+temp.*(1-correction);
-    else
-        temp=rho_mean-(MM(1:index_temp)+NN(1:index_temp)+V(1:index_temp)+CL(1:index_temp));
-        correction=MM(1:index_temp)./(MM(1:index_temp)+NN(1:index_temp)+CL(1:index_temp));
-        correction2=NN(1:index_temp)./(MM(1:index_temp)+NN(1:index_temp)+CL(1:index_temp));
-        MM(1:index_temp)=MM(1:index_temp)+temp.*correction;
-        NN(1:index_temp)=NN(1:index_temp)+temp.*correction2;
-        CL(1:index_temp)=CL(1:index_temp)+temp.*(1-correction2-correction);
-    end
-end
-dry_index=index_temp;
+%Dry_depth=Length2-300;  % the lowest part has much higher solidus
+%index_temp=find(cellz>Dry_depth,1,'first');
+%V(1:index_temp)=0.01*ones(index_temp,1); %linspace(0.001, V(index_temp), index_temp);
+%if Conservation_type==2
+%    if N_component==3
+ %       temp=rho_mean-(MM(1:index_temp)+NN(1:index_temp)+V(1:index_temp));
+ %       correction=MM(1:index_temp)./(MM(1:index_temp)+NN(1:index_temp));
+  %      MM(1:index_temp)=MM(1:index_temp)+temp.*correction;
+  %      NN(1:index_temp)=NN(1:index_temp)+temp.*(1-correction);
+  %  else
+  %      temp=rho_mean-(MM(1:index_temp)+NN(1:index_temp)+V(1:index_temp)+CL(1:index_temp));
+  %      correction=MM(1:index_temp)./(MM(1:index_temp)+NN(1:index_temp)+CL(1:index_temp));
+  %      correction2=NN(1:index_temp)./(MM(1:index_temp)+NN(1:index_temp)+CL(1:index_temp));
+  %      MM(1:index_temp)=MM(1:index_temp)+temp.*correction;
+  %      NN(1:index_temp)=NN(1:index_temp)+temp.*correction2;
+  %      CL(1:index_temp)=CL(1:index_temp)+temp.*(1-correction2-correction);
+  %  end
+%end
+%dry_index=index_temp;
 
 
 
 
-if N_component==3
-    T0=abs(cellz-nodez(end))/1000*25+10;   %thermal gradient 25C/km, surface at 10C
+%if N_component==3
+%    T0=abs(cellz-nodez(end))/1000*25+10;   %thermal gradient 25C/km, surface at 10C
 
-    H=(MM*cp0(1)+NN*cp0(2)+V*cp0(3)).*T0;  %background enthalpy, assuming no latent heat and 20C/km themal gradient
-    H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+mean(Lf)*(MM_sill+NN_sill+V_sill)*Sillphi*2.1;
-    Sill_den=MM_sill+NN_sill+V_sill;
-else
-    T0=abs(cellz-nodez(end))/1000*25+10;   %thermal gradient 25C/km, surface at 10C
+    %H=(MM*cp0(1)+NN*cp0(2)+V*cp0(3)).*T0;  %background enthalpy, assuming no latent heat and 20C/km themal gradient
+    %H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+mean(Lf)*(MM_sill+NN_sill+V_sill)*Sillphi*2.1;
+    %Sill_den=MM_sill+NN_sill+V_sill;
+%else
+ %   T0=abs(cellz-nodez(end))/1000*25+10;   %thermal gradient 25C/km, surface at 10C
 
     % Cu is treated as trace element, not taken into enthaly calculation
-    H=(MM*cp0(1)+NN*cp0(2)+(V)*cp0(3)).*T0;
-    Lf_temp=cb*Lf(1)+(1-cb)*Lf(2);
-    H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+Lf_temp*(MM_sill+NN_sill+V_sill)*Sillphi*1.85;
-    Sill_den=MM_sill+NN_sill+V_sill+CL_sill;
-end
+  %  H=(MM*cp0(1)+NN*cp0(2)+(V)*cp0(3)).*T0;
+  %  Lf_temp=cb*Lf(1)+(1-cb)*Lf(2);
+  %  H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+Lf_temp*(MM_sill+NN_sill+V_sill)*Sillphi*1.85;
+  %  Sill_den=MM_sill+NN_sill+V_sill+CL_sill;
+%end
 
 % % H(Sill_index(2)+1:end)=H_bot;
-H0=H;
+%H0=H;
 
-Show_z=[Length2 Length2+Sill_length*fine_ratio];
+%Show_z=[Length2 Length2+Sill_length*fine_ratio];
 % Show_z=[cellz(1) cellz(end)];
 
 
-Sum_M0=sum(MM.*dz);
-Sum_N0=sum(NN.*dz);
-Sum_V0=sum(V.*dz);
+%Sum_M0=sum(MM.*dz);
+%Sum_N0=sum(NN.*dz);
+%Sum_V0=sum(V.*dz);
 %% Time steps
 fixed_dt=0;
 
