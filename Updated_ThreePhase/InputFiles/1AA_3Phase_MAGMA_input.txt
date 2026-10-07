@@ -5,6 +5,12 @@ Description_use_4_spaces,dummy,
 Base_of_crust_km,dummy,
 ,base_crust_km,50
 
+Geotherm_of_crust_oCkm-1,dummy,
+,geotherm_crust,25
+
+Temperature_at_top_of_crust_oC,dummy, 
+,temp_surface,10
+
 Crust_comp_by_int_depth_=1_else_specified_=0,dummy,
 ,crust_comp_FLAG,0
 
@@ -35,8 +41,14 @@ H2O_content_crust2_percent,dummy,
 H2O_content_crust3_percent,dummy,
 ,H2O_crust3,1.21
 
+Dry_crust_at_base_=1,dummy, 
+,Dry_Depth_Flag,1
+
 Depth_below_which_Crust_is_Dry_km,dummy,
 ,Dry_Depth_km, 40
+
+Dry_volatile_amount,dummy, 
+,dry_volatile, 0.01
 
 ******************Intrusion_parameters****************,dummy,
 
