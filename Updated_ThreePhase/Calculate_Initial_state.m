@@ -10,8 +10,8 @@ function x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust,Pre
 % V = volatile
 
 % PD_range = [minimum SiO2, maximum SiO2] within the model
-% rho_mean = target value for the total amount of M+N+V - WORRIED ABOUT
-% THIS 
+% rho_mean = target value for the total amount of M+N+V (note that whenever
+% M,N or V is used, it is always the relative proportions of these values.
 % SiO2_Crust = required SiO2 content of the crust
 % H2O = required H2O content of the crust
 % Precision = convergence criterion for the iterative solution
@@ -27,7 +27,7 @@ M=x(1); N=x(2); V=x(3);
 
 %% Initialise the 3x3 Jacobian matrix.
 % The Jacobian contains the derivatives of the three equations being solved
-% wth respect to the three unknowns [M, N, V].
+% with respect to the three unknowns [M, N, V].
 J=zeros(3);
 
 % Equation 1 - SiO2 composition

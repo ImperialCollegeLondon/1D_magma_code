@@ -34,6 +34,8 @@
 % inputs related to RESTART.
 
 % The script goes into the following sections:
+% 1. Clear previous memory/values
+% 2. Importing inputs files
 
 %% Clear previous memory/values
 clear;
@@ -41,7 +43,61 @@ warning('off') % this turns off warnings MATLAB may output, turn warnings on for
 
 
 %% Importing inputs files
+% see lines 5-28
 
+% Material properties input
+Inputs = read2table('1AA_3Phase_MATERIAL_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number = Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
+
+% Chemical model input
+Inputs = read2table('1AA_3Phase_PHASE_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number = Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
+
+% Sill intrusion input
+Inputs = read2table('1AA_3Phase_MAGMA_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number = Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
+
+% Evacuation input
+Inputs = read2table('1AA_3Phase_EVACUATION_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number = Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
+
+% Simulation input
+Inputs = read2table('1AA_3Phase_SIMULATION_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number = Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
+
+% Output input
+Inputs = read2table('1AA_3Phase_OUTPUT_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number = Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
 
 %% Setting up echoscreen
 % This file is used to be an echo of what would usually be displayed in the
@@ -66,6 +122,16 @@ BC_value=[0,0];
 
 
 %% Outputting the choices made 
+%Transport method
+if Running_plot==1
+    disp('A running plot will be outputted')
+    fprintf(File_echo, '%s \n', 'A running plot will be outputted');
+else 
+    disp('A running plot will not be outputted')
+    fprintf(File_echo, '%s \n', 'A running plot will not be outputted');
+end
+
+
 % Outputting the choices made via the flags in the input files. 
 if Add_CLCU==1
     disp('The transport of copper, chlorine and sulfur will be modelled')
@@ -152,6 +218,62 @@ else
     fprintf(File_echo, '%s \n', 'The lower porition of the crust is not dry');
 
 end
+
+% Mutliple intrusions
+if To_intrude==1
+    disp('Multiple sill intrusions')
+    fprintf(File_echo, '%s \n', 'Multiple sill intrusions');
+
+else
+    disp('Single sill intrusion')
+    fprintf(File_echo, '%s \n', 'Single sill intrusion');
+
+end
+
+% Intrude at same depth
+if SDintrusion==1
+    disp('Sills are intruded at the same depth')
+    fprintf(File_echo, '%s \n', 'Sills are intruded at the same depth');
+end
+
+
+% Intrude depending on density and/or melt fraction
+if DensIntrusion==1 && PhiIntrusion==1
+    disp('Sills are intruded by density contrast and melt fraction, whichever has the deepest depth')
+    fprintf(File_echo, '%s \n', 'Sills are intruded by density contrast and melt fraction, whichever has the deepest depth');
+elseif DensIntrusion==1 && PhiIntrusion==0
+    disp('Sills are intruded by density contrast')
+    fprintf(File_echo, '%s \n', 'Sills are intruded by density contrast');
+elseif DensIntrusion==0 && PhiIntrusion==1
+    disp('Sills are intruded by melt fraction')
+    fprintf(File_echo, '%s \n', 'Sills are intruded by melt fraction')
+end
+
+% Errors with the choice of intrusion method 
+if SDintrusion==0 && DensIntrusion==0 && PhiIntrusion==0
+    disp('No sill intrusion method is defined. Sills will intrude at the same depth.')
+    fprintf(File_echo, '%s \n', 'No sill intrusion method is defined. Sills will intrude at the same depth.')
+end
+
+if SDintrusion==1 && (DensIntrusion==1 || PhiIntrusion==1)
+    disp('Both sills intruding at the same depth, as well as sills being chosen by density and/or melt fraction have been chosen. The model will go with density and/or melt fraction')
+    fprintf(File_echo, '%s \n', 'Both sills intruding at the same depth, as well as sills being chosen by density and/or melt fraction have been chosen. The model will go with density and/or melt fraction');
+end 
+
+% Evacuations
+if To_evacuate==0
+    disp('Evacuations are turned on')
+    fprintf(File_echo, '%s \n', 'Evacuations are turned on');
+end
+
+if Evac_Int_method==0
+    disp('Evacuated magma is intruded at initial depth specified in input file')
+    fprintf(File_echo, '%s \n', 'Evacuated magma is intruded at initial depth specified in input file');
+else
+    disp('Evacuated magma is intruded in the same way sill intrusions are')
+    fprintf(File_echo, '%s \n', 'Evacuated magma is intruded in the same way sill intrusions are');
+end
+
 
 %% Unchangeable definitions
 % Values that are fixed (such as how many seconds in a year) so are not
@@ -339,7 +461,22 @@ Data_y2=[120,208,297,390,473,561,596,691,728,738];
 Data_y2=40000-(Data_y2-120)*40000/(738-120);
 Data_point2=(Data_point2-61)*(1700-800)/(838-61)+800;
 
+%% Timesteps
 
+% Converting parameters from being in yrs to seconds (used in the model)
+Max_dt=Max_dt_yr*Year; % maximum timestep
+Min_dt=Min_dt_yr*Year; % minimum timestep
+
+%converting parameter from being in Myr to seconds (used in the model)
+End_time=End_time*1e6*Year; %Length of simulation run
+
+% Initialising parameters related to time
+Time=0; % time from start of model
+Courant=Courant0; % the courant number
+
+%define dt to be in the middle of the minimum and maximum dt defined by the
+%user
+dt=(Max_dt+Min_dt)/2;
 
 %% Set up domain and depths
 Last_adapted=0; % setting the counter for when the mesh was last adapted.
@@ -583,14 +720,51 @@ Sum_V0=sum(V.*dz); % volatile component
 T0=abs(cellz-nodez(end))/1000*geotherm_crust+temp_surface;   
 
 % Calculating initial enthalpy from temperature. 
-H=(MM*cp_evolved+NN*cp_refrac+V*cp_water).*T0;  
+H=(MM*cp0(1)+NN*cp0(2)+V*cp0(3)).*T0;  
 H0=H;
 
+%% Calculating pressure throughout the crust
+%P is in Pa, any other units will be labelled.
+
+%Initialize vector
+P=zeros(N,1);  %Pressure in Pa
+
+%Converting the surface pressure from bar in Pa
+P(end)=P_top_bar*1e5+(MM(1)+NN(1)+V(1))/2*g*dz(end)/2; %MM etc needs to be replaced with actual density.
+
+% Calculating pressure throughout the crust
+for i=N-1:-1:1
+    P(i)=P(i+1)+((MM(i)+NN(i)+V(i))*dz(i+1)+(MM(i+1)+NN(i+1)+V(i+1))*dz(i))/2*g*Dynamic_scaling;
+end
+
+
+%% Initializing constant parameters throughout the crust
+
+% Porosity/melt fraction
+phi=0.0*ones(N,1); 
+
+% Saturation
+S=0.0*ones(N,1);
+
+% chemical diffusivity for SiO2
+kc=kc0*ones(N+1,3);
+
+% Specific heat capacity (Nx3; evolved, refractory, volatile)
+cp=cp0.*ones(N,1);
+
+% Partition coefficient for water
+K=K0*ones(N,1);
+
+% Density [Nx3, solid, liquid, volatile(not used, will be blank) 
+rho=ones(N,3);
+
+% Coupling term
+C_values=zeros(N+1,3);
 
 %% Intruding the first sill
 
-% Melt fraction of sill
-Sillphi=0.935; %why
+% Melt fraction/porosity of sill (this has to be 100% currently)
+SillPhi=1;
 
 % Calculate the initial mass of evolved, refractory and water of the
 % sill composition
@@ -619,11 +793,274 @@ if Add_CLCU==1
 end
 
 % Setting enthalpy of sill
-H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+mean(Lf)*(MM_sill+NN_sill+V_sill)*Sillphi*2.1; % what is this? 
+H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+mean(Lf)*(MM_sill+NN_sill+V_sill)*Sillphi*2.1; % what is this? Why no relation to temperature? Sillphi is not 1!! IT is 0.935
 Sill_den=MM_sill+NN_sill+V_sill;
 
 
-%% Timesteps
+%% Calling chemical model to update variables due to the intrusion of a sill
+% Inputs for chemical model
+% system constants
+Sys_constant=[A1,B1,C1; aa; bb;cc; S_cap, 0; n_order,alpha_order,rho_mean];
+% Pressure in kbar
+Pg_kbar=P/1e8; % P in kbar
+
+% Outputs for chemical model 
+% Temperature 
+T=ones(N,1);
+% Number of iterations for the chemical model to converge
+iter=zeros(N+1,1);
+% The region of the chemical model used
+T_S_region=zeros(N,2);
+% Local solidus
+Ts_local=zeros(N,1);
+% Local liquidus
+Tl_local=zeros(N,1);
+% Solid saturation
+S_cap=zeros(N,1);
+% Saturation
+Saturation=zeros(N,1);
+
+if Add_CLCU==1
+    % Mass data
+    Mass_data=zeros(N,13);
+    % Partition between chlorine and copper
+    Partition_CL_CU=zeros(N,2);
+else
+    % Mass data
+    Mass_data=zeros(N,7);
+end
+
+
+% Calculating parameters for the first node
+if Add_CLCU==1
+    input=[H(1),MM(1),NN(1),V(1),CL(1),CU(1)]; %Initializing inputs % Remove CU at some point as this is recalculated - need to check how important this is
+else            
+    input=[H(1),MM(1),NN(1),V(1)];
+end
+[phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,Pg_real(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  ...
+    rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+
+
+% calculating parameters for the rest of the nodes. 
+for i=2:N
+    if Add_CLCU==1 % initializing inputs % Remove CU at some point as this is recalculated - need to check how important this is
+        input=[H(i),MM(i),NN(i),V(i),CL(i),CU(i)];
+    else
+        input=[H(i),MM(i),NN(i),V(i)];
+    end
+    [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T(i-1), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:), ...
+        rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+end
+
+%% Bulk composition (melt and solid)
+Cb=(PD_range(2)*sum(Mass_data(:,[1,4]),2)+PD_range(1)*sum(Mass_data(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2);
+
+%% Post-processing for sulfur and copper calculation
+
+% Additional masses
+Mass_data_addition=zeros(N,6); % 1.Sulfur in melt; 2.Sulfur in solid; 3.Sulfur in volatile; 4.Copper in melt; 5.Copper in solid; 6.Copper in volatiles.
+
+% Nodes to use post processing for in sulfur and copper.
+S_CU_to_process=1:N;
+
+% Calling post processing function file
+S_Cu_postprocessing;
+
+%% Calculate capped values which allows us to simulate convection
+Calculate_capped_values2;
+
+%% Injection
+
+% The inputs for choosing the method to choose the intrusion depth of sills
+% is in the input file '1AA_3Phase_MAGMA_input' 
+% Sills can either be intruded at the same depth, depending on density or
+% melt fraction.
+% The method for choosing the depths will be available in the echoscreen.
+
+
+
+%Number of nodes per sill
+dzf=part2(2)-part2(1); % grid spacing for the fine portion of the node spacing
+SillNodez=round(Sill_length/(dzf)); % Number of nodes per sill
+
+
+
+
+% Calculating injection time.
+% Injection rate is inputted as mm/yr
+% Convert mm/yr to m/yr
+Injection_rate_myr = Injection_rate_mmyr*1e3;
+% Calculate time between intrusions in yrs
+Injection_gap = Sill_length/Injection_rate_myr;
+%Times at which a sill will be intruded
+injection_time=(Injection_gap: Injection_gap: End_time)*Year;
+
+
+
+
+% Converting injection depth into m
+Injection_depth=Injection_depth_km*1000;
+
+%Find the initial intrusion depths node
+depthN = find(nodez>Injection_depth, 1, 'first');
+%Find the initial intrusion depths cell
+depthCN = find(cellz==((nodez(depthN)+nodez(depthN-1))/2));
+
+% Define the sill mass for future intrusions from the initial sill
+% intrusion (line 741)
+SillMass= Mass_data(Sill_index(1),:);
+% Define the sill mass addition for future intrusions from the initial sill
+% intrusion (line 741)
+SillMass_addition=Mass_data_addition(Sill_index(1),:);
+% Define the sill enthalpy for future intrusions from the initial sill
+% intrusion (line 741)
+SillH=H(Sill_index(1));
+% Define the sill temperature for future intrusions from the initial sill
+% intrusion (line 741)
+SillT=T(Sill_index(1));
+% Define the sill melt fraction for future intrusions from the initial sill
+% intrusion (line 741)
+Sillphi=phi(Sill_index(1));
+% Define the sill saturation for future intrusions from the initial sill
+% intrusion (line 741)
+SillS=S(Sill_index(1));
+% Define the sill density for future intrusions from the initial sill
+% intrusion (line 741)
+Sillrho=rho(Sill_index(1),:);
+if Conservation_type==1
+    Sillden=sum(SillMass);
+else
+    i=Sill_index(1);
+    m1=Mass_data(i,1); n1=Mass_data(i,2); v1=Mass_data(i,3); m2=Mass_data(i,4); n2=Mass_data(i,5); v2=Mass_data(i,6); v3=Mass_data(i,7);
+    Sillden=((rhof_1*m1+rhof_1*n1)/max(m1+n1,1e-3)*(m1+n1+v1)+(rhom_1*m2+rhom_2*n2)/max(m2+n2,1e-3)*(m2+n2+v2))/(m1+n1+v1+m2+n2+v2+v3);
+end
+
+
+% Flag to notify other portions of the code that a sill has been injected
+Injected=1;
+
+% Note down the last intrusion time
+Last_intrude_time=0;
+
+
+%% Evacuations 
+
+% initialising arrays for layers
+% buoyant layers which have porosity>0
+buoy_phi_top=[];
+buoy_phi_base=[];
+% buoyant layers which have porosity>CMF
+buoy_Hphi_top=[];
+buoy_Hphi_base=[];
+% layers which have porosity>0 and contain buoyant magma
+all_phi_buoy_top=[];
+all_phi_buoy_base=[];
+% confined time for hrti
+t2=[];
+% hrti thickness
+hrti=[];
+
+
+%bulk density
+rho_bulk=phi.*(1-S).*rho(:,1)+(1-phi).*rho(:,2)+phi.*S.*rho(:,3);
+
+%Diameter of reservoir (m)
+Diameter = Diameter_km*1000;
+
+%Counter of evacuations
+evacuation_counter = 0;
+
+
+
+% Intrusion depth(s) for evacuations
+Intrusion_Evac = -Evac_intrusion_depth_km*1000;
+Last_Intrusion_Evac=min(Intrusion_Evac);
+
+
+Intrusion_Evac=sort(Intrusion_Evac);
+
+%The distance of top of the system and the intended intrusion depth must be
+%larger than the following value in order for the evacuation to happen. 
+%It's a list for all the intended intrusion depths
+Safe_intrusion_evac_dist=5e3*ones(1,length(Intrusion_Evac));  % KEEP AN EYE ON THIS
+
+
+% Find the melt fraction layers initiated at the start of this section
+Finding_porosity;
+
+
+%% save the original component mass data (FIGURE OUT WHY)
+Mass_data_old=Mass_data;
+component_A_old=sum(Mass_data_old(:,1).*dz+Mass_data_old(:,4).*dz);
+component_B_old=sum(Mass_data_old(:,2).*dz+Mass_data_old(:,5).*dz);
+component_V_old=sum(Mass_data_old(:,3).*dz+Mass_data_old(:,6).*dz+Mass_data_old(:,7).*dz);
+
+%% outputs
+output_counter=1;
+Record_time=0:Out_time*Year:End_time;
+
+%% Set up plottings 
+% labels for parameters to be plot:
+% 1. porosity
+% 19. volatile fraction S
+% 2. liquid velocity
+% 3. solid velocity
+% 20 volotile velocity
+% 4. enthalpy
+% 5. temperature
+% 6. liquid composition
+% 7. solid composition
+% 8. bulk composition 
+% 24. volatile compositions: Cl2, Cs2
+% 25. Mass per unit volume of major component M2
+
+% 10. force contribution from solid viscous force
+% 11. Heat-chemical-compaction contribution, stepwise.
+% 12. Heat-chemical-compaction contribution, total (abs).
+% 13. Refined recored of bulk composition
+% 14. Refined recored of HCC contribution, total.
+% 15. Heat-chemical-compaction contribution, total
+% 16. Chemical differenciation from compacton and reactive flow, total
+% 17. Chemical differenciation from compacton and reactive flow, stepwise
+% 18. Chemical differenciation from compacton and reactive flow, total (abs)
+% 21. Pressures (liquid, solid, volatile)
+% 22. Pressures gradient(liquid, solid, volatile)
+% 23. Densities
+
+% 50. melt viscosity
+% 51. contributions
+% 101. Intrusion marker static
+% 102. Intrusion marker dynamics
+
+% 99. total mass, for testing
+
+% Plot_Label={'$$\phi$$','uf','um','H','T','Cf','Cm','Cb','St', 'Solid_vis(%)','$$\Delta\phi$$','$$\sum|\Delta\phi|$$'};
+% when multiple variable in one figure, temperature will be scaled between solidus and liquidus
+% option 11 and 12 must stand alone!
+
+Display_type=2;  %set to 2 for the computer screens that only support 1024*768
+
+% Variables to plot
+if N_component==3 && Add_CLCU~=1
+    Plot_configure=  {[1,19],[8,6,7],[24], [5]};
+else
+    Plot_configure=  {[1 19],[8,6,7],[24], 30, 31,32,[5]};
+end
+Contribution_type=2;  %1, instant 2 accumulative %check through this  
+
+% depth axis
+if Z_label_type==2
+    Show_z=(Show_z-nodez(end))/1000;
+end
+
+% Call the necessary plots
+if running_plot==1
+    Plot_settings;
+    Update_plot;
+    drawnow;
+    Show_refresh=10;  %the refresh rate in second
+    Frame_num=1;
+end
 
 %%
 %%
@@ -1121,111 +1558,111 @@ N_number=N;
 %Sum_N0=sum(NN.*dz);
 %Sum_V0=sum(V.*dz);
 %% Time steps
-fixed_dt=0;
+%fixed_dt=0;
 
-Courant0=9.5e-1;%0.025;  %During the start of the sill intrusion
-Courant1=9.5e-1;%0.15;  
-min_phi_dt=5e-2;
+%Courant0=9.5e-1;%0.025;  %During the start of the sill intrusion
+%Courant1=9.5e-1;%0.15;  
+%min_phi_dt=5e-2;
 
-Max_dt=200*Year;
-Min_dt=5*Year;
+%Max_dt=200*Year;
+%Min_dt=5*Year;
 
-if fixed_dt==1
-    dt=1e-1*Year;    
-else
-    dt=1e-3*Year;
-end
-End_time=23e6*Year;   %250e3*Year;
+%if fixed_dt==1
+%    dt=1e-1*Year;    
+%else
+%    dt=1e-3*Year;
+%end
+%End_time=23e6*Year;   %250e3*Year;
 % End_time=50e3*Year;   %250e3*Year;
 
-Time=0;
-Courant=Courant0;
+%Time=0;
+%Courant=Courant0;
 %% Temperature
 % T=931; %temperature in C
-phi=0.0*ones(N,1);
-S=0.0*ones(N,1);
+%phi=0.0*ones(N,1);
+%S=0.0*ones(N,1);
 % 0=kt0*ones(N,3);
-kc=kc0*ones(N+1,3);
-cp=cp0.*ones(N,1);
+%kc=kc0*ones(N+1,3);
+%cp=cp0.*ones(N,1);
 %% Water component and partition coefficient
-K0=0.2;
+%K0=0.2;
 
 % if N_component==5 
-Kcl=0.05;  % Solid/melt partition coefficient of Cl 0-0.2
-Kcu=0.5;   % Solid/melt partition coefficient of Cu 0.2-2.0
+%Kcl=0.05;  % Solid/melt partition coefficient of Cl 0-0.2
+%Kcu=0.5;   % Solid/melt partition coefficient of Cu 0.2-2.0
 % end
 %%
 
 
-K=K0*ones(N,1);
-Cl2=0.08*ones(N,1);
-Cs2=Cl2*K0;
+%K=K0*ones(N,1);
+%Cl2=0.08*ones(N,1);
+%Cs2=Cl2*K0;
 
 % Pressure at the top 
-P_top=1; % unit bar
+%P_top=1; % unit bar
 
 % Volitile saturation coefficient
 % fitting the points at 0.5, 2, 4 kbar
-T_cutmin=800;
-T_cutmax=1200;
+%T_cutmin=800;
+%T_cutmax=1200;
 % coef1=[16,4, 1; 4 2,1; 0.25, 0.5, 1]\[9.2 ; 6;   2.5];
 % coef2=[16,4, 1; 4 2,1; 0.25, 0.5, 1]\[7.1 ; 4.8; 2];
 
-if is_solid_solution==0
-    Sys_constant=[A1,B1,C1; aa; bb;cc; S_cap, 0; 0      ,          0,rho_mean];
-else
-    Sys_constant=[A1,B1,C1; aa; bb;cc; S_cap, 0; n_order,alpha_order,rho_mean];
-end
-rho=ones(N,3);
+%if is_solid_solution==0
+ %   Sys_constant=[A1,B1,C1; aa; bb;cc; S_cap, 0; 0      ,          0,rho_mean];
+%else
+ %   Sys_constant=[A1,B1,C1; aa; bb;cc; S_cap, 0; n_order,alpha_order,rho_mean];
+%end
+%rho=ones(N,3);
 %%
 % mu_f_dynamics=10^muf1*ones(N+1,1)/Dynamic_scaling;
-mu_m_dynamics=ones(N+1,1)/Dynamic_scaling;
-mu_g_dynamics=10^mug*ones(N+1,1)/Dynamic_scaling;
+%mu_m_dynamics=ones(N+1,1)/Dynamic_scaling;
+mu_g_dynamics=10^mug*ones(N+1,1)/Dynamic_scaling; %DELETE
 
 
-ZerosU1=[1,N+1]; 
-ZerosU2=[1,N+1];
-ZerosU3=[1,N+1];
+ZerosU1=[1,N+1]; % CHECK IF CAN BE DELETED- NO IDEA WHAT IT IS RELATED TO
+ZerosU2=[1,N+1]; % CHECK IF CAN BE DELETED- NO IDEA WHAT IT IS RELATED TO
+ZerosU3=[1,N+1]; % CHECK IF CAN BE DELETED- NO IDEA WHAT IT IS RELATED TO
 
-P=zeros(N,1); %zeros(N,1)+P_top*1e5; %Pressure in Pa
-if N_component==3
-    P(end)=P_top*1e5+(MM(1)+NN(1)+V(1))/2*g*dz(end)/2;
-    for i=N-1:-1:1
-        P(i)=P(i+1)+((MM(i)+NN(i)+V(i))*dz(i+1)+(MM(i+1)+NN(i+1)+V(i+1))*dz(i))/2*g*Dynamic_scaling;
-    end
-else
-    P(end)=P_top*1e5+(MM(1)+NN(1)+V(1)+CL(1))/2*g*dz(end)/2;
-    for i=N-1:-1:1
-        P(i)=P(i+1)+((MM(i)+NN(i)+V(i)+CL(i))*dz(i+1)+(MM(i+1)+NN(i+1)+V(i+1)+CL(i+1))*dz(i))/2*g*Dynamic_scaling;
-    end
-end
+%P=zeros(N,1); %zeros(N,1)+P_top*1e5; %Pressure in Pa
+%if N_component==3
+%    P(end)=P_top*1e5+(MM(1)+NN(1)+V(1))/2*g*dz(end)/2;
+%    for i=N-1:-1:1
+%        P(i)=P(i+1)+((MM(i)+NN(i)+V(i))*dz(i+1)+(MM(i+1)+NN(i+1)+V(i+1))*dz(i))/2*g*Dynamic_scaling;
+%    end
+%else
+%    P(end)=P_top*1e5+(MM(1)+NN(1)+V(1)+CL(1))/2*g*dz(end)/2;
+%    for i=N-1:-1:1
+%        P(i)=P(i+1)+((MM(i)+NN(i)+V(i)+CL(i))*dz(i+1)+(MM(i+1)+NN(i+1)+V(i+1)+CL(i+1))*dz(i))/2*g*Dynamic_scaling;
+%    end
+%end
 
-dP=zeros(N+1,1);
+dP=zeros(N+1,1); % DELETE - it is currently used to calculate pressure where pressure is calculated using density calculated using MM etc, this will be updated to just be a density input.
 
-C_values=zeros(N+1,3);
+%C_values=zeros(N+1,3);
 
-U_new=zeros((N+1)*2,1);
+U_new=zeros((N+1)*2,1); % CHECK IF IT CAN BE DELETED
 
-T=ones(N,1);
+%T=ones(N,1);
 
 %% Input data correction by the chemical model
 
-Pg_real=P/1e8; % P in kbar
-Pg_real0=Pg_real;
-iter=zeros(N+1,1);
-k2=zeros(N,1);
+%Pg_real=P/1e8; % P in kbar
+%Pg_real0=Pg_real;
+%iter=zeros(N+1,1);
+%k2=zeros(N,1);
 % Ts_new=zeros(N,1);
-T_S_region=zeros(N,2);
-Ts_local=zeros(N,1);
-Tl_local=zeros(N,1);
-S_cap=zeros(N,1);
-Saturation=zeros(N,1);
-if N_component==3 && Add_CLCU~=1
-    Mass_data=zeros(N,7);
-else
-    Mass_data=zeros(N,13);
-    Partition_CL_CU=zeros(N,2);
-end
+%T_S_region=zeros(N,2);
+%Ts_local=zeros(N,1);
+%Tl_local=zeros(N,1);
+%S_cap=zeros(N,1);
+%Saturation=zeros(N,1);
+%if N_component==3 && Add_CLCU~=1
+%    Mass_data=zeros(N,7);
+%else
+ %   Mass_data=zeros(N,13);
+  %  Partition_CL_CU=zeros(N,2);
+%end
 % pressure input here is kbar: 1e8 Pasca
 % [phi(1),S(1),T(1),rho(1,:),iter(1),k2(1),Ts_new(1),Mass_data(1,:)]=Phase_component_solve_new5(H(1),MM(1),NN(1),V(1),Pg_real(1), 1000, Sys_constant,cp(1,:),  rho_constant, Lf, K, Ts,  Tl, min_por, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision,3, Conservation_type);
 % for i=2:N
@@ -1233,59 +1670,60 @@ end
 % end
 
 
-if is_solid_solution==0
-    [phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Mass_data(1,:),S_cap(1)]=Phase_component_updated2(H(1),MM(1),NN(1),V(1),Pg_real(1), 500, [1,1], Jacobians, Rhs, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, K(1), Ts,  Tl, min_por, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
-    for i=2:N
+%if is_solid_solution==0
+%    [phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Mass_data(1,:),S_cap(1)]=Phase_component_updated2(H(1),MM(1),NN(1),V(1),Pg_real(1), 500, [1,1], Jacobians, Rhs, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, K(1), Ts,  Tl, min_por, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
+%    for i=2:N
         %     if i==40
         %         aaa=1;
         %     end
-        [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Mass_data(i,:),S_cap(i)]=Phase_component_updated2(H(i),MM(i),NN(i),V(i),Pg_real(i-1),T(i-1), T_S_region(i-1,:), Jacobians, Rhs, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K(i), Ts, Tl, min_por, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
-    end
-else
-    if N_component==3
-        if Add_CLCU==1
-            input=[H(1),MM(1),NN(1),V(1),CL(1),CU(1)];
-        else            
-            input=[H(1),MM(1),NN(1),V(1)];
-        end
-        [phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,Pg_real(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
-        for i=2:N
-            if Add_CLCU==1
-                input=[H(i),MM(i),NN(i),V(i),CL(i),CU(i)];
-            else
-                input=[H(i),MM(i),NN(i),V(i)];
-            end
-            [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T(i-1), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
-        end
-    else
-        [phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Partition_CL_CU(1,:)]=Phase_component_updated_solid_5p_simple(H(1),MM(1),NN(1),V(1),CL(1),CU(1), Pg_real(1), 1000, 1, Jacobians, Rhs, Constant_index,Extra_func, Sys_constant, cp(1,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
-        for i=2:N
-            [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i),Ts_local(i),Tl_local(i),Mass_data(i,:),S_cap(i),Partition_CL_CU(i,:)]=Phase_component_updated_solid_5p_simple(H(i),MM(i),NN(i),V(i),CL(i),CU(i), Pg_real(i), T(i-1), T_S_region(i-1), Jacobians, Rhs, Constant_index, Extra_func, Sys_constant, cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu Partition_CL_CU(i-1,:)], Ts, Tl, min_por, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
-        end
-    end
-end
+%        [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Mass_data(i,:),S_cap(i)]=Phase_component_updated2(H(i),MM(i),NN(i),V(i),Pg_real(i-1),T(i-1), T_S_region(i-1,:), Jacobians, Rhs, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K(i), Ts, Tl, min_por, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
+%    end
+%else
+%    if N_component==3
+%        if Add_CLCU==1
+%            input=[H(1),MM(1),NN(1),V(1),CL(1),CU(1)];
+%        else            
+%            input=[H(1),MM(1),NN(1),V(1)];
+%        end
+%        [phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,Pg_real(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+%        for i=2:N
+%            if Add_CLCU==1
+%                input=[H(i),MM(i),NN(i),V(i),CL(i),CU(i)];
+%            else
+%                input=[H(i),MM(i),NN(i),V(i)];
+%            end
+%            [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T(i-1), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+%        end
+%    else
+%        [phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Partition_CL_CU(1,:)]=Phase_component_updated_solid_5p_simple(H(1),MM(1),NN(1),V(1),CL(1),CU(1), Pg_real(1), 1000, 1, Jacobians, Rhs, Constant_index,Extra_func, Sys_constant, cp(1,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
+%        for i=2:N
+%            [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i),Ts_local(i),Tl_local(i),Mass_data(i,:),S_cap(i),Partition_CL_CU(i,:)]=Phase_component_updated_solid_5p_simple(H(i),MM(i),NN(i),V(i),CL(i),CU(i), Pg_real(i), T(i-1), T_S_region(i-1), Jacobians, Rhs, Constant_index, Extra_func, Sys_constant, cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu Partition_CL_CU(i-1,:)], Ts, Tl, min_por, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
+%        end
+%    end
+%end
 
 % post-processing for new Sulfur and Cu calculation
-Mass_data_addition=zeros(N,6);
-S_CU_to_process=1:N;
-S_Cu_postprocessing;
+%Mass_data_addition=zeros(N,6);
+%S_CU_to_process=1:N;
+%S_Cu_postprocessing;
 % Mass_data=[m1,n1,v1,m2,n2,v2,v3];
 
-Solid_saturation0=0.05;
-Solid_saturation=zeros(N,1);
-for i=1:N
-    [~,~, temp]=Cal_liquidus(19,Pg_real0(i)*1000,Data_point2,Data_y2);
-    Solid_saturation(i)=Solid_saturation0;
-end
-Cb=(PD_range(2)*sum(Mass_data(:,[1,4]),2)+PD_range(1)*sum(Mass_data(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2);
+%Solid_saturation0=0.05; % COULD POSSIBLY REMOVE
+%Solid_saturation=zeros(N,1); % COULD POSSIBLY REMOVE
+%for i=1:N % COULD POSSIBLY REMOVE
+%    [~,~, temp]=Cal_liquidus(19,Pg_real0(i)*1000,Data_point2,Data_y2); %
+%    COULD POSSIBLY REMOVE
+%    Solid_saturation(i)=Solid_saturation0; % COULD POSSIBLY REMOVE
+%end
+%Cb=(PD_range(2)*sum(Mass_data(:,[1,4]),2)+PD_range(1)*sum(Mass_data(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2);
 
 
-Convective_cut=0.990;
-Convective_cut2=0.990;
+%Convective_cut=0.990;
+%Convective_cut2=0.990;
 
-Calculate_capped_values2;
+%Calculate_capped_values2;
 %% Injection
-To_intrude=1;  %set to 1 to turn on the multi intrusion
+%To_intrude=1;  %set to 1 to turn on the multi intrusion
 
 % Injection depth method
 % method 99: always at the same depth
@@ -1297,12 +1735,12 @@ To_intrude=1;  %set to 1 to turn on the multi intrusion
 % previous depth
 
 % All methods are affected by the random shift 
-Injection_depth_method=3; 
-phi_crit=0.2; %the porosity where the initusion happens
+%Injection_depth_method=3; 
+%phi_crit=0.2; %the porosity where the initusion happens
 
 %Number of nodes per sill
-dzf=part2(2)-part2(1);
-SillNodez=round(Sill_length/(dzf));
+%dzf=part2(2)-part2(1);
+%SillNodez=round(Sill_length/(dzf));
 
 % injection_time=(5e3: 5e3: 3000e3)*Year; %
 % injection_time=(5e3: 5e3: 2000e3)*Year; %
@@ -1312,105 +1750,105 @@ SillNodez=round(Sill_length/(dzf));
 % injection_time=(30e3: 30e3: 12000e3)*Year; %
 % injection_time=(40e3: 40e3: 16000e3)*Year; %
 % injection_time=(30e3: 30e3: 18000e3)*Year;
-injection_time=(50e3: 50e3: 20000e3)*Year;
+%injection_time=(50e3: 50e3: 20000e3)*Year;
 % injection_time=(60e3: 60e3: 24000e3)*Year;
 % injection_time=(75e3: 75e3: 30000e3)*Year;
 % injection_time=[50e3: 50e3: 10000e3, (10000e3+40e3):40e3:18000e3, (18000e3+30e3):30e3:24000e3]*Year;
 % injection_time=(10e3: 10e3: 3000e3)*Year;
-injection_time=[injection_time End_time+100]; 
+%injection_time=[injection_time End_time+100]; 
 
 % injection_time=(30:50:500)*Year; %
-Random_shift=10; %random shift of distance from the intended position
+%Random_shift=10; %random shift of distance from the intended position
 
-Injected=1;
+%Injected=1;
 % Tot_Sill=100; % Total magma intruded (in metres)
 
-Injection_depth=30000;
+%Injection_depth=30000;
 
 %Intrusion depth - Nodez
-depthN = find(nodez>Injection_depth, 1, 'first');
+%depthN = find(nodez>Injection_depth, 1, 'first');
 %Intrusion depth -cellz
-depthCN = find(cellz==((nodez(depthN)+nodez(depthN-1))/2));
-SillMass= Mass_data(Sill_index(1),:);
-SillMass_addition=Mass_data_addition(Sill_index(1),:);
-SillH=H(Sill_index(1));
-SillT=T(Sill_index(1));
-Sillphi=phi(Sill_index(1));
-SillS=S(Sill_index(1));
-Sillrho=rho(Sill_index(1),:);
-if Conservation_type==1
-    Sillden=sum(SillMass);
-else
-    i=Sill_index(1);
-    m1=Mass_data(i,1); n1=Mass_data(i,2); v1=Mass_data(i,3); m2=Mass_data(i,4); n2=Mass_data(i,5); v2=Mass_data(i,6); v3=Mass_data(i,7);
-    Sillden=((rhof_1*m1+rhof_1*n1)/max(m1+n1,1e-3)*(m1+n1+v1)+(rhom_1*m2+rhom_2*n2)/max(m2+n2,1e-3)*(m2+n2+v2))/(m1+n1+v1+m2+n2+v2+v3);
-end
+%depthCN = find(cellz==((nodez(depthN)+nodez(depthN-1))/2));
+%SillMass= Mass_data(Sill_index(1),:);
+%SillMass_addition=Mass_data_addition(Sill_index(1),:);
+%SillH=H(Sill_index(1));
+%SillT=T(Sill_index(1));
+%Sillphi=phi(Sill_index(1));
+%SillS=S(Sill_index(1));
+%Sillrho=rho(Sill_index(1),:);
+%if Conservation_type==1
+%    Sillden=sum(SillMass);
+%else
+%    i=Sill_index(1);
+%    m1=Mass_data(i,1); n1=Mass_data(i,2); v1=Mass_data(i,3); m2=Mass_data(i,4); n2=Mass_data(i,5); v2=Mass_data(i,6); v3=Mass_data(i,7);
+%    Sillden=((rhof_1*m1+rhof_1*n1)/max(m1+n1,1e-3)*(m1+n1+v1)+(rhom_1*m2+rhom_2*n2)/max(m2+n2,1e-3)*(m2+n2+v2))/(m1+n1+v1+m2+n2+v2+v3);
+%end
 
-Last_intrude_time=0;
+%Last_intrude_time=0;
 
 
 %% Evacuations - CAB
-To_evacuate=0; %set to 1 to enable evacuation
+%To_evacuate=0; %set to 1 to enable evacuation
 % initialising arrays for layers
 % buoyant layers which have porosity>0
-buoy_phi_top=[];
-buoy_phi_base=[];
+%buoy_phi_top=[];
+%buoy_phi_base=[];
 % buoyant layers which have porosity>CMF
-buoy_Hphi_top=[];
-buoy_Hphi_base=[];
+%buoy_Hphi_top=[];
+%buoy_Hphi_base=[];
 % layers which have porosity>0 and contain buoyant magma
-all_phi_buoy_top=[];
-all_phi_buoy_base=[];
+%all_phi_buoy_top=[];
+%all_phi_buoy_base=[];
 % confined time for hrti
-t2=[];
+%t2=[];
 % hrti thickness
-hrti=[];
+%hrti=[];
 
 %critical melt fraction to be classed as high melt fraction
-CMF=0.6;
+%CMF=0.6;
 
 % define
 %Thickness of magma to calculate the density of the rock above (m)
-xabove = 2000;
+%xabove = 2000;
 %bulk density
-rho_bulk=phi.*(1-S).*rho(:,1)+(1-phi).*rho(:,2)+phi.*S.*rho(:,3);
+%rho_bulk=phi.*(1-S).*rho(:,1)+(1-phi).*rho(:,2)+phi.*S.*rho(:,3);
 
 %Diameter of reservoir (m)
-Diameter = 60000;
+%Diameter = 60000;
 %Crust viscosity (Pa s)
-crust_visc = 1e19;
+%crust_visc = 1e19;
 %Rock strength (Pa)
-crit_crust =10e6; %3e6;
+%crit_crust =10e6; %3e6;
 %Initial RTI scale (-)
-scale_RTI = 0.001;
+%scale_RTI = 0.001;
 %Elastic modulus (Pa)
-E_layer = 1e10;
+%E_layer = 1e10;
 %Freezing parameter (-)
-freeze=0.14;
+%freeze=0.14;
 % Thickness of crust above magma layer to take thermal gradient over (m)
-dTabove = 200;
+%dTabove = 200;
 
 %Counter of evacuations
-evacuation_counter = 0;
+%evacuation_counter = 0;
 
 % Intrusion method, similar to sill intrusion
 %1. density contrast based, or last location if no den_melt<den_crust point found.  
 %2. fixed depth
-Intrusion_Evac_method=1;  
+%Intrusion_Evac_method=1;  
 
 
 % Intrusion depth(s) for evacuations
 % Intrusion_Evac = [-15000 -5000];
-Intrusion_Evac = [-5000];
-Last_Intrusion_Evac=min(Intrusion_Evac);
+%Intrusion_Evac = [-5000];
+%Last_Intrusion_Evac=min(Intrusion_Evac);
 
 
-Intrusion_Evac=sort(Intrusion_Evac);
+%Intrusion_Evac=sort(Intrusion_Evac);
 
 %The distance of top of the system and the intended intrusion depth must be
 %larger than the following value in order for the evacuation to happen. 
 %It's a list for all the intended intrusion depths
-Safe_intrusion_evac_dist=5e3*ones(1,length(Intrusion_Evac));  
+%Safe_intrusion_evac_dist=5e3*ones(1,length(Intrusion_Evac));  
 
 
 % %Intrusion depth 1 for evacuations - Nodez
@@ -1424,35 +1862,35 @@ Safe_intrusion_evac_dist=5e3*ones(1,length(Intrusion_Evac));
 % initial_T_Depth_2 = find(cellz==((nodez(initial_T_depth_N_2)+nodez(initial_T_depth_N_2-1))/2));
 
 
-Finding_porosity;
+%Finding_porosity;
 % CAB end
 %% outputs
 %CAB
-Out_time = 5000;
-output_counter=1;
+%Out_time = 5000;
+%output_counter=1;
 % Set as 1, to turn on txt outputs
-Record_data=0;
-Record_index=2;
-Record_time=[0:Out_time*Year:End_time];
-restart_No=5;
+%Record_data=0;
+Record_index=2; % MAY BE ABLE TO REMOVE
+%Record_time=[0:Out_time*Year:End_time];
+%restart_No=5;
 
 %CAB end
 %% save the original component mass data
-Mass_data_old=Mass_data;
-component_A_old=sum(Mass_data_old(:,1).*dz+Mass_data_old(:,4).*dz);
-component_B_old=sum(Mass_data_old(:,2).*dz+Mass_data_old(:,5).*dz);
-component_V_old=sum(Mass_data_old(:,3).*dz+Mass_data_old(:,6).*dz+Mass_data_old(:,7).*dz);
+%Mass_data_old=Mass_data;
+%component_A_old=sum(Mass_data_old(:,1).*dz+Mass_data_old(:,4).*dz);
+%component_B_old=sum(Mass_data_old(:,2).*dz+Mass_data_old(:,5).*dz);
+%component_V_old=sum(Mass_data_old(:,3).*dz+Mass_data_old(:,6).*dz+Mass_data_old(:,7).*dz);
 %%
-% Record intrusion marker
-To_recored_intrusion_marker=0;
-if To_recored_intrusion_marker==1
-    marker_ratio=0.1;
+% Record intrusion marker - all can be removed.
+To_recored_intrusion_marker=0; %REMOVE
+if To_recored_intrusion_marker==1 %REMOVE
+    marker_ratio=0.1; %REMOVE
 
-    marker_nodes=find(cellz>(cellz(Sill_index(1))+marker_ratio*Sill_length),1,'first')-Sill_index(1);
-    Intrusion_marker_static=zeros(N,1);
-    Intrusion_marker_dynamics=zeros(N,1);
-    Intrusion_marker_static(Sill_index(1):Sill_index(1)+marker_nodes)=1;
-    Intrusion_marker_dynamics(Sill_index(1):Sill_index(1)+marker_nodes)=1;
+    marker_nodes=find(cellz>(cellz(Sill_index(1))+marker_ratio*Sill_length),1,'first')-Sill_index(1); %REMOVE
+    Intrusion_marker_static=zeros(N,1); %REMOVE
+    Intrusion_marker_dynamics=zeros(N,1); %REMOVE
+    Intrusion_marker_static(Sill_index(1):Sill_index(1)+marker_nodes)=1; %REMOVE
+    Intrusion_marker_dynamics(Sill_index(1):Sill_index(1)+marker_nodes)=1; %REMOVE
 end
 
 %% Set up plottings 
@@ -1499,41 +1937,41 @@ end
 %      [6],[7],[8],[11]};   % a 2*4 plot setting
 % Plot_configure=...
 %     {[1,5,8],[10],[11]};  
-running_plot=1; %CAB added, if 1 it will plot whilst running
-SiO2_range=[47 74]; %CAB added,
-Cb2=(sum(Mass_data(:,[3,6,7]),2))./sum(Mass_data,2); %CAB added,
+%running_plot=1; %CAB added, if 1 it will plot whilst running
+%SiO2_range=[47 74]; %CAB added,
+%Cb2=(sum(Mass_data(:,[3,6,7]),2))./sum(Mass_data,2); %CAB added,
 
-Display_type=2;  %set to 2 if the computer screen only support 1024*768..ffs!
+%Display_type=2;  %set to 2 if the computer screen only support 1024*768..ffs!
 
 %  Plot_configure=  {[1],[19],[8,6,7],[24], [5]};  
-if N_component==3 && Add_CLCU~=1
-    Plot_configure=  {[1,19],[8,6,7],[24], [5]};
+%if N_component==3 && Add_CLCU~=1
+%    Plot_configure=  {[1,19],[8,6,7],[24], [5]};
     % Plot_configure=  {[1,19],[8,6,7],[24], [101],[102]};
-else
-    Plot_configure=  {[1 19],[8,6,7],[24], 30, 31,32,[5]};
-end
- Contribution_type=2;  %1, instant 2 accumulative 
+%else
+%    Plot_configure=  {[1 19],[8,6,7],[24], 30, 31,32,[5]};
+%end
+% Contribution_type=2;  %1, instant 2 accumulative 
  % Plot_configure=  {[1],[8,6,7], [5};  
 % Plot_configure=  {[1],[19],[5],[8,6,7],[24], [2,3,20],[23], [99]};  
 
-Z_label_type=2;  % 1 in meter, 2 in km start from 0 on top
+%Z_label_type=2;  % 1 in meter, 2 in km start from 0 on top
 
-if Z_label_type==2
-    Show_z=(Show_z-nodez(end))/1000;
-end
+%if Z_label_type==2
+%    Show_z=(Show_z-nodez(end))/1000;
+%end
 
-Adaptive_show_range=1; % Set to one to let the show range track the active region
+%Adaptive_show_range=1; % Set to one to let the show range track the active region
 
-u_all=zeros(3*N+3,1);
+%u_all=zeros(3*N+3,1);
 % Ts_local=Ts;
 % Tl_local=Tl;
-if running_plot==1
-    Plot_settings;
-    Update_plot;
-    drawnow;
-    Show_refresh=10;  %the refresh rate in second
-    Frame_num=1;
-end
+%if running_plot==1
+%    Plot_settings;
+%    Update_plot;
+%    drawnow;
+ %   Show_refresh=10;  %the refresh rate in second
+  %  Frame_num=1;
+%end
 
 
 %%  Record videos (data)
@@ -1559,7 +1997,7 @@ if Create_save_data==1
 end
 %%
 %Extract volatile phases
-To_extract_volatile=1; %When set to 1, extract the volatile phases created and recored the collected volatile　
+To_extract_volatile=1; %When set to 1, extract the volatile phases created and recorded the collected volatile　
 if To_extract_volatile==1
     Record_gap=1000*Year;
     Record_vol_time=0;
@@ -1594,7 +2032,7 @@ file_iter = fopen('Iteration_recored.txt', 'w');
 
 %% Debug parameters
 
-found_error=0;
+found_error=0; %REMOVE
 
 
 %function x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust, H2O_crust, CL_crust, N_component,Conservation_type,Precision)
