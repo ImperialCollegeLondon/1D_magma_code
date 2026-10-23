@@ -131,7 +131,7 @@ Partition_coefficient_cu,dummy,
 
 ******************Pressure_parameters****************,dummy,
 Pressure_at_top_bar,dummy,
-,P_top,1
+,P_top_bar,1
 
 ******************Convective_parameters****************,dummy,
 Convective_cut,dummy,

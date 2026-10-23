@@ -58,9 +58,6 @@ If_multiple_sill_intrusion_gt_0,dummy,
 Length_of_sill_in_metres,dummy,
 ,Sill_length,50
 
-Melt_fraction_sill,dummy,
-,Sillphi,1
-
 SiO2_of_sill_percent,dummy,
 ,SiO2_sill,50
 
@@ -92,6 +89,12 @@ Injection_rate_mmyr,dummy,
 
 Calculate_CU_CL_S_=1,dummy,
 ,Add_CLCU,1
+
+Fe3ratio,dummy, 
+,Fe3Ratio, 0.5
+
+Mass_fractions_of_copper,dummy,
+,MassCuCh, 0.35
 
 CL_in_crust_ppm,dummy,
 ,CLcrust_ppm,150

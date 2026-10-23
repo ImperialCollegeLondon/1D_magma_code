@@ -9,13 +9,16 @@ To_evacuate_=0No_=Yes,dummy,
 
 ******************Crust_and_reservoir_parameters****************,dummy,
 ,diameter_of_reservoirs_km,dummy, 
-,Diameter, 80
+,Diameter_km, 80
 
 ,Viscosity_of_crust_Pas,dummy,
 ,Crust_visc,1e19
 
 ,Critical_rock_strength_Pa,dummy,
 ,Crit_Crust,3e6
+
+,Critical_melt_fraction_to_be_High_melt_fraction_magma,dummy, 
+,CMF,0.6
 
 ******************Overlying_rock_parameters****************,dummy,
 Distance_above_to_calculate_rock_density_m,dummy,
@@ -39,5 +42,5 @@ Thickness_of_magma_layer_to_take_thermal_grad_over_metres,dummy,
 Initial_intrusion_depth_of_evacuations_km,dummy,
 ,Evac_intrusion_depth_km,15
 
-Follow_intrusion_depth_of_sill_intrusion_=1Yes_=0IntitialIntrusionDepth,dummy, 
+Follow_intrusion_depth_of_sill_intrusion_=1_IntitialIntrusionDepth=0,dummy, 
 ,Evac_Int_method,0

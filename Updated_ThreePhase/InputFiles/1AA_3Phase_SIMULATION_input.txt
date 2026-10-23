@@ -2,6 +2,10 @@ Var1,Var2,Var3
 Description_use_4_spaces,dummy,
 ,Input_name,Input_No
 
+******************Maximum_length_of_time_for_model_Ma********,dummy, 
+,End_time, 23
+
+
 ******************Non_linear_loop_parameters****************,dummy,
 Precision,dummy,
 ,Precision,1e-4
@@ -78,10 +82,10 @@ Fixed_timesteps_=0yes_=1no,dummy,
 ,Fixed_dt,1
 
 Maximum_timestep_yrs,dummy,
-,Max_dt,200
+,Max_dt_yr,200
 
 Minimum_timestep_yrs,dummy,
-,Min_dt,5 
+,Min_dt_yr,5 
 
 Initial_courant_no,dummy, 
 ,Courant0,0.95
