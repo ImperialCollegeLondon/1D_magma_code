@@ -102,9 +102,9 @@ parfor i=S_CU_to_process
        
     %H2O content of the melt 
     H2O_melt=v1/max(m1+n1+v1,1e-12)*100;
-
+    
     % update comment when calculate_s_redox has been gone through
-    results=calculate_S_redox(wt_percent(8), wt_percent(6), wt_percent(3), wt_percent(1), wt_percent(9), wt_percent(7), wt_percent(2), wt_percent(5), wt_percent(4),    Fe3ratio, T(i), 0, 1, Pg_real(i)/10, 100, 80, H2O_melt);
+    results=calculate_S_redox_update(wt_percent(8), wt_percent(6), wt_percent(3), wt_percent(1), wt_percent(9), wt_percent(7), wt_percent(2), wt_percent(5), wt_percent(4),    Fe3ratio, T(i), 0, 1, P_kbar(i)/10, 100, 80, H2O_melt);
 
     % Difference in oxygen fugacity relative to the FMQ buffer (?)
     dFMQ=results.DeltaQFM; % this gets DeltaFMQ from results

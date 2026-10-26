@@ -37,16 +37,33 @@
 % 1. Clear previous memory/values
 % 2. Importing inputs files
 
+
+%%
+%%
 %% Clear previous memory/values
 clear;
 warning('off') % this turns off warnings MATLAB may output, turn warnings on for testing.
 
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%% VARIABLES TO REMOVE
+%%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+is_solid_solution=1; %DELETE 
+N_component=3;
+Fix_H2O=0;
+simplified_5p=0;
+Vol_flux=0; %DELETE %volatile? flux (mass)
+
+% paper based huber
+aa=[-112.528, 127.811, 112.04]; %DELETE - VISCOSITY DENSITY
+bb=[-0.381, -1.135, -0.411]; % DELETE - VISCOSITY DENSITY
+cc=[0.033, 0, 0]; % DELETE - VISCOSITY DENSITY 
 
 %% Importing inputs files
 % see lines 5-28
 
 % Material properties input
-Inputs = read2table('1AA_3Phase_MATERIAL_input.txt');
+Inputs = readtable('1AA_3Phase_MATERIAL_input.txt');
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -55,7 +72,7 @@ for i=1:r
 end
 
 % Chemical model input
-Inputs = read2table('1AA_3Phase_PHASE_input.txt');
+Inputs = readtable('1AA_3Phase_PHASE_input.txt');
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -64,7 +81,7 @@ for i=1:r
 end
 
 % Sill intrusion input
-Inputs = read2table('1AA_3Phase_MAGMA_input.txt');
+Inputs = readtable('1AA_3Phase_MAGMA_input.txt');
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -73,7 +90,7 @@ for i=1:r
 end
 
 % Evacuation input
-Inputs = read2table('1AA_3Phase_EVACUATION_input.txt');
+Inputs = readtable('1AA_3Phase_EVACUATION_input.txt');
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -82,7 +99,7 @@ for i=1:r
 end
 
 % Simulation input
-Inputs = read2table('1AA_3Phase_SIMULATION_input.txt');
+Inputs = readtable('1AA_3Phase_SIMULATION_input.txt');
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -91,7 +108,7 @@ for i=1:r
 end
 
 % Output input
-Inputs = read2table('1AA_3Phase_OUTPUT_input.txt');
+Inputs = readtable('1AA_3Phase_OUTPUT_input.txt');
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -99,6 +116,8 @@ for i=1:r
     assignin('base',names(i),Number(i))
 end
 
+% REMOVE
+Model_name='test_replace';
 %% Setting up echoscreen
 % This file is used to be an echo of what would usually be displayed in the
 % MATLAB command window. 
@@ -122,8 +141,10 @@ BC_value=[0,0];
 
 
 %% Outputting the choices made 
-%Transport method
-if Running_plot==1
+% Outputting the choices made via the flags in the input files. 
+
+% Running plot
+if running_plot==1
     disp('A running plot will be outputted')
     fprintf(File_echo, '%s \n', 'A running plot will be outputted');
 else 
@@ -131,8 +152,16 @@ else
     fprintf(File_echo, '%s \n', 'A running plot will not be outputted');
 end
 
+% Create video
+if Create_Video==1
+    disp('Running video outputted')
+    fprintf(File_echo, '%s \n', 'Running video outputted');
+else
+    disp('Running video is not outputted')
+    fprintf(File_echo, '%s \n', 'Running video is not outputted');
+end
 
-% Outputting the choices made via the flags in the input files. 
+% Transporting copper, chlorine and sulfur
 if Add_CLCU==1
     disp('The transport of copper, chlorine and sulfur will be modelled')
     fprintf(File_echo, '%s \n', 'The transport of copper, chlorine and sulfur will be modelled');
@@ -181,7 +210,7 @@ if melt_viscosity_type==1
 
 else
     disp('Melt viscosity indepedent of H2O and dependent on SiO2, see Jackson et al. 2018')
-    fprintf(File_echo, '%s \n', ''Melt viscosity indepedent of H2O and dependent on SiO2, see Jackson et al. 2018');
+    fprintf(File_echo, '%s \n', 'Melt viscosity indepedent of H2O and dependent on SiO2, see Jackson et al. 2018');
 
 end
 
@@ -197,17 +226,6 @@ else
 
 end
 
-% To_evacuate - turn on magma moving through crust
-if To_evacuate==1
-    disp('Magma evacuation from the reservoir is turned on')
-    fprintf(File_echo, '%s \n', 'Magma evacuation from the reservoir is turned on');
-
-else
-    disp('Magma evacuation from the reservoir is turned off')
-    fprintf(File_echo, '%s \n', 'Magma evacuation from the reservoir is turned off');
-
-end
-
 % The lower portion of the crust is made dry
 if Dry_Depth_Flag==1
     disp('The lower porition of the crust is made dry')
@@ -219,7 +237,7 @@ else
 
 end
 
-% Mutliple intrusions
+% Multiple intrusions
 if To_intrude==1
     disp('Multiple sill intrusions')
     fprintf(File_echo, '%s \n', 'Multiple sill intrusions');
@@ -246,13 +264,13 @@ elseif DensIntrusion==1 && PhiIntrusion==0
     fprintf(File_echo, '%s \n', 'Sills are intruded by density contrast');
 elseif DensIntrusion==0 && PhiIntrusion==1
     disp('Sills are intruded by melt fraction')
-    fprintf(File_echo, '%s \n', 'Sills are intruded by melt fraction')
+    fprintf(File_echo, '%s \n', 'Sills are intruded by melt fraction');
 end
 
 % Errors with the choice of intrusion method 
 if SDintrusion==0 && DensIntrusion==0 && PhiIntrusion==0
     disp('No sill intrusion method is defined. Sills will intrude at the same depth.')
-    fprintf(File_echo, '%s \n', 'No sill intrusion method is defined. Sills will intrude at the same depth.')
+    fprintf(File_echo, '%s \n', 'No sill intrusion method is defined. Sills will intrude at the same depth.');
 end
 
 if SDintrusion==1 && (DensIntrusion==1 || PhiIntrusion==1)
@@ -261,7 +279,7 @@ if SDintrusion==1 && (DensIntrusion==1 || PhiIntrusion==1)
 end 
 
 % Evacuations
-if To_evacuate==0
+if To_evacuate==1
     disp('Evacuations are turned on')
     fprintf(File_echo, '%s \n', 'Evacuations are turned on');
 end
@@ -273,6 +291,8 @@ else
     disp('Evacuated magma is intruded in the same way sill intrusions are')
     fprintf(File_echo, '%s \n', 'Evacuated magma is intruded in the same way sill intrusions are');
 end
+
+
 
 
 %% Unchangeable definitions
@@ -321,8 +341,8 @@ phi_range=linspace(0,1,N_vis);
 
 % Cap phi that is close to 0 (1-Phi_Max_MV) and 1 (Phi_Max_MV) as the
 % viscosity tends to infinity at these end points
-phi_range(phi_range<(1-Phi_Max_MV)=(1-Phi_Max_MV);
-phi_range(phi_range>Phi_Max_MV)=Phi_Max_Mv;
+phi_range(phi_range<(1-Phi_Max_MV))=(1-Phi_Max_MV);
+phi_range(phi_range>Phi_Max_MV)=Phi_Max_MV;
 
 %Calculating sigma
 sigma=sigma_n-gamma;
@@ -363,7 +383,7 @@ phi_range=phi_range(end:-1:1);
 
 %% Melt density
 % Melt density independent of H2O and dependent on SiO2
-x1=MeltDens_refrac_comp_noH2; y1=MeltDens_refrac_noH;   x2=MeltDens_evolved_comp_noH; y2=MeltDens_evolved_noH;
+x1=MeltDens_refrac_comp_noH2; y1=MeltDens_refrac_noH2;   x2=MeltDens_evolved_comp_noH2; y2=MeltDens_evolved_noH2;
 rhof_2=(y2-y1)/(x2-x1)*(PD_range_min-x1)+y1; %Density fluid, least evolved at 47% 
 rhof_1=(y2-y1)/(x2-x1)*(PD_range_max-x1)+y1; %Density fluid, most evolved AT 74%
 
@@ -373,7 +393,7 @@ Coef_melt_den=[-0.004542610349603, 0.000103097162684, 0.001102980266019, 0.00024
 
 %% Solid Density
 % Solid density independent of H2O and dependent on SiO2
-x1=SolidDens_refrac_comp_noH2; y1=SolidDens_refrac_noH;   x2=SolidDens_evolved_comp_noH; y2=SolidDens_evolved_noH;
+x1=SolidDens_refrac_comp_noH2; y1=SolidDens_refrac_noH2;   x2=SolidDens_evolved_comp_noH2; y2=SolidDens_evolved_noH2;
 rhom_2=(y2-y1)/(x2-x1)*(PD_range_min-x1)+y1; %Density solid, least evolved
 rhom_1=(y2-y1)/(x2-x1)*(PD_range_max-x1)+y1; %Density solid, most evolved
 
@@ -500,25 +520,25 @@ base_crust_m = base_crust_km*1000;
 %Calculate the lengths - these lengths are calculated so that the intrusion
 %depths are in the centre of the fine mesh area.
 if To_evacuate==0 % no evacuations
-    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
-    Length1 = (-Injection_depth_m)+Sill_length*fine_ratio/2; % Above sill intrusion depth to surface
+    Length0 = (base_crust_m-Injection_depth_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
+    Length1 = (Injection_depth_m)+Sill_length*fine_ratio/2; % Above sill intrusion depth to surface
 else %evacuations
-    Length0 = (Injection_depth_m-base_crust_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
-    Length1 = (Evac_intrusion_middepth_m-Injection_depth_m)+Sill_length*fine_ratio/2; %Above sill intrusion depth to evacuated magma mid intrusion depth
-    Length2 = (Evac_intrusion_upperdepth_m-Evac_intrusion_middepth_m)-Sill_length*fine_ratio/2; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
-    Length3 = -Evac_intrusion_upperdepth_m+Sill_length*fine_ratio/2; %evacuated upper intrusion depth to surface
+    Length0 = (base_crust_m-Injection_depth_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
+    Length1 = (Injection_depth_m-Evac_intrusion_middepth_m)+Sill_length*fine_ratio/2; %Above sill intrusion depth to evacuated magma mid intrusion depth
+    Length2 = (Evac_intrusion_middepth_m-Evac_intrusion_upperdepth_m)-Sill_length*fine_ratio/2; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
+    Length3 = Evac_intrusion_upperdepth_m+Sill_length*fine_ratio/2; %evacuated upper intrusion depth to surface
 end
 
 %From base of crust to the below the sill intrusion domain (coarse)
-part1 = linspace(0,Length0, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells));
+part1 = linspace(0,Length0, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cellz*min_N_cells));
 
 % Magma domain (fine)
-part2 = linspace(0, Sill_length*fine_ratio,min_N);
+part2 = linspace(0, Sill_length*fine_ratio,min_N_cells);
 
 % if evacuation on: above sill intrusion domain to evacuated magma mid
 % intrusion domain // if evacuation off: above sill intrusion domain to
 % surface
-part3 = linspace(0, Length1, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells));
+part3 = linspace(0, Length1, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cellz*min_N_cells));
 
 
 if To_evacuate==0 %no evacuations
@@ -527,15 +547,18 @@ if To_evacuate==0 %no evacuations
 else %evacuations 
     % From top of evacauted magma mid intrusion domain to base of evacuated
     % magma upper intrusion domain
-    part4 = linspace(0,Length2, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells));
+    part4 = linspace(0,Length2, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cellz*min_N_cells));
     %From top of evacuated magma upper intrusion domain to the surface of
     %the crust
-    part5 = linspace(0,Length3, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cells*min_N_cells)); 
+    part5 = linspace(0,Length3, max(round(min_N_cells*fraction_sill_cellz),Min_fraction_sill_cellz*min_N_cells)); 
     %parts combined to make nodez used in the model
-    nodez = [part1 part1(end)+part2(2:end) part1(end)+part2(end)+part3(2:end) part1(end)+part2(end)+part3(end)+part2(2:end)
-        part1(end)+2*part2(end)+part3(end)+part4(2:end) part1(end)+2*part2(end)+part3(end)+part4(end)+part2(2:end)  
-        part1(end)+3*part2(end)+part3(end)+part4(end)+part5(2:end)];
-
+    nodez = [part1 ...
+        part1(end)+part2(2:end)... 
+        part1(end)+part2(end)+part3(2:end) ...
+        part1(end)+part2(end)+part3(end)+part2(2:end)...
+        part1(end)+part2(end)+part3(end)+part2(end)+part4(2:end) ...
+        part1(end)+part2(end)+part3(end)+part2(end)+part4(end)+part2(2:end) ... 
+        part1(end)+part2(end)+part3(end)+part2(end)+part4(end)+part2(end)+part5(2:end)];
 end
 
 %transpose the nodez vector
@@ -561,17 +584,17 @@ dzf = part2(2)-part2(1); % calculate the fine spatial step
 SillNodez = round(Sill_length/dzf); % the number of nodez/cellz in a sill
 
 % Find intrusion depths 
-Injection_depth_nodez = find(nodez_km<Injection_depth_km & nodez_km>Injection_depth_km-dzf); % initial sill intrusion depth - nodez
-Injection_depth_cellz = find(cellz_km<Injection_depth_km & cellz_km>Injection_depth_km-dzf); % initial sill intrusion depth - cellz
+Injection_depth_nodez = find(nodez_km>=-Injection_depth_km, 1); % initial sill intrusion depth - nodez
+Injection_depth_cellz = find(cellz_km>=-Injection_depth_km, 1); % initial sill intrusion depth - cellz
 
-Evac_intrusion_middepth_nodez = find(nodez_km<Evac_intrusion_middepth_km & nodez_km>Evac_intrusion_middepth_km-dzf); % evacuation mid intrusion depth - nodez
-Evac_intrusion_middepth_cellz = find(cellz_km<Evac_intrusion_middepth_km & cellz_km>Evac_intrusion_middepth_km-dzf); % evacuation mid intrusion depth - cellz
+Evac_intrusion_middepth_nodez = find(nodez_km>=-Evac_intrusion_middepth_km,1); % evacuation mid intrusion depth - nodez
+Evac_intrusion_middepth_cellz = find(cellz_km>=-Evac_intrusion_middepth_km & cellz_km>-Evac_intrusion_middepth_km-dzf/1000); % evacuation mid intrusion depth - cellz
 
-Evac_intrusion_upperdepth_nodez = find(nodez_km<Evac_intrusion_upperdepth_km & nodez_km>Evac_intrusion_upperdepth_km-dzf); % evacuation upper intrusion depth - nodez
-Evac_intrusion_upperdepth_cellz = find(cellz_km<Evac_intrusion_upperdepth_km & cellz_km>Evac_intrusion_upperdepth_km-dzf); % evacuation upper intrusion depth - cellz 
+Evac_intrusion_upperdepth_nodez = find(nodez_km>=-Evac_intrusion_upperdepth_km,1); % evacuation upper intrusion depth - nodez
+Evac_intrusion_upperdepth_cellz = find(cellz_km>=-Evac_intrusion_upperdepth_km,1); % evacuation upper intrusion depth - cellz 
 
 % The cellz over which sills are intruded
-Sill_index=[Injection_depth_cellz-Sill_length; Injection_depth_cellz];
+Sill_index=[Injection_depth_cellz-SillNodez; Injection_depth_cellz];
 
 
 
@@ -598,22 +621,22 @@ end
 %
 % Calculate the initial mass of evolved, refractory and water of the
 % initial composition given by crust1
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust1, H2O_crust1, CL_crust, N_component, Conservation_type, Precision);              
-MM_crust=x(1);
-NN_crust=x(2);
-V_crust=x(3);
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust1, H2O_crust1, Precision);              
+MM_crust1=x(1);
+NN_crust1=x(2);
+V_crust1=x(3);
 
 
 % Calculate the initial mass of evolved, refractory and water of the
 % initial composition given by crust2
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust2, H2O_crust2, CL_crust, N_component, Conservation_type, Precision);              
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust2, H2O_crust2, Precision);              
 MM_crust2=x(1);
 NN_crust2=x(2);
 V_crust2=x(3);
 
 % Calculate the initial mass of evolved, refractory and water of the
 % initial composition given by crust3
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust3, H2O_crust3, CL_crust, N_component, Conservation_type, Precision);              
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_crust3, H2O_crust3, Precision);              
 MM_crust3=x(1);
 NN_crust3=x(2);
 V_crust3=x(3);
@@ -626,13 +649,13 @@ BaseCrustCompFLAG=0;
 if crust_comp_FLAG==0 
     % These depths are specified by the user
     index1=find(cellz-nodez(end)>=-Depth1_crust_km*1000,1,'first'); %deepest depth
-    index2=find(cellz-nodez(end)>=Depth2_crust_km*1000,1,'first'); %middle depth
+    index2=find(cellz-nodez(end)>=-Depth2_crust_km*1000,1,'first'); %middle depth
     % index 3 is the surface so is not calculated.
     
     % If Depth1_crust_km is shallower than the base of the crust, then from
     % Depth1_crust_km to the base of the crust, the crust has the same
     % composition 
-    if Depth1_crust_km<Base_crust_km
+    if Depth1_crust_km<base_crust_km
         BaseCrustCompFLAG=1;
     end
 
@@ -687,7 +710,7 @@ end
 
 if Dry_Depth_Flag==1
     % Find the first cell above the dry_depth_km, this is boundary of the dry region 
-    index_dry=find(cellz-nodez(end)>-Dry_depth_km*1000,1,'first');
+    index_dry=find(cellz-nodez(end)>-Dry_Depth_km*1000,1,'first');
     
     % Update the volatile component of the crust to make it dry 
     V(1:index_dry)=dry_volatile*ones(index_dry,1); 
@@ -737,6 +760,10 @@ for i=N-1:-1:1
     P(i)=P(i+1)+((MM(i)+NN(i)+V(i))*dz(i+1)+(MM(i+1)+NN(i+1)+V(i+1))*dz(i))/2*g*Dynamic_scaling;
 end
 
+% Calculate pressure in kbar
+P_kbar = P/1e8;
+
+
 
 %% Initializing constant parameters throughout the crust
 
@@ -768,7 +795,7 @@ SillPhi=1;
 
 % Calculate the initial mass of evolved, refractory and water of the
 % sill composition
-x=Calculate_Initial_state(PD_range, rho_mean, SiO2_sill, H2O_sill, CL_sill, N_component, Conservation_type, Precision);              
+x=Calculate_Initial_state(PD_range, rho_mean, SiO2_sill, H2O_sill, Precision);              
 MM_sill=x(1);
 NN_sill=x(2);
 V_sill=x(3);
@@ -837,8 +864,8 @@ if Add_CLCU==1
 else            
     input=[H(1),MM(1),NN(1),V(1)];
 end
-[phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,Pg_real(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  ...
-    rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+[phi(1),S(1),T(1),rho(1,:),iter(1),T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,P_kbar(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  ...
+    rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, PD_min_phi, PD_max_phi, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
 
 
 % calculating parameters for the rest of the nodes. 
@@ -848,8 +875,8 @@ for i=2:N
     else
         input=[H(i),MM(i),NN(i),V(i)];
     end
-    [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,Pg_real(i-1),T(i-1), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:), ...
-        rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+    [phi(i),S(i),T(i),rho(i,:),iter(i),T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,P_kbar(i-1),T(i-1), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:), ...
+        rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, PD_min_phi, PD_max_phi, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
 end
 
 %% Bulk composition (melt and solid)
@@ -864,7 +891,7 @@ Mass_data_addition=zeros(N,6); % 1.Sulfur in melt; 2.Sulfur in solid; 3.Sulfur i
 S_CU_to_process=1:N;
 
 % Calling post processing function file
-S_Cu_postprocessing;
+S_Cu_postprocessing_update;
 
 %% Calculate capped values which allows us to simulate convection
 Calculate_capped_values2;
@@ -880,7 +907,7 @@ Calculate_capped_values2;
 
 
 %Number of nodes per sill
-dzf=part2(2)-part2(1); % grid spacing for the fine portion of the node spacing
+%dzf=part2(2)-part2(1); % grid spacing for the fine portion of the node spacing
 SillNodez=round(Sill_length/(dzf)); % Number of nodes per sill
 
 
@@ -889,11 +916,11 @@ SillNodez=round(Sill_length/(dzf)); % Number of nodes per sill
 % Calculating injection time.
 % Injection rate is inputted as mm/yr
 % Convert mm/yr to m/yr
-Injection_rate_myr = Injection_rate_mmyr*1e3;
+Injection_rate_myr = Injection_rate_mmyr/1e3;
 % Calculate time between intrusions in yrs
 Injection_gap = Sill_length/Injection_rate_myr;
 %Times at which a sill will be intruded
-injection_time=(Injection_gap: Injection_gap: End_time)*Year;
+injection_time=(Injection_gap*Year: Injection_gap*Year: End_time);
 
 
 
@@ -973,7 +1000,7 @@ evacuation_counter = 0;
 
 
 % Intrusion depth(s) for evacuations
-Intrusion_Evac = -Evac_intrusion_depth_km*1000;
+Intrusion_Evac = -Evac_intrusion_middepth_km*1000;
 Last_Intrusion_Evac=min(Intrusion_Evac);
 
 
@@ -986,7 +1013,7 @@ Safe_intrusion_evac_dist=5e3*ones(1,length(Intrusion_Evac));  % KEEP AN EYE ON T
 
 
 % Find the melt fraction layers initiated at the start of this section
-Finding_porosity;
+Finding_porosity_update;
 
 
 %% save the original component mass data (FIGURE OUT WHY)
@@ -994,6 +1021,34 @@ Mass_data_old=Mass_data;
 component_A_old=sum(Mass_data_old(:,1).*dz+Mass_data_old(:,4).*dz);
 component_B_old=sum(Mass_data_old(:,2).*dz+Mass_data_old(:,5).*dz);
 component_V_old=sum(Mass_data_old(:,3).*dz+Mass_data_old(:,6).*dz+Mass_data_old(:,7).*dz);
+
+
+%% Extract volatile phases
+if To_extract_volatile==1
+    Record_gap=Record_gap*Year;
+    Record_vol_time=0;
+    fileID = fopen('Volatile_leak.txt', 'w');
+    if fileID == -1
+        error('File could not be opened');
+    end
+
+    Leak_V=0;
+    Leak_H=0;
+    if Add_CLCU==1
+        Leak_CU=0;
+        Leak_CL=0;
+        Leak_SUL=0;
+        fprintf(fileID, 'Time(y)\t V\t Cu\t Cl\t H(J)\t SUL\n');
+        fprintf(fileID, '%d\t %.4f\t %.4f\t %.4f\t %.4f\t %.4f\n', 0, 0, 0, 0,0);
+    else
+        fprintf(fileID, 'Time(y)\t V\t H(J)\n');
+        fprintf(fileID, '%d\t %.4f\t %.4f\n', 0, 0,0);
+    end
+end
+
+
+%% set velocity
+u_all=zeros(3*N+3,1);
 
 %% outputs
 output_counter=1;
@@ -1049,19 +1104,35 @@ end
 Contribution_type=2;  %1, instant 2 accumulative %check through this  
 
 % depth axis
+Show_z=[Length2 Length2+Sill_length*fine_ratio]; %Show_z=[-base_crust_km*1000 0];%
 if Z_label_type==2
     Show_z=(Show_z-nodez(end))/1000;
 end
 
 % Call the necessary plots
 if running_plot==1
-    Plot_settings;
-    Update_plot;
+    Plot_settings_update;
+    Update_plot_update;
     drawnow;
     Show_refresh=10;  %the refresh rate in second
     Frame_num=1;
 end
 
+
+%%  Record videos (data)
+Fixed_record_dt=Fixed_record_dt0*Year;
+Fixed_record=1;
+
+video_data_index=0;
+video_data_file_name=['Data' num2str(video_data_index)];
+save(video_data_file_name,'Time','cellz','Mass_data','P_kbar','Ts_local','Tl_local','T', 'S_cap','phi')
+
+
+%% Save simulation data
+if Create_save_data==1
+    Save_data_times=Record_time;
+    Save_data_index=1;
+end
 %%
 %%
 %%
@@ -1122,10 +1193,10 @@ N_component=3; %DELETE
 % C_type=0;  % 1 for porous-suspension type.  0 for porous only 
 
 
-min_por=PD_min_phi;%REPLACE  0.00; %minimal porosity of the solid
-max_melt=PD_max_phi; %REPLACE 1; %maximum allowed melt fraction
+%min_por=PD_min_phi;%REPLACE  0.00; %minimal porosity of the solid
+%max_melt=PD_max_phi; %REPLACE 1; %maximum allowed melt fraction
 
-Vol_flux=0; %DELETE %volatile? flux (mass)
+
 %S_cap=[0.015 0.04]; %Solid water saturation for component A (74%, 0.5-1.5%) and B (47%,  3-5%) 
 %% Viscosities
 %melt_viscosity_type=1;  %0 for old type, 1 for new
@@ -1975,58 +2046,58 @@ end
 
 
 %%  Record videos (data)
-Create_video=1;
-Fixed_record_dt0=2000*Year;
-Fixed_record_dt=Fixed_record_dt0;
-Fixed_record=1;
+%Create_video=1;
+%Fixed_record_dt0=2000*Year;
+%Fixed_record_dt=Fixed_record_dt0;
+%Fixed_record=1;
 
-video_data_index=0;
-video_data_file_name=['Data' num2str(video_data_index)];
-save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
+%video_data_index=0;
+%video_data_file_name=['Data' num2str(video_data_index)];
+%save(video_data_file_name,'Time','cellz','Mass_data','Pg_real','Ts_local','Tl_local','T', 'S_cap','phi')
 
 %% Save simulation data
-Create_save_data=1;
-if Create_save_data==1
+%Create_save_data=1;
+%if Create_save_data==1
 %     Save_data_times=[10, 20 50 100]*Year;  %define the time where data are saved.
     % Save_data_times=[0:10e4:2e6 (2e6+5e4):5e4:5e6]*Year;
-    Save_data_times=[0:20e4:(End_time*1.1/Year)]*Year;
+ %   Save_data_times=[0:20e4:(End_time*1.1/Year)]*Year;
     % Save_data_times=[0:2e3:2e6 (2e6+5e4):5e4:5e6]*Year;
     % Save_data_times=0:2e4
-    Save_data_times=[Save_data_times End_time+1000*Year];
-    Save_data_index=1;
-end
+  %  Save_data_times=[Save_data_times End_time+1000*Year];
+   % Save_data_index=1;
+%end
 %%
 %Extract volatile phases
-To_extract_volatile=1; %When set to 1, extract the volatile phases created and recorded the collected volatile　
-if To_extract_volatile==1
-    Record_gap=1000*Year;
-    Record_vol_time=0;
-    fileID = fopen('Volatile_leak.txt', 'w');
-    if fileID == -1
-        error('File could not be opened');
-    end
+%To_extract_volatile=1; %When set to 1, extract the volatile phases created and recorded the collected volatile　
+%if To_extract_volatile==1
+%    Record_gap=1000*Year;
+%    Record_vol_time=0;
+%    fileID = fopen('Volatile_leak.txt', 'w');
+%    if fileID == -1
+%        error('File could not be opened');
+%    end
     
-    Leak_V=0;
-    Leak_H=0;
-    if N_component==5 || Add_CLCU==1
-        Leak_CU=0;
-        Leak_CL=0;
-        Leak_SUL=0;
-        fprintf(fileID, 'Time(y)\t V\t Cu\t Cl\t H(J)\t SUL\n');
-        fprintf(fileID, '%d\t %.4f\t %.4f\t %.4f\t %.4f\t %.4f\n', 0, 0, 0, 0,0);
-    else
-        fprintf(fileID, 'Time(y)\t V\t H(J)\n');
-        fprintf(fileID, '%d\t %.4f\t %.4f\n', 0, 0,0);
-    end
-end
+%    Leak_V=0;
+%    Leak_H=0;
+%    if N_component==5 || Add_CLCU==1
+%        Leak_CU=0;
+%        Leak_CL=0;
+%        Leak_SUL=0;
+%        fprintf(fileID, 'Time(y)\t V\t Cu\t Cl\t H(J)\t SUL\n');
+%        fprintf(fileID, '%d\t %.4f\t %.4f\t %.4f\t %.4f\t %.4f\n', 0, 0, 0, 0,0);
+%    else
+%        fprintf(fileID, 'Time(y)\t V\t H(J)\n');
+%        fprintf(fileID, '%d\t %.4f\t %.4f\n', 0, 0,0);
+%    end
+%end
 %% extra parameters
-Invis_vol=zeros(N,1);
-Top0=0;
+Invis_vol=zeros(N,1); % REMOVE
+Top0=0; % REMOVE
 
-Convergence_record_steps=10;
-Convergence_record=zeros(Convergence_record_steps,2);
-Num_non_convergence=0;
-file_iter = fopen('Iteration_recored.txt', 'w');
+Convergence_record_steps=10; % REMOVE
+Convergence_record=zeros(Convergence_record_steps,2); % REMOVE
+Num_non_convergence=0; % REMOVE
+file_iter = fopen('Iteration_recored.txt', 'w'); % REMOVE
 
 
 
