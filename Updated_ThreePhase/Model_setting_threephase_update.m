@@ -116,6 +116,18 @@ for i=1:r
     assignin('base',names(i),Number(i))
 end
 
+% Loading restart input file
+Inputs = readtable('1AA_3Phase_RESTART_input.txt');
+[r,~] = size(Inputs);
+names = string(Inputs.Var2);
+Number=Inputs.Var3;
+for i=1:r
+    assignin('base',names(i),Number(i))
+end
+
+
+
+
 % REMOVE
 Model_name='test_replace';
 %% Setting up echoscreen
@@ -191,10 +203,10 @@ else
 end
 
 %enhanced convergence and fixed_dt - as they both affect timesteps
-if Enhanced_convergence==0 && Fixed_dt==0
+if Enhanced_convergence==0 && fixed_dt==0
     disp('Enhanced convergence is off, fixed timesteps')
     fprintf(File_echo, '%s \n', 'Enhanced convergence is off, fixed timesteps');
-elseif Enhanced_convergence==0 && Fixed_dt~=0
+elseif Enhanced_convergence==0 && fixed_dt~=0
     disp('Enhanced convergence is off, adaptive timestepping')
     fprintf(File_echo, '%s \n', 'Enhanced convergence is off, adaptive timestepping');
 elseif Enhanced_convergence==1
@@ -521,12 +533,12 @@ base_crust_m = base_crust_km*1000;
 %depths are in the centre of the fine mesh area.
 if To_evacuate==0 % no evacuations
     Length0 = (base_crust_m-Injection_depth_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
-    Length1 = (Injection_depth_m)+Sill_length*fine_ratio/2; % Above sill intrusion depth to surface
+    Length1 = (Injection_depth_m)-Sill_length*fine_ratio/2; % Above sill intrusion depth to surface
 else %evacuations
     Length0 = (base_crust_m-Injection_depth_m)-Sill_length*fine_ratio/2; %Below sill intrusion depth to crust
-    Length1 = (Injection_depth_m-Evac_intrusion_middepth_m)+Sill_length*fine_ratio/2; %Above sill intrusion depth to evacuated magma mid intrusion depth
-    Length2 = (Evac_intrusion_middepth_m-Evac_intrusion_upperdepth_m)-Sill_length*fine_ratio/2; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
-    Length3 = Evac_intrusion_upperdepth_m+Sill_length*fine_ratio/2; %evacuated upper intrusion depth to surface
+    Length1 = (Injection_depth_m-Evac_intrusion_middepth_m)-Sill_length*fine_ratio; %Above sill intrusion depth to evacuated magma mid intrusion depth
+    Length2 = (Evac_intrusion_middepth_m-Evac_intrusion_upperdepth_m)-Sill_length*fine_ratio; %Evacuated magma mid intrusion depth to evacuated upper intrusion depth
+    Length3 = Evac_intrusion_upperdepth_m-Sill_length*fine_ratio/2; %evacuated upper intrusion depth to surface
 end
 
 %From base of crust to the below the sill intrusion domain (coarse)
@@ -753,7 +765,7 @@ H0=H;
 P=zeros(N,1);  %Pressure in Pa
 
 %Converting the surface pressure from bar in Pa
-P(end)=P_top_bar*1e5+(MM(1)+NN(1)+V(1))/2*g*dz(end)/2; %MM etc needs to be replaced with actual density.
+P(end)=P_top_bar*1e5+(MM(N)+NN(N)+V(N))/2*g*dz(end)/2; %MM etc needs to be replaced with actual density.
 
 % Calculating pressure throughout the crust
 for i=N-1:-1:1
@@ -1104,7 +1116,7 @@ end
 Contribution_type=2;  %1, instant 2 accumulative %check through this  
 
 % depth axis
-Show_z=[Length2 Length2+Sill_length*fine_ratio]; %Show_z=[-base_crust_km*1000 0];%
+Show_z=[Length1 Length1+Sill_length*fine_ratio]; %Show_z=[-base_crust_km*1000 0];%
 if Z_label_type==2
     Show_z=(Show_z-nodez(end))/1000;
 end
@@ -1410,7 +1422,7 @@ end
 %Sill_length=50;
 %margin=0;
 %fine_ratio=3;  %fine meshed region, in comparison with the size of the initial sill region
-Show_z=[Length2 Length2+Sill_length*fine_ratio];
+%Show_z=[Length2 Length2+Sill_length*fine_ratio];
 %Sill=[Length2+Sill_length*(fine_ratio-1)/2,Length2+Sill_length*(fine_ratio+1)/2];  %intruded sill position
 min_show_range=Show_z(2)-Show_z(1);
 

@@ -21,6 +21,7 @@ for i=1:r
     assignin('base',names(i),Number(i))
 end
 
+
 if To_Restart==0
 
     % Model_setting_threephase_sill_multi_intrustion2;    
@@ -35,7 +36,7 @@ if To_Restart==0
         Frame_num=1;
     end
 
-
+    
     
     if exist('Fixed_record','var')
         if  Fixed_record==1
@@ -54,6 +55,8 @@ if To_Restart==0
     %CAB - mass cons - original Cb. Only updated in sill intrusion and 
     OG_Cb = Cb;
     OG_composition=sum(Cb);
+    Cb1=Cb;
+    Cb22 = (sum(Mass_data(:,[3,6,7]),2))./sum(Mass_data,2);
 
  
  %% CAB - outputs
@@ -127,6 +130,10 @@ if To_Restart==0
     % ongoing text file for tracking mass conservation
     File_comp=fopen('mass_cons.txt','w');
     fprintf(File_comp, '%10s \t %10s \t %10s \n', 'Time (ka)', 'Mass cons', 'Mass Res' );
+
+    % ongoing text file for tracking residuals
+    File_resid=fopen('residual_tracker.txt','w');
+    fprintf(File_resid, '%10s \t %10s \t %10s \t %10s \t %10s \n', 'Time (ka)', 'phi', 'cb', 'H', 'cb2' );
 
 % CAB END
 %%
@@ -230,7 +237,7 @@ while Time<End_time
         end
 
         Adaptive_step_time=0.1*Year;
-        Adaptive_step_gap=10;
+        %Adaptive_step_gap=10;
         % Courant=Courant0;
     end
 
@@ -240,18 +247,20 @@ while Time<End_time
         % old_check_buoy_top_km = cellz(all_phi_buoy_top)-nodez(end);
         % old_check_buoy_base_km = cellz(all_phi_buoy_base)-nodez(end);
         
-        Adapt_mesh_3p;
+        Adapt_mesh_3p_update;
        
         Calculate_capped_values2;
 
         Last_adapted=Time;
         if Time-Last_intrude_time>1000*Year
             Adaptive_step_time=1*Year;
-            Adaptive_step_gap=Adaptive_step_gap0;
+            %Adaptive_step_gap=Adaptive_step_gap0;
             % Courant=Courant1;
         end
 
-
+        % For the residual
+        Cb22 = (sum(Mass_data_capped(:,[3,6,7]),2))./sum(Mass_data,2);
+        Cb1 = (PD_range(2)*sum(Mass_data_capped(:,[1,4]),2)+PD_range(1)*sum(Mass_data_capped(:,[2,5]),2))./sum(Mass_data_capped(:,[1 2 4 5]),2);
 
         % CAB EDIT - needed for finding_porosity 
          rho_on_nodez=zeros(N+1,3);
@@ -359,30 +368,44 @@ while Time<End_time
         S_on_nodez(find(S==0)+1)=0;          
         
 
-        %%
-            sum_mass_FM=interp1(cellz,Mass_all,nodez,'linear','extrap');
-            dP=zeros(N+1,1);
-            % index=find(phi_on_nodez<=max(min_por,1e-2)); %this part only considers hydrostatic pressure
+        %% Pressure (Catherine edit)
+        % P is in Pa, any other units will be labelled
+
+        sum_mass_FM=interp1(cellz,Mass_all,nodez,'linear','extrap');
+        dP = -sum_mass_FM(:)*g*Dynamic_scaling;
+        P = zeros (N,1);
+
+        % Surface pressure plus half cell correction
+        P(N) = P_top_bar*1e5;% + sum_mass_FM(N)/2*g*Dynamic_scaling*dz(N)/2;
+
+        % Integrate pressure downwards using adjacent density values
+        for i = N-1:-1:1
+            P(i) = P(i+1) + (sum_mass_FM(i)*dz(i+1)+sum_mass_FM(i+1)*dz(i))/2*g*Dynamic_scaling;
+        end
+
+
+           % dP=zeros(N+1,1);
+            % index=find(phi_on_nodez<=max(PD_min_phi,1e-2)); %this part only considers hydrostatic pressure
             % index2=setxor(1:N+1,index);  %this part considers dynamic pressure
             
-            index=1:N;
-            index2=[];
+            %index=1:N;
+            %index2=[];
             
 
-            dP(index)=-sum_mass_FM(index)*g;
+            %dP(index)=-sum_mass_FM(index)*g;
             % dP(index2)=+C_values(index2,1).*(u_all(N+1+index2)-u_all(index2))./phi_on_nodez(index2)...
             %            -C_values(index2,3).*(u_all(2*N+2+index2)-u_all(N+1+index2))./phi_on_nodez(index2)...
             %     -((1-S_on_nodez(index2)).*rho_on_nodez(index2,1)+S_on_nodez(index2).*rho_on_nodez(index2,3))*g;
             
             % dP=max(dP,-rho_on_nodez(:,2)*g);
             % dP=min(dP,-rho_on_nodez(:,3)*g);
-            dP=dP*Dynamic_scaling;
-            P=zeros(N,1);
-            P(N)=-dP(N)*dz(N)/2;
-            for i=N-1:-1:1
-                P(i)=P(i+1)-dP(i)*(dz(i)+dz(i+1))/2;
-            end
-            P_kbar=P/1e8+P_top_bar/1000; %P in Pa and P_real in kbar
+            %dP=dP*Dynamic_scaling;
+            %P=zeros(N,1);
+            %P(N)=-dP(N)*dz(N)/2;
+            %for i=N-1:-1:1
+            %    P(i)=P(i+1)-dP(i)*(dz(i)+dz(i+1))/2;
+            %end
+            P_kbar=P/1e8;%+P_top_bar/1000; %P in Pa and P_real in kbar
             %%
             
         %new melt viscosity model
@@ -632,12 +655,12 @@ while Time<End_time
             end
         end
         H_source= zeros(N,1);
-        
+        H_pre = H;
         kt=(kt0(1)*sum(Mass_data(:,[1 4]),2)+kt0(2)*sum(Mass_data(:,[2 5]),2))./max(sum(Mass_data(:,[1 2 5 5]),2),1e-3);
         if simplified_5p==1
-            H=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, 3);
+            [H, Lf1]=Threephase_enthalpy_solver3_update(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, 3);
         else
-            H=Threephase_enthalpy_solver3(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, N_component);
+            [H, Lf1]=Threephase_enthalpy_solver3_update(Mass_data, Mass_data_old,T_old, H_old, u_all,cp, kt ,Lf, dz, cellz, nodez, dt, H_source, rho_ref*phi(1)*S(1), 0, N_component);
         end
         
 
@@ -658,10 +681,10 @@ while Time<End_time
         K=K0*ones(N,1);
         Cases=zeros(N,1);
         if is_solid_solution==0
-            [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Mass_data(1,:),S_cap(1)]=Phase_component_updated2(H(1),MM(1),NN(1),V(1),P_kbar(1), Output_guess, [1,1], Jacobians, Rhs, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, K0, Ts,  Tl, min_por, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
+            [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Mass_data(1,:),S_cap(1)]=Phase_component_updated2(H(1),MM(1),NN(1),V(1),P_kbar(1), Output_guess, [1,1], Jacobians, Rhs, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, K0, Ts,  Tl, PD_min_phi, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
             for i=2:N
 
-                [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Mass_data(i,:),S_cap(i)]=Phase_component_updated2(H(i),MM(i),NN(i),V(i),P_kbar(i-1),[Mass_data(i-1,:) T(i-1) S_cap(i-1)], T_S_region(i-1,:), Jacobians, Rhs, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, min_por, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
+                [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Mass_data(i,:),S_cap(i)]=Phase_component_updated2(H(i),MM(i),NN(i),V(i),P_kbar(i-1),[Mass_data(i-1,:) T(i-1) S_cap(i-1)], T_S_region(i-1,:), Jacobians, Rhs, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, PD_min_phi, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type);
             end
         else
             if N_component==3
@@ -670,9 +693,9 @@ while Time<End_time
                 else
                     input=[H(1),MM(1),NN(1),V(1)];
                 end
-                [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,P_kbar(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+                [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),~,Saturation(1), Partition_CL_CU(1,:)]=Phase_component_updated_solid3(input,P_kbar(1), 500, [1,1], Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),  rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts,  Tl, PD_min_phi, PD_max_phi, dz(1),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
 
-                % [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),Cases(1)]=Phase_component_updated_solid3(H(1),MM(1),NN(1),V(1),P_kbar(1), 500, 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),   rho_constant, Lf, K0, Ts, Tl, min_por, max_melt, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, 1);
+                % [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1,:),Ts_new(1),Ts_local(1),Mass_data(1,:),S_cap(1),Tl_local(1),Cases(1)]=Phase_component_updated_solid3(H(1),MM(1),NN(1),V(1),P_kbar(1), 500, 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(1,:),   rho_constant, Lf, K0, Ts, Tl, PD_min_phi, PD_max_phi, dz(1),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, 1);
                 phi(1:5)=0;
 
                 if isempty(gcp('nocreate'))
@@ -687,19 +710,19 @@ while Time<End_time
                     else
                         input=[H(i),MM(i),NN(i),V(i)];
                     end
-                    [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,P_kbar(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
-                    % [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),Cases(i)]=Phase_component_updated_solid3(H(i),MM(i),NN(i),V(i),P_kbar(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, min_por, max_melt, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, force_solid);
+                    [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),~,Saturation(i), Partition_CL_CU(i,:)]=Phase_component_updated_solid3(input,P_kbar(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, [K(i) Kcl Kcu], Ts, Tl, PD_min_phi, PD_max_phi, dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS,0);
+                    % [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_new(i),Ts_local(i),Mass_data(i,:),S_cap(i),Tl_local(i),Cases(i)]=Phase_component_updated_solid3(H(i),MM(i),NN(i),V(i),P_kbar(i-1),T_old(i), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(i,:),   rho_constant, Lf, K0, Ts, Tl, PD_min_phi, PD_max_phi, dz(i),Data_point,Data_y,Data_point2,Data_y2,Precision, Conservation_type,simplified_TS, force_solid);
                 end
                 catch
                     eval(['save(''Record_error'  '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
                 end
             else
-                [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1),Ts_local(1),Tl_local(1),Mass_data(1,:),S_cap(1),Partition_CL_CU(1,:)]=Phase_component_updated_solid_5p_simple(H(1),MM(1),NN(1),V(1),CL(1),CU(1), P_kbar(1), 1000, 1, Jacobians, Rhs, Constant_index,Extra_func, Sys_constant, cp(1,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
+                [phi(1),S(1),T(1),rho(1,:),~,T_S_region(1),Ts_local(1),Tl_local(1),Mass_data(1,:),S_cap(1),Partition_CL_CU(1,:)]=Phase_component_updated_solid_5p_simple(H(1),MM(1),NN(1),V(1),CL(1),CU(1), P_kbar(1), 1000, 1, Jacobians, Rhs, Constant_index,Extra_func, Sys_constant, cp(1,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, PD_min_phi, dz, Data_point,Data_y,Data_point2,Data_y2, PD_range, Precision, Conservation_type, 1);
                 phi(1:5)=0;
                 if N<50 || Use_parrallel==0
                     for i=2:N
                         warning('off', 'all');
-                        [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_local(i),Tl_local(i),Mass_data(i,:),S_cap(i),Partition_CL_CU(i,:)]=Phase_component_updated_solid_5p_simple(H(i),MM(i),NN(i),V(i),CL(i),CU(i),P_kbar(i-1), 1000, 1, Jacobians, Rhs, Constant_index, Extra_func, Sys_constant,cp(i,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por,  dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range, Precision,Conservation_type,1);
+                        [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_local(i),Tl_local(i),Mass_data(i,:),S_cap(i),Partition_CL_CU(i,:)]=Phase_component_updated_solid_5p_simple(H(i),MM(i),NN(i),V(i),CL(i),CU(i),P_kbar(i-1), 1000, 1, Jacobians, Rhs, Constant_index, Extra_func, Sys_constant,cp(i,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, PD_min_phi,  dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range, Precision,Conservation_type,1);
                     end
                 else
                     if isempty(gcp('nocreate'))
@@ -707,12 +730,32 @@ while Time<End_time
                     end
                     parfor i=2:N
                         warning('off', 'all');
-                        [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_local(i),Tl_local(i),Mass_data(i,:),S_cap(i),Partition_CL_CU(i,:)]=Phase_component_updated_solid_5p_simple(H(i),MM(i),NN(i),V(i),CL(i),CU(i),P_kbar(i-1), 1000, 1, Jacobians, Rhs, Constant_index, Extra_func, Sys_constant,cp(i,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por,  dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range, Precision,Conservation_type,1);
+                        [phi(i),S(i),T(i),rho(i,:),~,T_S_region(i,:),Ts_local(i),Tl_local(i),Mass_data(i,:),S_cap(i),Partition_CL_CU(i,:)]=Phase_component_updated_solid_5p_simple(H(i),MM(i),NN(i),V(i),CL(i),CU(i),P_kbar(i-1), 1000, 1, Jacobians, Rhs, Constant_index, Extra_func, Sys_constant,cp(i,:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, PD_min_phi,  dz(i),Data_point,Data_y,Data_point2,Data_y2,PD_range, Precision,Conservation_type,1);
                     end
                 end
             end
         end
-        eps=max(abs(phi-phi_pre));
+        
+        %% New residuals 
+        % calculating the bulk composition of the solid and melt
+        Cb1_pre = Cb1; %CABG
+        Cb1=(PD_range(2)*sum(Mass_data_capped(:,[1,4]),2)+PD_range(1)*sum(Mass_data_capped(:,[2,5]),2))./sum(Mass_data(:,[1 2 4 5]),2); %CABG
+        
+        % calculating volatile composition 
+        Cb2_pre = Cb22;
+        Cb22 = (sum(Mass_data_capped(:,[3,6,7]),2))./sum(Mass_data_capped,2);
+
+        % residuals
+        maxresid_phi=max(abs(phi-phi_pre));
+        maxresid_cb = max(abs(Cb1-Cb1_pre));
+        maxresid_cb2 = max(abs(Cb22-Cb2_pre))*100;
+        idx_H = (Lf1~=0);
+        maxresid_H = max(abs((H(idx_H)-H_pre(idx_H))./Lf1(idx_H)));
+
+        eps=max([maxresid_H,maxresid_cb,maxresid_cb2]);
+
+
+
         % eps=max(max(abs(Mass_data-Mass_data_pre))/1e7);
 
                 % Update_plot;
@@ -752,10 +795,10 @@ while Time<End_time
             end
         end
     end
+    
+    disp([maxresid_phi,maxresid_cb,maxresid_H,maxresid_cb2])
+    fprintf(File_resid, '%10.5f \t %10.10f \t %10.10f \t %10.10f  \t %10.10f \n', Time/Year/1000, maxresid_phi, maxresid_cb, maxresid_H,maxresid_cb2);
 
-    if eps>Precision
-        disp('yes')
-    end
     %post-processings for the new Sulfur and Copper calculations
     % transport S and Cu
     CUs=CV_transport_scaled_v2(dz,Mass_data_addition(:,5), ones(N,1), ones(N,1), u_all(N+2:2*N+2), kc,dt, 0,[3,3],0);
@@ -769,7 +812,7 @@ while Time<End_time
     SUL=Suls+Sull+Sulg;
     
     S_CU_to_process=1:N;
-    S_Cu_postprocessing;
+    S_Cu_postprocessing_update;
     
     if Enhanced_convergence==1
         if iter<Max_iter/5
@@ -828,7 +871,7 @@ while Time<End_time
                     else
                         input=[H(vol_cells(i)),MM(vol_cells(i)),NN(vol_cells(i)),V(vol_cells(i))];
                     end
-                    [phi(vol_cells(i)),S(vol_cells(i)),T(vol_cells(i)),rho(vol_cells(i),:),~,T_S_region(vol_cells(i),:),Ts_new(vol_cells(i)),Ts_local(vol_cells(i)),Mass_data(vol_cells(i),:),S_cap(vol_cells(i)),Tl_local(vol_cells(i)),~,~,Partition_CL_CU(vol_cells(i),:)]=Phase_component_updated_solid3(input,P_kbar(vol_cells(i)-1),T_old(vol_cells(i)), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(vol_cells(i),:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, min_por, max_melt, dz(vol_cells(i)),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS, 0);
+                    [phi(vol_cells(i)),S(vol_cells(i)),T(vol_cells(i)),rho(vol_cells(i),:),~,T_S_region(vol_cells(i),:),Ts_new(vol_cells(i)),Ts_local(vol_cells(i)),Mass_data(vol_cells(i),:),S_cap(vol_cells(i)),Tl_local(vol_cells(i)),~,~,Partition_CL_CU(vol_cells(i),:)]=Phase_component_updated_solid3(input,P_kbar(vol_cells(i)-1),T_old(vol_cells(i)), 1, Jacobians, Rhs, Extra_func, Constant_index, Sys_constant,cp(vol_cells(i),:),   rho_constant, Lf, [K(1) Kcl Kcu 3 50], Ts, Tl, PD_min_phi, PD_max_phi, dz(vol_cells(i)),Data_point,Data_y,Data_point2,Data_y2,PD_range,Precision, Conservation_type,simplified_TS, 0);
                 % catch
                 %     eval(['save(''Record_error2'  '.mat''' ',' '''-regexp''' ',' '''^(?!Video_handel$).'');'])
                 %     % error('error 2')
@@ -940,7 +983,7 @@ while Time<End_time
                     t2(j) = -5000;
                     
                  
-                    %Adapt_mesh_3p;
+                    %Adapt_mesh_3p_update;
                     Calculate_capped_values2;
 
 
@@ -1202,7 +1245,7 @@ while Time<End_time
         end
     end
     
-    if Create_video==1 && Time>(video_data_index+1)*Fixed_record_dt0
+    if Create_Video==1 && Time>(video_data_index+1)*Fixed_record_dt0
         video_data_index=video_data_index+1;
         video_data_file_name=['Data' num2str(video_data_index)];
         save(video_data_file_name,'Time','cellz','Mass_data','Mass_data_addition', 'P_kbar','Ts_local','Tl_local','T', 'S_cap','phi')
