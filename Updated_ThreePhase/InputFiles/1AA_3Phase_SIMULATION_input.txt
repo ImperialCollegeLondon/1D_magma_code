@@ -3,7 +3,7 @@ Description_use_4_spaces,dummy,
 ,Input_name,Input_No
 
 ******************Maximum_length_of_time_for_model_Ma********,dummy, 
-,End_time, 23
+,End_time, 10
 
 
 ******************Non_linear_loop_parameters****************,dummy,
@@ -14,9 +14,9 @@ Maximum_no_iterations,dummy,
 ,Max_iter,25
 
 Minimum_no_iterations,dummy,
-,Min_iter,1
+,min_iter,1
 
-Enhanced_convergence_=0no_=1yes
+Enhanced_convergence_=0no_=1yes,dummy,
 ,Enhanced_convergence,0
 
 ******************Method_parameters****************,dummy,
@@ -34,11 +34,11 @@ To_use_parallel_computing_set_to_1,dummy,
 ,Use_parallel,1
 
 Number_of_cores_to_use,dummy,
-,Num_core_use,5
+,Num_core_use,2
 
 ******************Initial_mesh_set_up_parameters****************,dummy,
 Ratio_of_fine_meshed_region_around_sills,dummy,
-,fine_ratio,3
+,fine_ratio,5
 
 Minimum_dx_to_use_m,dummy,
 ,min_dx,5
@@ -49,11 +49,14 @@ Maximum_dx_to_use_m,dummy,
 Minimum_number_of_cells_in_adomain,dummy, 
 ,min_N_cells, 100
 
+Maxmimum_numebr_of_cells_in_domain,dummy,
+,max_N_cells,8000
+
 Fraction_of_cells_in_outerdomain,dummy,
-,fraction_sill_cells,0.125
+,fraction_sill_cellz,0.125
 
 Minimum_fraction_of_cellz_outerdomain,dummy,
-,Min_fraction_sill_cells,0.05
+,Min_fraction_sill_cellz,0.05
 
 ******************Adaptive_mesh_parameters****************,dummy,
 Turn_adaptive_mesh_on_=1,dummy, 
@@ -77,9 +80,21 @@ Difference_in_phi_between_cells_to_cause_additional_cellz,dummy,
 Difference_in_phi_between_cells_to_cause_loss_cells,dummy, 
 ,dphi_min,4e-3
 
+Difference_in_saturation_to_cause_additional_cellz_MAY_BE_UNUSED,dummy, 
+,dS_max,1e-2
+
+Difference_in_saturation_to_cause_loss_cellz_MAY_BE_UNUSED,dummy, 
+,dS_min,5e-3
+
+Difference_in_mass_to_cause_additional_cellz_MAY_BE_UNUSED,dummy,
+,dMNV_max, 20
+
+Difference_in_mass_to_cause_loss_cellz_MAY_BE_UNUSED,dummy,
+,dMNV_min, 20
+
 ******************Timestep_parameters****************,dummy,
 Fixed_timesteps_=0yes_=1no,dummy,
-,Fixed_dt,1
+,fixed_dt,1
 
 Maximum_timestep_yrs,dummy,
 ,Max_dt_yr,200
@@ -97,4 +112,4 @@ Decrease_courantno_by_factor_of_X_if_converging_well,dummy,
 ,Courant_dec,0.97
 
 Minimum_porosity_to_calculate_courant_number_from_velocity_of_same_node,dummy, 
-,Min_phi_dt,0.05
+,Min_phi_dt,0.0

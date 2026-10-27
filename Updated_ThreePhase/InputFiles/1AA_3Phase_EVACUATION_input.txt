@@ -12,10 +12,10 @@ To_evacuate_=0No_=Yes,dummy,
 ,Diameter_km, 80
 
 ,Viscosity_of_crust_Pas,dummy,
-,Crust_visc,1e19
+,crust_visc,1e19
 
 ,Critical_rock_strength_Pa,dummy,
-,Crit_Crust,3e6
+,crit_crust,3e6
 
 ,Critical_melt_fraction_to_be_High_melt_fraction_magma,dummy, 
 ,CMF,0.6
@@ -26,7 +26,7 @@ Distance_above_to_calculate_rock_density_m,dummy,
 
 ******************Rayleigh_Taylor_Instability_parameters****************,dummy,
 Initial_scale_of_RTI_D_multplied_by_below_value,dummy, 
-,Scale_RTI,0.001
+,scale_RTI,0.001
 
 ******************Thermal_death_parameters****************,dummy,
 Elastic_modulus_Pa,dummy, 
@@ -39,8 +39,11 @@ Thickness_of_magma_layer_to_take_thermal_grad_over_metres,dummy,
 ,dTabove,200
 
 ******************Intrusion_of_evacuated_magma_parameters****************,dummy,
-Initial_intrusion_depth_of_evacuations_km,dummy,
-,Evac_intrusion_depth_km,15
+Initial_intrusion_depth_of_evacuations_midcrust_km,dummy,
+,Evac_intrusion_middepth_km,15
+
+Initial_intrusion_depth_of_evacuations_uppercrust_km,dummy,
+,Evac_intrusion_upperdepth_km,5
 
 Follow_intrusion_depth_of_sill_intrusion_=1_IntitialIntrusionDepth=0,dummy, 
 ,Evac_Int_method,0

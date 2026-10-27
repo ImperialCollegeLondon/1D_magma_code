@@ -3,7 +3,7 @@ Description_use_4_spaces,dummy,
 ,Input_name,Input_No
 
 Base_of_crust_km,dummy,
-,base_crust_km,50
+,base_crust_km,40
 
 Geotherm_of_crust_oCkm-1,dummy,
 ,geotherm_crust,25
@@ -24,13 +24,13 @@ Crust_comp3_at_surface_km,dummy
 ,Depth3_crust_km,0
 
 Crust_comp1_SiO2_percent,dummy,
-,Sio2_crust1,48
+,SiO2_crust1,48
 
 Crust_comp2_SiO2_percent,dummy, 
 ,SiO2_crust2, 48
 
 Crust_comp3_SiO2_percent,dummy,
-,SiO2_crust3,500
+,SiO2_crust3,50
 
 H2O_content_crust1_percent,dummy,
 ,H2O_crust1,1.21
@@ -58,6 +58,9 @@ If_multiple_sill_intrusion_gt_0,dummy,
 Length_of_sill_in_metres,dummy,
 ,Sill_length,50
 
+Melt_fraction_of_sill,dummy, 
+,Sillphi,1
+
 SiO2_of_sill_percent,dummy,
 ,SiO2_sill,50
 
@@ -83,7 +86,7 @@ Random_shift_in_intrusion_depth_m,dummy,
 ,Random_shift_m,50
 
 Injection_rate_mmyr,dummy,
-,Injection_rate_mmyr,5
+,Injection_rate_mmyr,0.5
 
 ******************CL_CU_S_parameters****************,dummy,
 
@@ -91,7 +94,7 @@ Calculate_CU_CL_S_=1,dummy,
 ,Add_CLCU,1
 
 Fe3ratio,dummy, 
-,Fe3Ratio, 0.5
+,Fe3ratio, 0.5
 
 Mass_fractions_of_copper,dummy,
 ,MassCuCh, 0.35
@@ -117,7 +120,7 @@ S_in_sill_ppm,dummy,
 ******************Exsolved_volatiles_parameters****************,dummy,
 
 To_extract_exsolvedVolatiles_above_seebelow_distance_of_magma_layer=1,dummy,
-,To_extract_volatiles,1
+,To_extract_volatile,1
 
 Distance_above_magma_layer_to_extract_from_m,dummy,
 ,magma_vol_m,200

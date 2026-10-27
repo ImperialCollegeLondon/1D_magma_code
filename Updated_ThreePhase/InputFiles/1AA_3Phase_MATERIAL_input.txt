@@ -15,7 +15,7 @@ Max_S_evolved,dummy,
 ,Max_S_evolved,0.015
 
 Max_S_refrac,dummy, 
-,Max_s_refrac, 0.04
+,Max_S_refrac, 0.04
 
 Solid_saturation0,dummy, 
 ,Solid_saturation0,0.05
@@ -59,32 +59,32 @@ BS_Ratio,dummy,
 ,BS_ratio,0.6
 
 ******************Melt_Density_parameters****************,dummy,
-MeltDenistyType_=0NatureNoH2O_=1IncH2O,dummy
+MeltDenistyType_=0NatureNoH2O_=1IncH2O,dummy,
 ,Melt_density_type,1
 
-,MeltDens_evolved_noH2O_kgm-3,dummy
+MeltDens_evolved_noH2O_kgm-3,dummy,
 ,MeltDens_evolved_noH2,2422.6
 
-,MeltDens_evolved_comp_noH2O_SiO2%,dummy
+MeltDens_evolved_comp_noH2O_SiO2%,dummy,
 ,MeltDens_evolved_comp_noH2,70.625
 
-,MeltDens_refractory_noH2O_kgm-3,dummy
+MeltDens_refractory_noH2O_kgm-3,dummy,
 ,MeltDens_refrac_noH2,2772.04
 
-,MeltDensrefractory_comp_noH2O_SiO2%,dummy
+MeltDensrefractory_comp_noH2O_SiO2%,dummy,
 ,MeltDens_refrac_comp_noH2,50.5
 
 ******************Solid_Density_parameters****************,dummy,
-,SolidDens_evolved_noH2O_kgm-3,dummy
+SolidDens_evolved_noH2O_kgm-3,dummy,
 ,SolidDens_evolved_noH2,2660.13
 
-,SolidDens_evolved_comp_noH2O_SiO2%,dummy
+SolidDens_evolved_comp_noH2O_SiO2%,dummy,
 ,SolidDens_evolved_comp_noH2,70.99
 
-,SolidDens_refractory_noH2O_kgm-3,dummy
+SolidDens_refractory_noH2O_kgm-3,dummy,
 ,SolidDens_refrac_noH2,2959.43
 
-,SolidDensrefractory_comp_noH2O_SiO2%,dummy
+SolidDensrefractory_comp_noH2O_SiO2%,dummy,
 ,SolidDens_refrac_comp_noH2,51.094
 
 ******************Boussinesq_parameters****************,dummy,
@@ -124,10 +124,10 @@ Partition_coefficient_water,dummy,
 ,K0,0.2
 
 Partition_coefficient_cl,dummy,
-,kcl,0.05
+,Kcl,0.05
 
 Partition_coefficient_cu,dummy,
-,kcu,0.5
+,Kcu,0.5
 
 ******************Pressure_parameters****************,dummy,
 Pressure_at_top_bar,dummy,

@@ -8,14 +8,14 @@ Model_name,dummy,
 
 ******************Text_output_parameters****************,dummy,
 Turn_on_txt_file_outputs_=1,dummy, 
-,Record_data,0
+,Record_data,1
 
 Frequency_of_outputs_years,dummy, 
 ,Out_time,500
 
 ******************Running_plot_parameters****************,dummy,
 Turn_on_running_plot_=1,dummy, 
-,Running_plot,1
+,running_plot,1
 
 If_=1Plot_in_metres_if=2_plot_in_km,dummy,
 ,Z_label_type,2
@@ -29,6 +29,10 @@ Turn_on_video_=1,dummy,
 
 How_many_yrs_between_snapshot,dummy, 
 ,Fixed_record_dt0, 2000
+
+*************Old_save_data**********************,dummy, 
+Turn_on_saving_data=1,dummy, 
+,Create_save_data,1
 
 ******************Exsolved_volatile_parameters****************,dummy,
 How_often_to_output_exsolved_volatiles_years,dummy, 
