@@ -83,7 +83,7 @@ Random_shift_in_intrusion_depth_m,dummy,
 ,Random_shift_m,50
 
 Injection_rate_mmyr,dummy,
-,Injection_rate_mmyr,0.5
+,Injection_rate_mmyr,5
 
 ******************CL_CU_S_parameters****************,dummy,
 

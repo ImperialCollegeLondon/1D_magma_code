@@ -1611,7 +1611,7 @@ N_number=N;
 %end
 
 % make the lower part dryer
-%Dry_depth=Length2-300;  % the lowest part has much higher solidus
+% Dry_depth=Length2-300;  % the lowest part has much higher solidus
 %index_temp=find(cellz>Dry_depth,1,'first');
 %V(1:index_temp)=0.01*ones(index_temp,1); %linspace(0.001, V(index_temp), index_temp);
 %if Conservation_type==2
