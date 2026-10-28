@@ -803,7 +803,7 @@ C_values=zeros(N+1,3);
 %% Intruding the first sill
 
 % Melt fraction/porosity of sill (this has to be 100% currently)
-SillPhi=1;
+Sillphi=1;
 
 % Calculate the initial mass of evolved, refractory and water of the
 % sill composition
@@ -831,8 +831,21 @@ if Add_CLCU==1
     SUL(Sill_index(1):Sill_index(2))=(MM_sill+NN_sill+V_sill)*SUL_sill/100; %Sulfur
 end
 
+% Calculating the local enthalpy of the sill, ensuring the melt fraction is 1
+Lf_sill=(MM_sill*Lf_evolved+NN_sill*Lf_refrac)/(MM_sill+NN_sill);
+P2_injection=P_kbar(Sill_index(1));
+
+Tl_temp=Cal_liquidus((V_sill)/(MM_sill+NN_sill+V_sill)*100/K0,P2_injection*1e3,Data_point2,Data_y2);
+Ts_temp=Cal_solidus((V_sill)/(MM_sill+NN_sill+V_sill)*100/K0,P2_injection*1e3,Data_point,Data_y);
+
+a_sill=A1*(Tl_temp-Ts_temp)/(-A1-B1);
+b_sill=B1*(Tl_temp-Ts_temp)/(-A1-B1);
+c_sill=Tl_temp;
+
+Cb_sill=MM_sill/(MM_sill+NN_sill);
+Tl_sill=a_sill*Cb_sill^2+b_sill*Cb_sill+c_sill;
 % Setting enthalpy of sill
-H(Sill_index(1):Sill_index(2))=H(Sill_index(1):Sill_index(2))+mean(Lf)*(MM_sill+NN_sill+V_sill)*Sillphi*2.1; % what is this? Why no relation to temperature? Sillphi is not 1!! IT is 0.935
+H(Sill_index(1):Sill_index(2))=(Tl_sill*cp0(1)+Lf_sill*Sillphi)*(MM_sill+NN_sill+V_sill); % what is this? Why no relation to temperature? Sillphi is not 1!! IT is 0.935
 Sill_den=MM_sill+NN_sill+V_sill;
 
 
