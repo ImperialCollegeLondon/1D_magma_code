@@ -45,7 +45,7 @@ Dry_crust_at_base_=1,dummy,
 ,Dry_Depth_Flag,1
 
 Depth_below_which_Crust_is_Dry_km,dummy,
-,Dry_Depth_km, 40
+,Dry_Depth_km, 30
 
 Dry_volatile_amount,dummy, 
 ,dry_volatile, 0.01
@@ -57,9 +57,6 @@ If_multiple_sill_intrusion_gt_0,dummy,
 
 Length_of_sill_in_metres,dummy,
 ,Sill_length,50
-
-Melt_fraction_of_sill,dummy, 
-,Sillphi,1
 
 SiO2_of_sill_percent,dummy,
 ,SiO2_sill,50

@@ -13,7 +13,8 @@ clear;
 % CABG end 1
 
 % Loading restart input file
-Inputs = readtable('1AA_3Phase_RESTART_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_RESTART_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -823,11 +824,16 @@ while Time<End_time
     if To_extract_volatile==1
 
         Last_phi=find(phi>0,1,'last');
-        Last_phi=find(cellz>cellz(Last_phi)+100,1,'first');
-        
-        temp=Mass_data(:,7)+max(Mass_data(:,6)-Mass_solid.*S_cap,0);
-        vol_cells=find(temp>0)';
-        vol_cells=vol_cells(vol_cells>=Last_phi);
+
+        if ~isempty(Last_phi)
+            Last_phi=find(cellz>cellz(Last_phi)+100,1,'first');
+            
+            temp=Mass_data(:,7)+max(Mass_data(:,6)-Mass_solid.*S_cap,0);
+            vol_cells=find(temp>0)';
+            vol_cells=vol_cells(vol_cells>=Last_phi);
+        else
+             vol_cells=[];
+        end
         % if ~isempty(vol_cells)
         %     if vol_cells(end)==Last_phi
         %         d = diff(vol_cells);
@@ -1025,7 +1031,7 @@ while Time<End_time
                     fprintf(File_Out, '%10.4f \t %10.4f \t %10.4f \t %3e \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \t %10.4f \n ', ...
                         [((cellz(i)-nodez(end))/1000); phi(i); S(i); H(i); T(i); ...
                         Ts_local(i); Tl_local(i); Cb(i); (SiO2_range(2)*Mass_data(i,1) + SiO2_range(1)*Mass_data(i,2))/(sum(Mass_data(i,1:2),2)); (SiO2_range(2)*Mass_data(i,4) + SiO2_range(1)*Mass_data(i,5))/(sum(Mass_data(i,4:5),2)); ...
-                        Cb2(i); Mass_data(i,1)/sum(Mass_data(i,[1,2]),2); Mass_data(i,4)/sum(Mass_data(i,[4,5]),2); (Mass_data(i,7)+max(Mass_data(i,6)-Mass_solid(i)*S_cap(i),0))/rho_mean; rho_bulk(i)]);
+                        Cb22(i); Mass_data(i,1)/sum(Mass_data(i,[1,2]),2); Mass_data(i,4)/sum(Mass_data(i,[4,5]),2); (Mass_data(i,7)+max(Mass_data(i,6)-Mass_solid(i)*S_cap(i),0))/rho_mean; rho_bulk(i)]);
 
 
                 end
@@ -1055,42 +1061,43 @@ while Time<End_time
                         save(['output_',num2str(output_counter),'.mat']');  %(FileNameO)   
                 end
 
-                % % % phi data from finding porosity % % %
-                Filename_phi = ['phi_output_',num2str(output_counter),'.txt'];
-                File_phi = fopen(Filename_phi, 'w');
+                % % % phi data from finding porosity % % % This is off for
+                % now,  but will need to be turned back on. 
+                %Filename_phi = ['phi_output_',num2str(output_counter),'.txt'];
+                %File_phi = fopen(Filename_phi, 'w');
                 
-                fprintf(File_phi, '%10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \n',...
-                     'Time (ka)', 'No.', 'phi_top(-)', 'phi_base(-)', 'Hphi_t(-)', 'Hphi_b(-)', 'phi_t(km)', 'phi_b(km)', ...
-                    'Hphi_t(km)', 'Hphi_b(km)', 'ov_rho_bulk(kgm-3/)');
+               % fprintf(File_phi, '%10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \n',...
+                %     'Time (ka)', 'No.', 'phi_top(-)', 'phi_base(-)', 'Hphi_t(-)', 'Hphi_b(-)', 'phi_t(km)', 'phi_b(km)', ...
+                %    'Hphi_t(km)', 'Hphi_b(km)', 'ov_rho_bulk(kgm-3/)');
 
-                if ~isempty(phi_top)
+                %if ~isempty(phi_top)
 
-                   for i=1:1:length(phi_top)
+                  % for i=1:1:length(phi_top)
 
-                        if Hphi_top(i) == - 5000
-                            fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
-                                [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
-                                (cellz(phi_base(i))-nodez(end))/1000; 0; 0;...
-                                ov_rho_bulk(i)]);
-                        else
-                            fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
-                            [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
-                            (cellz(phi_base(i))-nodez(end))/1000; (cellz(Hphi_top(i))-nodez(end))/1000; (cellz(Hphi_base(i))-nodez(end))/1000;...
-                            ov_rho_bulk(i)]);
-                        end
+                   %     if Hphi_top(i) == - 5000
+                    %        fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
+                     %           [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
+                      %          (cellz(phi_base(i))-nodez(end))/1000; 0; 0;...
+                       %         ov_rho_bulk(i)]);
+                       % else
+                       %     fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
+                        %    [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
+                        %    (cellz(phi_base(i))-nodez(end))/1000; (cellz(Hphi_top(i))-nodez(end))/1000; (cellz(Hphi_base(i))-nodez(end))/1000;...
+                        %    ov_rho_bulk(i)]);
+                        %end
 
-                    end
+                   % end
          
 
-                else
+               % else
 
-                    fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f\t %10.3f \t %10.3f \n ',...
-                            [Time/Year/1000; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
+                %    fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f\t %10.3f \t %10.3f \n ',...
+                 %           [Time/Year/1000; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
 
 
-                end
+                %end
 
-                fclose(File_phi);
+                %fclose(File_phi);
 
 
 
@@ -1154,11 +1161,11 @@ while Time<End_time
 
                 else
 
-                    frprintf(File_BUOYphi, ['%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t ...' ...
+                    fprintf(File_BUOYphi, ['%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t ...' ...
                             '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t...' ...
                             ' %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t ...' ...
                             '%10.3f \t %10.3f \t %10.3f \n '], ...
-                            [Time/Year/1000; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0])
+                            [Time/Year/1000; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
 
 
                 end

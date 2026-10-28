@@ -63,7 +63,8 @@ cc=[0.033, 0, 0]; % DELETE - VISCOSITY DENSITY
 % see lines 5-28
 
 % Material properties input
-Inputs = readtable('1AA_3Phase_MATERIAL_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_MATERIAL_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -72,7 +73,8 @@ for i=1:r
 end
 
 % Chemical model input
-Inputs = readtable('1AA_3Phase_PHASE_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_PHASE_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -81,7 +83,8 @@ for i=1:r
 end
 
 % Sill intrusion input
-Inputs = readtable('1AA_3Phase_MAGMA_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_MAGMA_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -90,7 +93,8 @@ for i=1:r
 end
 
 % Evacuation input
-Inputs = readtable('1AA_3Phase_EVACUATION_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_EVACUATION_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -99,7 +103,8 @@ for i=1:r
 end
 
 % Simulation input
-Inputs = readtable('1AA_3Phase_SIMULATION_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_SIMULATION_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -108,7 +113,8 @@ for i=1:r
 end
 
 % Output input
-Inputs = readtable('1AA_3Phase_OUTPUT_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_OUTPUT_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number = Inputs.Var3;
@@ -117,7 +123,8 @@ for i=1:r
 end
 
 % Loading restart input file
-Inputs = readtable('1AA_3Phase_RESTART_input.txt');
+inputfile = fullfile(fileparts(mfilename('fullpath')), 'InputFiles','1AA_3Phase_RESTART_input.txt');
+Inputs = readtable(inputfile);
 [r,~] = size(Inputs);
 names = string(Inputs.Var2);
 Number=Inputs.Var3;
@@ -722,7 +729,7 @@ end
 
 if Dry_Depth_Flag==1
     % Find the first cell above the dry_depth_km, this is boundary of the dry region 
-    index_dry=find(cellz-nodez(end)>-Dry_Depth_km*1000,1,'first');
+    index_dry=find(cellz-nodez(end)>=-Dry_Depth_km*1000,1,'first');
     
     % Update the volatile component of the crust to make it dry 
     V(1:index_dry)=dry_volatile*ones(index_dry,1); 
