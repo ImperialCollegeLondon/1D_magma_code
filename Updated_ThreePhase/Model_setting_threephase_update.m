@@ -943,6 +943,13 @@ Calculate_capped_values2;
 SillNodez=round(Sill_length/(dzf)); % Number of nodes per sill
 
 
+% Calculating the number of nodez in random_shift_m
+if Random_shift_m==0
+    Random_shift = 0;
+else
+    Random_shift = round(Random_shift_m/dzf); 
+end
+
 
 
 % Calculating injection time.

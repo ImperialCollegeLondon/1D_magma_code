@@ -168,53 +168,210 @@ while Time<End_time
     iter=0;
     eps=1;
     
+    %% Intruding sills
     Just_intruded=0;
     if Time>injection_time(Injected)  && To_intrude==1
-        disp('hi')
+        % Calculating dummy density
         if Conservation_type==1 || Time==0
             sum_mass=sum(Mass_data,2);
         else
             m1=Mass_data(:,1); n1=Mass_data(:,2); v1=Mass_data(:,3); m2=Mass_data(:,4); n2=Mass_data(:,5); v2=Mass_data(:,6); v3=Mass_data(:,7);
             sum_mass=((rhof_1*m1+rhof_1*n1)./max(m1+n1,1e-3).*(m1+n1+v1)+(rhom_1*m2+rhom_2*n2)./max(m2+n2,1e-3).*(m2+n2+v2))./(m1+n1+v1+m2+n2+v2+v3);
         end
-        index=find(cellz>Dry_depth,1,'first');
-        depthN0=find(Sillden>sum_mass(index:end),1,'first');
-        depthN0=depthN0+index;
-        if Injection_depth_method==99            
-            depthN=find(nodez>=(nodez(end)-Injection_depth)+(rand-0.5)*Random_shift*2, 1, 'first'); 
-        elseif Injection_depth_method==2
-            [ ~,depthN]=min(sum_mass);
-        elseif Injection_depth_method==3
-            temp=find(phi>phi_crit,1,'first');
-            if isempty(temp)
-                % intrude at the same depth
-                depthN=find(nodez>=(nodez(end)-Injection_depth)+(rand-0.5)*Random_shift*2, 1, 'first');
-            else
-                depthN=find(nodez>=cellz(temp)+(rand-0.5)*Random_shift*2, 1, 'first'); 
-                Injection_depth=nodez(end)-cellz(temp);
+
+        % Must intrude above dry depth
+        index_sill_dry=find((cellz-nodez(end))>-(Dry_Depth_km*1000+Sill_length*(Injected+1)),1,'first');
+        
+        % Find if there is a depth where the density of the sill intrusion
+        % is more than the crust. 
+        depthN0=find(Sillden>=sum_mass(index_sill_dry:end),1,'first')-1;
+
+        % If depthN0 is in the dry crust, then a warning is needed as this
+        % might not be appropriate
+        if ~isempty(depthN0)
+            if index_sill_dry>=depthN0
+                depthN0=index_sill_dry+1;
+                fprintf(File_echo, '%s \n', 'WARNING: There is crust that is less dense than the sill in the dry crust!');
             end
-        else
-            if ~isempty(depthN0)
-                Injection_depth=cellz(depthN0)+(rand-0.5)*Random_shift*2;
-                depthN=find(nodez>=Injection_depth, 1, 'first');
-            else
-                if Injection_depth_method==0
-                    [ ~,depthN]=min(sum_mass);
-                else
-                    depthN=find(nodez>=Injection_depth, 1, 'first'); %inject at the same depth, but need to find the nodes again
-                end
+        end
+
+        % Find if there is a place in the model where the melt fraction is
+        % greater than phi_crit
+        depthP0=find(phi>=Phi_crit,1,'first')-1;
+        % error just in case there is melt in the dry crust
+        if ~isempty(depthP0)
+            if index_sill_dry>=depthP0
+                depthP0=index_sill_dry+1;
+                fprintf(File_echo, '%s \n', 'ERROR: There is melt in the dry crust!');
             end
         end
         
+        % depthN0=depthN0+index_sill_dry; I am not sure how this is helpful
+
+        % Finding intrusion depth 
+        % melt fraction and density constraints turned on
+        if DensIntrusion==1 && PhiIntrusion==1 
+
+            if ~isempty(depthN0) && ~isempty(depthP0) % if both constraints are present, then choose deepest
+                
+                if depthN0>depthP0
+                    depthN = depthP0 + round((rand-0.5)*Random_shift*2);
+
+                    if index_sill_dry>=depthN
+                        depthN=index_sill_dry+1;
+                    end
+
+                    if Random_shift == 0
+                        fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint');
+                    else
+                        fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint around the initial depth');
+                    end
+
+                else
+                    depthN = depthN0 + round((rand-0.5)*Random_shift*2);
+
+                    if index_sill_dry>=depthN
+                        depthN=index_sill_dry+1;
+                    end
+
+                    if Random_shift == 0
+                        fprintf(File_echo, '%s \n', 'Intruding due to density constraint');
+                    else
+                        fprintf(File_echo, '%s \n', 'Intruding due to density constraint around the initial depth, random intrusion around this depth');
+                    end
+                end
+
+            elseif isempty(depthN0) &&  ~isempty(depthP0) %If there is no density constraint, intrude due to melt fraction constraint
+
+                depthN = depthP0 + round((rand-0.5)*Random_shift*2);
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint, random intrusion around this depth');
+                end
+
+            elseif ~isempty(depthN0) && isempty(depthP0) % If there is no melt fraction constraint, intrude due to density constraint
+
+                depthN = depthN0 + round((rand-0.5)*Random_shift*2);
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding due to density constraint');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding due to density constraint, random intrusion around this depth');
+                end
+
+            else % If there are no constraints present, then intrude around initial depth
+                depthN=Injection_depth_nodez-SillNodez*(Injected+1) + round((rand-0.5)*Random_shift*2); 
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding at the initial depth');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding randomly around the initial depth');
+                end
+
+            end
+
+        % Only density constraint turned on
+        elseif DensIntrusion==1
+            if ~isempty(depthN0) % intrude due to density constraint
+
+                depthN = depthN0 + round((rand-0.5)*Random_shift*2);
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding due to density constraint');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding due to density constraint, random intrusion around this depth');
+                end
+
+            else % If there are no constraints present, then intrude around initial depth
+                depthN=Injection_depth_nodez-SillNodez*(Injected+1)+round((rand-0.5)*Random_shift*2); 
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding at the initial depth');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding randomly around the initial depth');
+                end
+
+            end
+
+        % Only melt fraction constraint turned on
+        elseif PhiIntrusion==1
+            
+            if ~isempty(depthP0) %If there is no density constaint, intrude due to melt fraction constraint
+                depthN = depthP0 + round((rand-0.5)*Random_shift*2);
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint, random intrusion around this depth');
+                end
+            else % If there are no constraints present, then intrude around initial depth
+                depthN=Injection_depth_nodez-SillNodez*(Injected+1)+round((rand-0.5)*Random_shift*2); 
+
+                if index_sill_dry>=depthN
+                    depthN=index_sill_dry+1;
+                end
+
+                if Random_shift == 0
+                    fprintf(File_echo, '%s \n', 'Intruding at the initial depth');
+                else
+                    fprintf(File_echo, '%s \n', 'Intruding randomly around the initial depth');
+                end
+
+            end
+
+        % initial intrusion depth
+        else
+            depthN=Injection_depth_nodez-SillNodez*(Injected+1)+round((rand-0.5)*Random_shift*2); %rand-0.5 as rand is between 0 and 1
+
+            if index_sill_dry>=depthN
+                depthN=index_sill_dry+1;
+            end
+
+            if Random_shift == 0
+                fprintf(File_echo, '%s \n', 'Intruding at the initial depth');
+            else
+                fprintf(File_echo, '%s \n', 'Intruding randomly around the initial depth');
+            end
+
+
+        end
+      
+        % Output intrusion depth 
         fprintf(File_echo, '%s %5.5f %s %5.5f %6s\n', 'Sill intruded at', ...
                             (nodez(depthN)-nodez(end))/1000, 'km at', Time/Year/1000, 'ka');
 
         SillTs=Cal_solidus(sum(SillMass([3,6,7]))/sum(SillMass)*100/K0, P_kbar(depthN)*1e3 ,Data_point,Data_y);
-        if is_solid_solution==0
-            [dz, nodez, N, cellz, H, T, Ts_new, phi, S, Mass_data, rho, P_kbar, S_cap] = sill_intrusion_break(dz, nodez(end), N, depthN, dzf, H, T, Ts_new, phi, S, Mass_data, rho, SillNodez, SillMass, SillH, SillT, SillTs, Sillphi, SillS, Sillrho, P_kbar, S_cap);
-        else
-                sill_intrusion_break_solid2;
-        end
+        
+        sill_intrusion_break_solid2_update;
+       
+
+        %%
         % Update the bottom cell temperature and enthalpy
         T_botom=min(abs(cellz(1)-nodez(end))/1000*24.5+10,1100);
         H(1)=T_botom*cp(1,2)*rho_mean;
