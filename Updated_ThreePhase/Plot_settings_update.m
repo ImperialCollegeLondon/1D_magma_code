@@ -476,7 +476,7 @@ for i=1:(Plot_size(1)*Plot_size(2))
         end
     end
     if i~=1
-        set(gca,'YTickLabel',[]);
+        % set(gca,'YTickLabel',[]);
     else
         if Z_label_type==1
             ylabel('Distance (m)','fontsize',Font_Size+2)
