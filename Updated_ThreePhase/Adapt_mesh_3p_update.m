@@ -268,7 +268,7 @@ while num_adaptive<=max_adaptive_number && to_adapt==1
     %     min_dx=min_dx*0.9;
     % %     max_dx=max_dx*0.9;
     % end
-    disp(['Number of nodes: ', num2str(N)])
+    disp(['Possible mesh adaptation. Number of nodes: ', num2str(N)])
     if abs(N_old-N)/N_old<0.05
         to_adapt=0;
     end

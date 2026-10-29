@@ -5,7 +5,7 @@ Description_use_4_spaces,dummy,
 
 ****************************************************************,dummy,
 To_evacuate_=0No_=Yes,dummy, 
-,To_evacuate,0
+,To_evacuate,1
 
 ******************Crust_and_reservoir_parameters****************,dummy,
 ,diameter_of_reservoirs_km,dummy, 

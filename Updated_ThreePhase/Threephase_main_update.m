@@ -215,7 +215,9 @@ while Time<End_time
             if ~isempty(depthN0) && ~isempty(depthP0) % if both constraints are present, then choose deepest
                 
                 if depthN0>depthP0
-                    depthN = depthP0 + round((rand-0.5)*Random_shift*2);
+                    
+                    depthN = find(nodez>=nodez(depthP0)+(rand-0.5)*Random_shift_m*2,1,'first');
+                    %depthN = depthP0 + round((rand-0.5)*Random_shift*2);
 
                     if index_sill_dry>=depthN
                         depthN=index_sill_dry+1;
@@ -228,7 +230,7 @@ while Time<End_time
                     end
 
                 else
-                    depthN = depthN0 + round((rand-0.5)*Random_shift*2);
+                    depthN = find(nodez>=nodez(depthN0)+(rand-0.5)*Random_shift_m*2,1,'first');
 
                     if index_sill_dry>=depthN
                         depthN=index_sill_dry+1;
@@ -243,7 +245,7 @@ while Time<End_time
 
             elseif isempty(depthN0) &&  ~isempty(depthP0) %If there is no density constraint, intrude due to melt fraction constraint
 
-                depthN = depthP0 + round((rand-0.5)*Random_shift*2);
+                depthN = find(nodez>=nodez(depthP0)+(rand-0.5)*Random_shift_m*2,1,'first');
 
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
@@ -257,7 +259,7 @@ while Time<End_time
 
             elseif ~isempty(depthN0) && isempty(depthP0) % If there is no melt fraction constraint, intrude due to density constraint
 
-                depthN = depthN0 + round((rand-0.5)*Random_shift*2);
+                depthN = find(nodez>=nodez(depthN0)+(rand-0.5)*Random_shift_m*2,1,'first');
 
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
@@ -270,7 +272,7 @@ while Time<End_time
                 end
 
             else % If there are no constraints present, then intrude around initial depth
-                depthN=Injection_depth_nodez-SillNodez*(Injected+1) + round((rand-0.5)*Random_shift*2); 
+                depthN=find(nodez>=nodez(end)-Injection_depth_km*1000+(rand-0.5)*Random_shift_m*2,1,'first'); 
 
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
@@ -288,7 +290,7 @@ while Time<End_time
         elseif DensIntrusion==1
             if ~isempty(depthN0) % intrude due to density constraint
 
-                depthN = depthN0 + round((rand-0.5)*Random_shift*2);
+                depthN = find(nodez>=nodez(depthN0)+(rand-0.5)*Random_shift_m*2,1,'first');
 
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
@@ -301,8 +303,8 @@ while Time<End_time
                 end
 
             else % If there are no constraints present, then intrude around initial depth
-                depthN=Injection_depth_nodez-SillNodez*(Injected+1)+round((rand-0.5)*Random_shift*2); 
-
+                depthN=find(nodez>=nodez(end)-Injection_depth_km*1000+(rand-0.5)*Random_shift_m*2,1,'first'); 
+                
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
                 end
@@ -319,7 +321,7 @@ while Time<End_time
         elseif PhiIntrusion==1
             
             if ~isempty(depthP0) %If there is no density constaint, intrude due to melt fraction constraint
-                depthN = depthP0 + round((rand-0.5)*Random_shift*2);
+                depthN = find(nodez>=nodez(depthP0)+(rand-0.5)*Random_shift_m*2,1,'first');
 
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
@@ -331,7 +333,7 @@ while Time<End_time
                     fprintf(File_echo, '%s \n', 'Intruding due to melt fraction constraint, random intrusion around this depth');
                 end
             else % If there are no constraints present, then intrude around initial depth
-                depthN=Injection_depth_nodez-SillNodez*(Injected+1)+round((rand-0.5)*Random_shift*2); 
+                depthN=find(nodez>=nodez(end)-Injection_depth_km*1000+(rand-0.5)*Random_shift_m*2,1,'first'); 
 
                 if index_sill_dry>=depthN
                     depthN=index_sill_dry+1;
@@ -347,7 +349,7 @@ while Time<End_time
 
         % initial intrusion depth
         else
-            depthN=Injection_depth_nodez-SillNodez*(Injected+1)+round((rand-0.5)*Random_shift*2); %rand-0.5 as rand is between 0 and 1
+            depthN=find(nodez>=nodez(end)-Injection_depth_km*1000+(rand-0.5)*Random_shift_m*2,1,'first');  %rand-0.5 as rand is between 0 and 1
 
             if index_sill_dry>=depthN
                 depthN=index_sill_dry+1;
@@ -402,8 +404,8 @@ while Time<End_time
     if (Adaptive_mesh==1 && mod(counter,Adaptive_step_gap)==1 && Time-Last_adapted>Adaptive_step_time) || Just_intruded==1
         %         save('temp.mat')
         
-        % old_check_buoy_top_km = cellz(all_phi_buoy_top)-nodez(end);
-        % old_check_buoy_base_km = cellz(all_phi_buoy_base)-nodez(end);
+         old_check_buoy_top_km = cellz(all_phi_buoy_top)-nodez(end);
+         old_check_buoy_base_km = cellz(all_phi_buoy_base)-nodez(end);
         
         Adapt_mesh_3p_update;
        
@@ -462,7 +464,7 @@ while Time<End_time
              end
 
 
-             % Finding_porosity_adaptmesh;
+              Finding_porosity_adaptmesh;
          end
         %CAB end
     end
@@ -954,7 +956,7 @@ while Time<End_time
         end
     end
     
-    disp([maxresid_phi,maxresid_cb,maxresid_H,maxresid_cb2])
+    %disp([maxresid_phi,maxresid_cb,maxresid_H,maxresid_cb2])
     fprintf(File_resid, '%10.5f \t %10.10f \t %10.10f \t %10.10f  \t %10.10f \n', Time/Year/1000, maxresid_phi, maxresid_cb, maxresid_H,maxresid_cb2);
 
     %post-processings for the new Sulfur and Copper calculations
@@ -1090,7 +1092,7 @@ while Time<End_time
 
 
     if To_evacuate==1
-        Finding_porosity;
+        Finding_porosity_update;
     end
         
 
@@ -1168,7 +1170,7 @@ while Time<End_time
             if (Time)>=Record_time(Record_index)+dt
                 Record_index=Record_index+1;
                 vv=['Output ', num2str(Time/Year/1000), ' ka'];
-%                 disp(vv)
+
 
                 % % % Overal model data % % %
 
@@ -1220,41 +1222,41 @@ while Time<End_time
 
                 % % % phi data from finding porosity % % % This is off for
                 % now,  but will need to be turned back on. 
-                %Filename_phi = ['phi_output_',num2str(output_counter),'.txt'];
-                %File_phi = fopen(Filename_phi, 'w');
+                Filename_phi = ['phi_output_',num2str(output_counter),'.txt'];
+                File_phi = fopen(Filename_phi, 'w');
                 
-               % fprintf(File_phi, '%10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \n',...
-                %     'Time (ka)', 'No.', 'phi_top(-)', 'phi_base(-)', 'Hphi_t(-)', 'Hphi_b(-)', 'phi_t(km)', 'phi_b(km)', ...
-                %    'Hphi_t(km)', 'Hphi_b(km)', 'ov_rho_bulk(kgm-3/)');
+                fprintf(File_phi, '%10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \t %10s \n',...
+                     'Time (ka)', 'No.', 'phi_top(-)', 'phi_base(-)', 'Hphi_t(-)', 'Hphi_b(-)', 'phi_t(km)', 'phi_b(km)', ...
+                    'Hphi_t(km)', 'Hphi_b(km)', 'ov_rho_bulk(kgm-3/)');
 
-                %if ~isempty(phi_top)
+                if ~isempty(phi_top)
 
-                  % for i=1:1:length(phi_top)
+                   for i=1:1:length(phi_top)
 
-                   %     if Hphi_top(i) == - 5000
-                    %        fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
-                     %           [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
-                      %          (cellz(phi_base(i))-nodez(end))/1000; 0; 0;...
-                       %         ov_rho_bulk(i)]);
-                       % else
-                       %     fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
-                        %    [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
-                        %    (cellz(phi_base(i))-nodez(end))/1000; (cellz(Hphi_top(i))-nodez(end))/1000; (cellz(Hphi_base(i))-nodez(end))/1000;...
-                        %    ov_rho_bulk(i)]);
-                        %end
+                        if Hphi_top(i) == - 5000
+                            fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
+                                [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
+                                (cellz(phi_base(i))-nodez(end))/1000; 0; 0;...
+                                ov_rho_bulk(i)]);
+                        else
+                            fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \n ',...
+                           [Time/Year/1000; i; phi_top(i); phi_base(i); Hphi_top(i); Hphi_base(i); (cellz(phi_top(i))-nodez(end))/1000;...
+                            (cellz(phi_base(i))-nodez(end))/1000; (cellz(Hphi_top(i))-nodez(end))/1000; (cellz(Hphi_base(i))-nodez(end))/1000;...
+                            ov_rho_bulk(i)]);
+                        end
 
-                   % end
+                    end
          
 
-               % else
+                else
 
-                %    fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f\t %10.3f \t %10.3f \n ',...
-                 %           [Time/Year/1000; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
+                    fprintf(File_phi, '%10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f \t %10.3f\t %10.3f \t %10.3f \n ',...
+                            [Time/Year/1000; 0; 0; 0; 0; 0; 0; 0; 0; 0; 0]);
 
 
-                %end
+                end
 
-                %fclose(File_phi);
+                fclose(File_phi);
 
 
 
@@ -1382,9 +1384,9 @@ while Time<End_time
     %     V_loss=(sum(sum(Mass_data_old(:,[3,6,7])))-sum(sum(Mass_data(:,[3,6,7]))))/sum(sum(Mass_data_old(:,[3,6,7])));
     % end
     Sum_H=sum(H.*dz);
-    % disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ' num2str(Num_non_convergence)])  %, ' ', num2str((Sum_H-Sum_H0)/Sum_H0
-    disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ', num2str(min(sum(Mass_data(1:7,:),2))), ' ', num2str(Time/Year)  ' ' ])
     
+    %disp([num2str(counter), ' ', num2str(iter), ' ', num2str(max(sum(Mass_data(1:7,:),2))), ' ', num2str(min(sum(Mass_data(1:7,:),2))), ' ', num2str(Time/Year)  ' ' ])
+    disp(['Model time is ', num2str(Time/Year/1000), 'ka'])
     Conservation_check=[sum(sum(Mass_data(:,[1 4]),2).*dz)/Sum_M0, sum(sum(Mass_data(:,[2 5]),2).*dz)/Sum_N0, sum(sum(Mass_data(:,[3 6 7]),2).*dz)/Sum_V0]; 
     %Display the conservation
     %     disp([num2str(Conservation_check(1)), ' ', num2str(Conservation_check(2)), ' ', num2str(Conservation_check(2))])

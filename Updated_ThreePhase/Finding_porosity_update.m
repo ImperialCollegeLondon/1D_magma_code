@@ -114,8 +114,11 @@ end
 
 
 % For the areas of porosity, find the highest layer of high porosity 
-for j=2:length(phi_top)
-
+for j=1:length(phi_top)
+    
+    % set these variables
+    Hphi_top(j)=-5000;
+    Hphi_base(j)=-5000;
     Hphi_dummy=0;
     
     for i=phi_top(j):-1:phi_base(j)
@@ -139,10 +142,6 @@ for j=2:length(phi_top)
         end
     end
 
-    if Hphi_dummy==0
-        Hphi_top(j)=-5000;
-        Hphi_base(j)=-5000;
-    end
 
 end
 
@@ -521,7 +520,7 @@ if ~isempty(buoy_phi_top)
                     H2O_layer=100*(Mass_data(buoy_Hphi_base(i):buoy_Hphi_top(i),3))./max(sum(Mass_data(buoy_Hphi_base(i):buoy_Hphi_top(i),1:3),2),1e-3); % H2O%  !!!
                     
                     for j=1:length(H2O_layer)%buoy_Hphi_base(i):buoy_Hphi_top(i)
-                        P3_layer=Pg_real(j+buoy_Hphi_base(i)-1)*100;
+                        P3_layer=P_kbar(j+buoy_Hphi_base(i)-1)*100;
                         Saturation_layer=(2.859e-2*P3_layer-1.495e-3*P3_layer.^1.5+2.702e-5*P3_layer.^2+0.257*P3_layer.^0.5);
                         H2O_layer(j)=H2O_layer(j)/Saturation_layer;
                     end

@@ -452,7 +452,8 @@ Tl=C1; % define liquidus
 simplified_5p=1;
 % [Jacobians,Rhs,Constant_index, Extra_func]=chemical_solver_initiator(is_solid_solution, 3, simplified_TS, simplified_5p);   %For initialize the Jacobion, must remove for compiling
 load('Chemical_model_variables.mat');
-
+disp('WARNING: Before compiling make sure the chemical_solver_initiator was run to get the Chemical_model_variables.mat')
+fprintf(File_echo, '%s \n', 'WARNING: Before compiling make sure the chemical_solver_initiator was run to get the Chemical_model_variables.mat');
 load('Oxides_coefficients.mat') %NO COMMENT need to figure out what this is for.
 
 
