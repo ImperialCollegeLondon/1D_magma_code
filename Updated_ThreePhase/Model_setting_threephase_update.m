@@ -44,6 +44,7 @@
 clear;
 warning('off') % this turns off warnings MATLAB may output, turn warnings on for testing.
 
+
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%% VARIABLES TO REMOVE
 %%%%%%%%%%%%%%%%%%%%%%%%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -51,7 +52,7 @@ warning('off') % this turns off warnings MATLAB may output, turn warnings on for
 is_solid_solution=1; %DELETE 
 N_component=3;
 Fix_H2O=0;
-simplified_5p=0;
+
 Vol_flux=0; %DELETE %volatile? flux (mass)
 
 % paper based huber
@@ -137,6 +138,9 @@ end
 
 % REMOVE
 Model_name='test_replace';
+if isempty(gcp('nocreate'))
+    parpool(Num_core_use); % Reopen the pool desired number of cores
+end
 %% Setting up echoscreen
 % This file is used to be an echo of what would usually be displayed in the
 % MATLAB command window. 
@@ -445,7 +449,9 @@ Tl=C1; % define liquidus
 
 % Sets up the Jacobian, RHS, constant index and Extra_func (if Add_CLCU=1
 % or simplified_5p=1) as a function_handle
-chemical_solver_loader;
+simplified_5p=1;
+% [Jacobians,Rhs,Constant_index, Extra_func]=chemical_solver_initiator(is_solid_solution, 3, simplified_TS, simplified_5p);   %For initialize the Jacobion, must remove for compiling
+load('Chemical_model_variables.mat');
 
 load('Oxides_coefficients.mat') %NO COMMENT need to figure out what this is for.
 

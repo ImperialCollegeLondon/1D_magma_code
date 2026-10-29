@@ -34,7 +34,7 @@ To_use_parallel_computing_set_to_1,dummy,
 ,Use_parallel,1
 
 Number_of_cores_to_use,dummy,
-,Num_core_use,2
+,Num_core_use,5
 
 ******************Initial_mesh_set_up_parameters****************,dummy,
 Ratio_of_fine_meshed_region_around_sills,dummy,
